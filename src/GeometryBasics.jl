@@ -18,6 +18,20 @@ abstract type AbstractSimplex{Dimension, N, T} <: StaticVector{Dimension, T} end
 GeometryTypes.@fixed_vector Point AbstractPoint
 
 """
+Face index, connecting points to form a simplex
+"""
+GeometryTypes.@fixed_vector SimplexFace AbstractFace
+
+"""
+Face index, connecting points to form an Ngon
+"""
+GeometryTypes.@fixed_vector NgonFace AbstractFace
+const TriangleFace{T} = NgonFace{3, T}
+function element_type(P::Type{<: AbstractPoint{Dim, T}}, ::Type{<: NgonFace{N}}) where {N, Dim, T}
+    NGon{Dim, T, N, P}
+end
+
+"""
 Fixed Size Polygon, e.g.
 N 1-2 : Illegal!
 N = 3 : Triangle
@@ -168,6 +182,10 @@ struct Mesh{
     simplices::V
 end
 
+function Mesh(elements::AbstractVector{<: Polytope{Dim, T}}) where {Dim, T}
+    Mesh{Dim, T, eltype(elements), typeof(elements)}(elements)
+end
+
 """
 FaceView enables to link one array of points via a face array, to generate one
 abstract array of elements.
@@ -195,6 +213,13 @@ struct FaceView{
     points::P
     faces::F
 end
+function FaceView(points::AbstractVector{P}, faces::AbstractVector{F}) where {P <: AbstractPoint, F <: AbstractFace}
+    Element = element_type(P, F)
+    FaceView{Element, P, F, typeof(points), typeof(faces)}(points, faces)
+end
 
+function Mesh(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: AbstractFace})
+    Mesh(FaceView(points, faces))
+end
 
 end # module
