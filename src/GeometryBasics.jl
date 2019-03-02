@@ -4,7 +4,7 @@ using StaticArrays, Tables, StructArrays
 import GeometryTypes
 import Base: convert
 """
-Geometry made of N connected points. Connected as one flat geometry, it makes a Line, Ngon / Polygon.
+Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
 Connected as volume it will be a Simplex / Tri / Cube.
 Note That `Polytype{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
 """
