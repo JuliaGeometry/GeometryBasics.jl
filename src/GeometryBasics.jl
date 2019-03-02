@@ -168,7 +168,18 @@ struct Mesh{
     simplices::V
 end
 
-
+"""
+FaceView enables to link one array of points via a face array, to generate one
+abstract array of elements.
+E.g., this becomes possible:
+```
+x = FaceView(rand(Point3f0, 10), TriangleFace[(1, 2, 3), (2,4, 5), ...])
+x[1] isa Triangle == true
+x isa AbstractVector{<: Triangle} == true
+# This means we can use it as a mesh:
+Mesh(x) # should just work!
+```
+"""
 struct FaceView{
         Element,
         Point <: AbstractPoint,
