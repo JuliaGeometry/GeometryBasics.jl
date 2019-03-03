@@ -78,7 +78,7 @@ struct Simplex{
     points::SVector{N, Point}
 end
 const Line{Dimension, T, P <: AbstractPoint{Dimension, T}} = Simplex{Dimension, T, 2, P}
-const Tetrahedron{Dimension, T, P <: AbstractPoint{Dimension, T}} = Simplex{Dimension, T, 2, P}
+const Tetrahedron{Dimension, T, P <: AbstractPoint{Dimension, T}} = Simplex{Dimension, T, 4, P}
 
 
 struct LineString{
