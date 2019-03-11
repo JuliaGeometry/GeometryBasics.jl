@@ -8,6 +8,4 @@ include("basic_types.jl")
 include("metadata.jl")
 include("viewtypes.jl")
 
-
-
 end # module

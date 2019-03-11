@@ -1,9 +1,14 @@
 """
+Abstract Geometry in R{Dim} with Number type T
+"""
+abstract type AbstractGeometry{Dim, T <: Real} end
+
+"""
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
 Connected as volume it will be a Simplex / Tri / Cube.
 Note That `Polytype{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
 """
-abstract type Polytope{Dim, T <: Real} end
+abstract type Polytope{Dim, T} <: AbstractGeometry{Dim, T} end
 abstract type AbstractPolygon{Dim, T} <: Polytope{Dim, T} end
 
 abstract type AbstractPoint{Dim, T} <: StaticVector{Dim, T} end
@@ -38,10 +43,9 @@ const TriangleFace{T} = NgonFace{3, T}
 Base.show(io::IO, x::Type{<: TriangleFace{T}}) where T = print(io, "TriangleFace{", T, "}")
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
 
-
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
-@propagate_inbounds Base.iterate(x::Polytope, i::Integer) = iterate(coordinates(x), i)
+@propagate_inbounds Base.iterate(x::Polytope, i) = iterate(coordinates(x), i)
 
 """
 Fixed Size Polygon, e.g.
@@ -88,7 +92,17 @@ end
 # Simplex{D, T, 3} & Ngon{D, T, 3} are both representing a triangle.
 # Since Ngon is supposed to be flat and a triangle is flat, lets prefer Ngon
 # for triangle:
-const Triangle{Dim, T} = Ngon{Dim, T, 3, P} where P <: AbstractPoint{Dim, T}
+const TriangleP{Dim, T, P <: AbstractPoint{Dim, T}} = Ngon{Dim, T, 3, P}
+
+const Triangle{Dim, T} = TriangleP{Dim, T, Point{Dim, T}}
+const Triangle3d{T} = Triangle{3, T}
+
+function Base.show(io::IO, ::Type{TriangleP{D, T, P}}) where {D, T, P}
+    print(io, "Tetrahedron{", D, ", ", T, "}")
+end
+Base.show(io::IO, ::Type{Triangle}) = print(io, "Triangle")
+Base.show(io::IO, x::TriangleP) = print(io, "Triangle(", join(x, ", "), ")")
+
 const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T}
 
 """
@@ -115,9 +129,19 @@ struct Simplex{
 
     points::SVector{N, Point}
 end
+
 const NSimplex{N} = Simplex{Dim, T, N, P} where {Dim, T, P}
-const Line{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 2, P}
-const Tetrahedron{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 3, P}
+const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 2, P}
+const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
+const TetrahedronP{T, P <: AbstractPoint{3, T}} = Simplex{3, T, 4, P}
+const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
+
+function Base.show(io::IO, ::Type{TetrahedronP{T, P}}) where {T, P}
+    print(io, "Tetrahedron{", T, "}")
+end
+Base.show(io::IO, ::Type{Tetrahedron}) = print(io, "Tetrahedron")
+Base.show(io::IO, x::TetrahedronP) = print(io, "Tetrahedron(", join(x, ", "), ")")
+
 
 coordinates(x::Simplex) = x.points
 function (::Type{<: NSimplex{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
@@ -142,17 +166,11 @@ function Polytope(::Type{<: NSimplex{N}}, P::Type{<: AbstractPoint{NDim, T}}) wh
     Simplex{NDim, T, N, P}
 end
 
-function Base.show(io::IO, ::Type{Line{D, T, P}}) where {D, T, P}
+function Base.show(io::IO, ::Type{LineP{D, T, P}}) where {D, T, P}
     print(io, "Line{", D, ", ", T, "}")
 end
-
-function Base.show(io::IO, ::Type{Line})
-    print(io, "Line")
-end
-
-function Base.show(io::IO, x::Line{D, T}) where {D, T}
-    print(io, "Line: ", x[1], " => ", x[2])
-end
+Base.show(io::IO, ::Type{Line}) = print(io, "Line")
+Base.show(io::IO, x::LineP) = print(io, "Line(", x[1], " => ", x[2], ")")
 
 """
 A LineString is a geometry of connected line segments
@@ -160,8 +178,8 @@ A LineString is a geometry of connected line segments
 struct LineString{
         Dim, T <: Real,
         P <: AbstractPoint,
-        V <: AbstractVector{<: Line{Dim, T, P}}
-    } <: AbstractVector{Line{Dim, T}}
+        V <: AbstractVector{<: LineP{Dim, T, P}}
+    } <: AbstractVector{LineP{Dim, T}}
     points::V
 end
 coordinates(x::LineString) = x.points
@@ -170,7 +188,7 @@ Base.size(x::LineString) = size(coordinates(x))
 Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
 
 
-function LineString(points::AbstractVector{Line{Dim, T, P}}) where {Dim, T, P}
+function LineString(points::AbstractVector{LineP{Dim, T, P}}) where {Dim, T, P}
     LineString{Dim, T, P, typeof(points)}(points)
 end
 
@@ -186,11 +204,11 @@ linestring = LineString(points)
 ```
 """
 function LineString(points::AbstractVector{<: AbstractPoint}, skip = 1)
-    LineString(connect(points, Line, skip))
+    LineString(connect(points, LineP, skip))
 end
 
 function LineString(points::AbstractVector{<: Pair{P, P}}) where P <: AbstractPoint{N, T} where {N, T}
-    LineString(reinterpret(Line{N, T, P}, points))
+    LineString(reinterpret(LineP{N, T, P}, points))
 end
 
 function LineString(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: LineFace})
@@ -223,7 +241,8 @@ end
 
 struct Polygon{
         Dim, T <: Real,
-        L <: AbstractVector{<: Line{Dim, T}},
+        P <: AbstractPoint{Dim, T},
+        L <: AbstractVector{<: LineP{Dim, T, P}},
         V <: AbstractVector{L}
     } <: AbstractPolygon{Dim, T}
     exterior::L
@@ -232,11 +251,11 @@ end
 
 Base.:(==)(a::Polygon, b::Polygon) = (a.exterior == b.exterior) && (a.interiors == b.interiors)
 
-function Polygon(exterior::AbstractVector{Line{Dim, T, P}}, interiors::V) where {Dim, T, P, V <: AbstractVector{<: AbstractVector{Line{Dim, T, P}}}}
+function Polygon(exterior::AbstractVector{LineP{Dim, T, P}}, interiors::V) where {Dim, T, P, V <: AbstractVector{<: AbstractVector{LineP{Dim, T, P}}}}
     Polygon{Dim, T, typeof(exterior), V}(exterior, interiors)
 end
 
-Polygon(exterior::L) where L <: AbstractVector{<: Line} = Polygon(exterior, L[])
+Polygon(exterior::L) where L <: AbstractVector{<: LineP} = Polygon(exterior, L[])
 
 function Polygon(exterior::AbstractVector{P}, skip::Int = 1) where P <: AbstractPoint{Dim, T} where {Dim, T}
     Polygon(LineString(exterior, skip))
