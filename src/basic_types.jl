@@ -18,7 +18,7 @@ abstract type AbstractNgonFace{Dim, T} <: AbstractFace{Dim, T} end
 
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
-GeometryTypes.@fixed_vector Point AbstractPoint
+@fixed_vector Point AbstractPoint
 
 
 
@@ -27,7 +27,7 @@ GeometryTypes.@fixed_vector Point AbstractPoint
 Face index, connecting points to form a simplex
 """
 
-GeometryTypes.@fixed_vector SimplexFace AbstractSimplexFace
+@fixed_vector SimplexFace AbstractSimplexFace
 const LineFace{T} = SimplexFace{2, T}
 Base.show(io::IO, x::Type{<: LineFace{T}}) where T = print(io, "LineFace{", T, "}")
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
@@ -38,7 +38,7 @@ Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 Face index, connecting points to form an Ngon
 """
 
-GeometryTypes.@fixed_vector NgonFace AbstractNgonFace
+@fixed_vector NgonFace AbstractNgonFace
 const TriangleFace{T} = NgonFace{3, T}
 Base.show(io::IO, x::Type{<: TriangleFace{T}}) where T = print(io, "TriangleFace{", T, "}")
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
