@@ -29,7 +29,6 @@ Face index, connecting points to form a simplex
 
 @fixed_vector SimplexFace AbstractSimplexFace
 const LineFace{T} = SimplexFace{2, T}
-Base.show(io::IO, x::Type{<: LineFace{T}}) where T = print(io, "LineFace{", T, "}")
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
 
@@ -40,7 +39,11 @@ Face index, connecting points to form an Ngon
 
 @fixed_vector NgonFace AbstractNgonFace
 const TriangleFace{T} = NgonFace{3, T}
-Base.show(io::IO, x::Type{<: TriangleFace{T}}) where T = print(io, "TriangleFace{", T, "}")
+
+const QuadFace{T} = NgonFace{4, T}
+
+Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
+
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
@@ -93,14 +96,9 @@ end
 # Since Ngon is supposed to be flat and a triangle is flat, lets prefer Ngon
 # for triangle:
 const TriangleP{Dim, T, P <: AbstractPoint{Dim, T}} = Ngon{Dim, T, 3, P}
-
 const Triangle{Dim, T} = TriangleP{Dim, T, Point{Dim, T}}
 const Triangle3d{T} = Triangle{3, T}
 
-function Base.show(io::IO, ::Type{TriangleP{D, T, P}}) where {D, T, P}
-    print(io, "Tetrahedron{", D, ", ", T, "}")
-end
-Base.show(io::IO, ::Type{Triangle}) = print(io, "Triangle")
 Base.show(io::IO, x::TriangleP) = print(io, "Triangle(", join(x, ", "), ")")
 
 const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T}
@@ -136,14 +134,11 @@ const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
 const TetrahedronP{T, P <: AbstractPoint{3, T}} = Simplex{3, T, 4, P}
 const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
 
-function Base.show(io::IO, ::Type{TetrahedronP{T, P}}) where {T, P}
-    print(io, "Tetrahedron{", T, "}")
-end
-Base.show(io::IO, ::Type{Tetrahedron}) = print(io, "Tetrahedron")
 Base.show(io::IO, x::TetrahedronP) = print(io, "Tetrahedron(", join(x, ", "), ")")
 
 
 coordinates(x::Simplex) = x.points
+
 function (::Type{<: NSimplex{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
     Simplex{Dim, T, N, P}(SVector(points))
 end
@@ -165,11 +160,6 @@ The fully concrete Simplex type, when constructed from a point type!
 function Polytope(::Type{<: NSimplex{N}}, P::Type{<: AbstractPoint{NDim, T}}) where {N, NDim, T}
     Simplex{NDim, T, N, P}
 end
-
-function Base.show(io::IO, ::Type{LineP{D, T, P}}) where {D, T, P}
-    print(io, "Line{", D, ", ", T, "}")
-end
-Base.show(io::IO, ::Type{Line}) = print(io, "Line")
 Base.show(io::IO, x::LineP) = print(io, "Line(", x[1], " => ", x[2], ")")
 
 """

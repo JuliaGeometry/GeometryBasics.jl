@@ -121,12 +121,17 @@ end
     return element
 end
 
-
 function connect(points::AbstractVector{P}, faces::AbstractVector{F}) where {P <: AbstractPoint, F <: AbstractFace}
     FaceView{Polytope(P, F), P, F, typeof(points), typeof(faces)}(points, faces)
 end
 
 
-function connect(points::AbstractVector{P}, faces::AbstractVector{<: Integer}, ::Type{F}) where {P <: AbstractPoint, F <: AbstractFace}
-    FaceView{Polytope(P, F), P, F, typeof(points), typeof(faces)}(points, faces)
+
+const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
+
+function coordinates(mesh::FaceMesh)
+    mesh.simplices.points
+end
+function faces(mesh::FaceMesh)
+    mesh.simplices.faces
 end
