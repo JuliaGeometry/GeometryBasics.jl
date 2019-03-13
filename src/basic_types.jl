@@ -30,6 +30,7 @@ Face index, connecting points to form a simplex
 @fixed_vector SimplexFace AbstractSimplexFace
 const LineFace{T} = SimplexFace{2, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
+Face(::Type{<: NSimplex{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
 
 
@@ -71,6 +72,7 @@ const NNgon{N} = Ngon{Dim, T, N, P} where {Dim, T, P}
 function (::Type{<: NNgon{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
     Ngon{Dim, T, N, P}(SVector(points))
 end
+Base.show(io::IO, x::NNgon{N}) where N = print(io, "Ngon{$N}(", join(x, ", "), ")")
 
 # Interfaces
 coordinates(x::Ngon) = x.points
@@ -100,6 +102,7 @@ const Triangle{Dim, T} = TriangleP{Dim, T, Point{Dim, T}}
 const Triangle3d{T} = Triangle{3, T}
 
 Base.show(io::IO, x::TriangleP) = print(io, "Triangle(", join(x, ", "), ")")
+Base.summary(io::IO, x::Type{<: TriangleP}) = print(io, "Triangle")
 
 const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T}
 
@@ -299,7 +302,11 @@ struct Mesh{
 
     simplices::V
 end
-
+function Base.summary(io::IO, x::Mesh{Dim, T, Element}) where {Dim, T, Element}
+    print(io, "Mesh{$Dim, $T, ")
+    summary(io, Element)
+    print(io, "}")
+end
 Base.size(x::Mesh) = size(x.simplices)
 Base.getindex(x::Mesh, i::Integer) = x.simplices[i]
 
