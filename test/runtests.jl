@@ -1,22 +1,88 @@
 using GeometryBasics
-using GeometryBasics: Polygon, MultiPolygon, Point, LineFace, Polytope, Line, Simplex, connect, Triangle, NSimplex, Tetrahedron, TupleView, TriangleFace, SimplexFace, LineString, Mesh
-using Test, Random
+using GeometryBasics: Polygon, MultiPolygon, Point, LineFace, Polytope, Line
+using GeometryBasics: Simplex, connect, Triangle, NSimplex, Tetrahedron
+using GeometryBasics: QuadFace, hascolumn, getcolumn, metafree, coordinates, TetrahedronFace
+using GeometryBasics: TupleView, TriangleFace, SimplexFace, LineString, Mesh, meta
+using Test, Random, Query, StructArrays, Tables
+using StaticArrays
 
 
-@testset "polygon with metadata" begin
-    polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
-    pnames = [randstring(4) for i in 1:10]
-    numbers = rand(10)
-    bin = rand(Bool, 10)
-    x = MultiPolygon(polys, name = pnames, value = numbers, category = bin)
-    for (mp, p, n, num, b) in zip(x, polys, pnames, numbers, bin)
-        @test mp.polygon == p
-        @test mp.name == n
-        @test mp.value == num
-        @test mp.category == b
+@testset "embedding metadata" begin
+    @testset "Meshes" begin
+
+        @testset "per vertex attributes" begin
+            points = rand(Point{3, Float64}, 8)
+            tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
+            normals = rand(SVector{3, Float64}, 8)
+            stress = LinRange(0, 1, 8)
+            mesh = Mesh(meta(points, normals = normals, stress = stress), tfaces)
+
+            @test hascolumn(coordinates(mesh), :stress)
+            @test hascolumn(coordinates(mesh), :normals)
+            @test coordinates(mesh).stress === stress
+            @test coordinates(mesh).normals === normals
+            @test coordinates(mesh).normals === normals
+            @test GeometryBasics.faces(mesh) === tfaces
+
+        end
+
+        @testset "per face attributes" begin
+
+            # Construct a cube out of Quads
+            points = Point{3, Float64}[
+                (0.0, 0.0, 0.0), (2.0, 0.0, 0.0),
+                (2.0, 2.0, 0.0), (0.0, 2.0, 0.0),
+                (0.0, 0.0, 12.0), (2.0, 0.0, 12.0),
+                (2.0, 2.0, 12.0), (0.0, 2.0, 12.0)
+            ]
+
+            facets = QuadFace{Cint}[
+                1:4,
+                5:8,
+                [1,5,6,2],
+                [2,6,7,3],
+                [3, 7, 8, 4],
+                [4, 8, 5, 1]
+            ]
+
+            markers = Cint[-1, -2, 0, 0, 0, 0]
+            # attach some additional information to our faces!
+            mesh = Mesh(points, meta(facets, markers = markers))
+            @test hascolumn(GeometryBasics.faces(mesh), :markers)
+            # test with === to assert we're not doing any copies
+            @test getcolumn(GeometryBasics.faces(mesh), :markers) === markers
+            @test coordinates(mesh) === points
+            @test metafree(GeometryBasics.faces(mesh)) === facets
+
+        end
+
+    end
+    @testset "polygon with metadata" begin
+        polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
+        pnames = [randstring(4) for i in 1:10]
+        numbers = LinRange(0.0, 1.0, 10)
+        bin = rand(Bool, 10)
+        # create just an array
+        plain = meta(polys, name = pnames, value = numbers, category = bin)
+        # create a MultiPolygon with the right type & meta information!
+        multipoly = MultiPolygon(polys; name = pnames, value = numbers, category = bin)
+        for x in (plain, multipoly)
+            for (mp, p, n, num, b) in zip(x, polys, pnames, numbers, bin)
+                @test mp.polygon == p
+                @test mp.name == n
+                @test mp.value == num
+                @test mp.category == b
+            end
+
+            filtered = @from i in x begin
+                @where i.value < 0.7
+                @select i
+                @collect
+            end
+            @test length(filtered) == 7
+        end
     end
 end
-
 
 @testset "view" begin
     @testset "TupleView" begin
@@ -48,8 +114,20 @@ end
 
         triangles = connect(x, Triangle)
         @test triangles == [Triangle(Point(1, 2), Point(3, 4), Point(5, 6))]
-        tetrahedra = connect(x, NSimplex{3})
-        @test tetrahedra == [Tetrahedron(x[1], x[2], x[3])]
+        x = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+        tetrahedra = connect(x, NSimplex{4})
+        @test tetrahedra == [Tetrahedron(x[1], x[2], x[3], x[4])]
+
+        @testset "matrix non-copy point views" begin
+            # point in row
+            points = [1 2; 1 4; 66 77]
+            comparison = [Point(1, 2), Point(1, 4), Point(66, 77)]
+            @test connect(points, Point{2}) == comparison
+            # point in column
+            points = [1 1 66; 2 4 77]
+            # huh, reinterpret array doesn't seem to like `==`
+            @test all(((a,b),)-> a==b, zip(connect(points, Point{2}), comparison))
+        end
     end
 
     @testset "face views" begin
@@ -61,8 +139,8 @@ end
         x = Point{3}(1.0)
         triangles = connect([x], [TriangleFace(1, 1, 1)])
         @test triangles == [Triangle(x, x, x)]
-
-        faces = connect([1, 2, 3], SimplexFace{3})
+        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+        faces = connect([1, 2, 3, 4], SimplexFace{4})
         triangles = connect(points, faces)
         @test triangles == [Tetrahedron(points...)]
     end
@@ -133,7 +211,8 @@ end
         mesh = Mesh([x], [TriangleFace(1, 1, 1)])
         @test mesh == [Triangle(x, x, x)]
 
-        faces = connect([1, 2, 3], SimplexFace{3})
+        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+        faces = connect([1, 2, 3, 4], SimplexFace{4})
         mesh = Mesh(points, faces)
         @test mesh == [Tetrahedron(points...)]
 

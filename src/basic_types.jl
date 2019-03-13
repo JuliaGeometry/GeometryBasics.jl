@@ -29,8 +29,8 @@ Face index, connecting points to form a simplex
 
 @fixed_vector SimplexFace AbstractSimplexFace
 const LineFace{T} = SimplexFace{2, T}
+const TetrahedronFace{T} = SimplexFace{4, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
-Face(::Type{<: NSimplex{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
 
 
@@ -40,7 +40,6 @@ Face index, connecting points to form an Ngon
 
 @fixed_vector NgonFace AbstractNgonFace
 const TriangleFace{T} = NgonFace{3, T}
-
 const QuadFace{T} = NgonFace{4, T}
 
 Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
@@ -172,14 +171,13 @@ struct LineString{
         Dim, T <: Real,
         P <: AbstractPoint,
         V <: AbstractVector{<: LineP{Dim, T, P}}
-    } <: AbstractVector{LineP{Dim, T}}
+    } <: AbstractVector{LineP{Dim, T, P}}
     points::V
 end
 coordinates(x::LineString) = x.points
 
 Base.size(x::LineString) = size(coordinates(x))
 Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
-
 
 function LineString(points::AbstractVector{LineP{Dim, T, P}}) where {Dim, T, P}
     LineString{Dim, T, P, typeof(points)}(points)
@@ -244,8 +242,8 @@ end
 
 Base.:(==)(a::Polygon, b::Polygon) = (a.exterior == b.exterior) && (a.interiors == b.interiors)
 
-function Polygon(exterior::AbstractVector{LineP{Dim, T, P}}, interiors::V) where {Dim, T, P, V <: AbstractVector{<: AbstractVector{LineP{Dim, T, P}}}}
-    Polygon{Dim, T, typeof(exterior), V}(exterior, interiors)
+function Polygon(exterior::E, interiors::AbstractVector{E}) where E <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
+    Polygon{Dim, T, P, typeof(exterior), typeof(interiors)}(exterior, interiors)
 end
 
 Polygon(exterior::L) where L <: AbstractVector{<: LineP} = Polygon(exterior, L[])
@@ -268,18 +266,13 @@ struct MultiPolygon{
         Element <: AbstractPolygon{Dim, T},
         A <: AbstractVector{Element}
     } <: AbstractVector{Element}
-
     polygons::A
 end
 
-function MultiPolygon(polygons::AbstractVector{P}; meta...) where P <: AbstractPolygon{Dim, T} where {Dim, T}
-    nt = values(meta)
-    n = keys(nt)
-    typs = Tuple{eltype.(values(nt))...}
-    m = StructArray(nt)
-    PType = MetaPolygon{Dim, T, P, n, typs}
-    mpolys = StructArray{PType}((polygons, m))
-    MultiPolygon{Dim, T, PType, typeof(mpolys)}(mpolys)
+
+
+function MultiPolygon(polygons::AbstractVector{P}; kw...) where P <: AbstractPolygon{Dim, T} where {Dim, T}
+    MultiPolygon(meta(polygons; kw...))
 end
 
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]

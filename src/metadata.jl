@@ -65,7 +65,7 @@ macro meta_type(name, mainfield, supertype, params...)
         const $NoParams{Typ, Names, Types} = $MetaName{$(params...), Typ, Names, Types} where {$(params...)}
 
         function Base.getproperty(x::$MetaName{$(params...), Typ, Names, Types}, field::Symbol) where {$(params...), Typ, Names, Types}
-            field === $field && return getfield(x, $field)
+            field === $field && return getfield(x, :main)
             field === :main && return getfield(x, :main)
             Base.sym_in(field, Names) && return getfield(getfield(x, :meta), field)
             error("Field $field not part of Element")
@@ -120,3 +120,8 @@ Base.getindex(x::PointMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(NgonFace, ngon, AbstractNgonFace, N, T)
 Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
+
+@meta_type(SimplexFace, simplex, AbstractSimplexFace, N, T)
+Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
+
+@meta_type(Polygon, polygon, AbstractPolygon, N, T)
