@@ -1,66 +1,15 @@
-"""
-Compatibility layer for transferring from FixedSizeArrays. This provides
-alternative definitions of `Vec`, `Mat`, `Point`, `FixedVectorNoTuple`, `@fsa`,
-etc, using StaticArrays as a backend.
-The type definitions are not "perfect" matches because the type parameters are
-different. However, it should cover common method signatures and constructors.
-"""
-module FixedSizeArrays
-
-using StaticArrays
-
-export FixedArray
-export FixedVector
-export FixedMatrix
-export Mat
-export Vec
-export Point
-export @fsa
-export FixedVectorNoTuple
-
-const FixedArray = StaticArray
-const FixedVector = StaticVector
-const FixedMatrix = StaticMatrix
+export Mat, unit
 const Mat = SMatrix
-const FixedVectorNoTuple = FieldVector
 
-function fsa_ast(ex)
-    @assert isa(ex, Expr)
-    if ex.head == :vect # Vector
-        return Expr(:call, SVector{length(ex.args)}, Expr(:tuple, ex.args...))
-    elseif ex.head == :hcat # 1 x n
-        s1 = 1
-        s2 = length(ex.args)
-        return Expr(:call, SMatrix{s1, s2}, Expr(:tuple, ex.args...))
-    elseif ex.head == :vcat
-        if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
-            # Validate
-            s1 = length(ex.args)
-            s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 1), 1:s1)
-            s2 = minimum(s2s)
-            if maximum(s2s) != s2
-                error("Rows must be of matching lengths")
-            end
-
-            exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-            return Expr(:call, SMatrix{s1, s2}, Expr(:tuple, exprs...))
-        else # n x 1
-            return Expr(:call, SMatrix{length(ex.args), 1}, Expr(:tuple, ex.args...))
-        end
-    end
-end
-macro fsa(ex)
-    expr = fsa_ast(ex)
-    esc(expr)
-end
-
-function unit(::Type{T}, i::Integer) where T <: StaticVector
+"""
+Creates a unit vector with the one in `dim`
+"""
+function unit(::Type{T}, dim::Integer) where T <: StaticVector
     T(ntuple(Val(length(T))) do j
-        ifelse(i == j, 1, 0)
+        ifelse(dim === j, 1, 0)
     end)
 end
 
-export unit
 
 macro fixed_vector(name, parent)
     esc(quote
@@ -84,20 +33,11 @@ macro fixed_vector(name, parent)
         size_or(::Type{$(name){S, T} where S}, or) where {T} = or
         size_or(::Type{$(name){S, T} where T}, or) where {S} = Size{(S,)}()
         size_or(::Type{$(name){S, T}}, or) where {S, T} = (S,)
-        # Array constructor
-        @inline function $(name){S}(x::AbstractVector{T}) where {S, T}
-            @assert S <= length(x)
-            $(name){S, T}(ntuple(i-> x[i], Val(S)))
-        end
-        @inline function $(name){S, T1}(x::AbstractVector{T2}) where {S, T1, T2}
-            @assert S <= length(x)
-            $(name){S, T1}(ntuple(i-> T1(x[i]), Val(S)))
-        end
 
+        # Constructor from one value
         @inline function $(name){S, T}(x) where {S, T}
             $(name){S, T}(ntuple(i-> T(x), Val(S)))
         end
-
 
         @inline function $(name){S}(x::T) where {S, T}
             $(name){S, T}(ntuple(i-> x, Val(S)))
@@ -105,6 +45,7 @@ macro fixed_vector(name, parent)
         @inline function $(name){1, T}(x::T) where T
             $(name){1, T}((x,))
         end
+
         @inline $(name)(x::NTuple{S}) where {S} = $(name){S}(x)
         @inline $(name)(x::T) where {S, T <: Tuple{Vararg{Any, S}}} = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         @inline function $(name){S}(x::T) where {S, T <: Tuple}
@@ -156,8 +97,4 @@ macro fixed_vector(name, parent)
         end
 
     end)
-end
-
-export @fixed_vector
-
 end
