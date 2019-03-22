@@ -4,7 +4,7 @@ A `HyperRectangle` is a generalization of a rectangle into N-dimensions.
 Formally it is the cartesian product of intervals, which is represented by the
 `origin` and `width` fields, whose indices correspond to each of the `N` axes.
 """
-struct HyperRectangle{N, T} <: GeometryPrimitive{N, T}
+struct HyperRectangle{N, T} <: AbstractGeometry{N, T}
     origin::Vec{N, T}
     widths::Vec{N, T}
 end
@@ -14,7 +14,7 @@ end
 A `HyperSphere` is a generalization of a sphere into N-dimensions.
 A `center` and radius, `r`, must be specified.
 """
-struct HyperSphere{N, T} <: GeometryPrimitive{N, T}
+struct HyperSphere{N, T} <: AbstractGeometry{N, T}
     center::Point{N, T}
     r::T
 end
@@ -36,7 +36,7 @@ centered(S::Type{HyperSphere{N, T}}) where {N, T} = S(Vec{N, T}(0), T(0.5))
 centered(::Type{T}) where {T <: HyperSphere} = centered(HyperSphere{ndims_or(T, 3), eltype_or(T, Float32)})
 
 
-struct Pyramid{T} <: GeometryPrimitive{3, T}
+struct Pyramid{T} <: AbstractGeometry{3, T}
     middle::Point{3, T}
     length::T
     width ::T
@@ -46,7 +46,7 @@ end
 A `Cylinder` is a 2D rectangle or a 3D cylinder defined by its origin point,
 its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """
-struct Cylinder{N,T<: AbstractFloat} <: GeometryPrimitive{N,T}
+struct Cylinder{N,T<: AbstractFloat} <: AbstractGeometry{N,T}
     origin::Point{N,T}
     extremity::Point{N,T}
     r::T

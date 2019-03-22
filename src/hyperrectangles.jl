@@ -1,15 +1,17 @@
-origin(prim::HyperRectangle) = prim.origin
-maximum(prim::HyperRectangle) = origin(prim) + widths(prim)
-minimum(prim::HyperRectangle) = origin(prim)
-length(prim::HyperRectangle{N}) where N = N
-widths(prim::HyperRectangle) = prim.widths
+const Rect{N, T} = HyperRectangle{N, T}
+
+origin(prim::Rect) = prim.origin
+maximum(prim::Rect) = origin(prim) + widths(prim)
+minimum(prim::Rect) = origin(prim)
+length(prim::Rect{N}) where N = N
+widths(prim::Rect) = prim.widths
 
 """
 Splits an HyperRectangle into two along an axis at a given location.
 """
-split(b::HyperRectangle, axis, value::Integer) = _split(b, axis, value)
-split(b::HyperRectangle, axis, value::Number) = _split(b, axis, value)
-function _split(b::H, axis, value) where H<:HyperRectangle
+split(b::Rect, axis, value::Integer) = _split(b, axis, value)
+split(b::Rect, axis, value::Number) = _split(b, axis, value)
+function _split(b::H, axis, value) where H <: Rect
     bmin = minimum(b)
     bmax = maximum(b)
     b1max = setindex(bmax, value, axis)
@@ -23,26 +25,27 @@ function Rect{N, T}() where {T, N}
 end
 
 # conversion from other HyperRectangles
-function Rect{N,T1}(a::Rect{N, T2}) where {N,T1,T2}
+function Rect{N, T1}(a::Rect{N, T2}) where {N, T1, T2}
     Rect(Vec{N, T1}(minimum(a)), Vec{N, T1}(widths(a)))
 end
 
-function Rect(v1::Vec{N, T1}, v2::Vec{N, T2}) where {N,T1,T2}
+function Rect(v1::VecTypes{N, T1}, v2::VecTypes{N, T2}) where {N, T1, T2}
     T = promote_type(T1, T2)
-    Rect{N,T}(Vec{N, T}(v1), Vec{N, T}(v2))
-end
-function Rect{N}(v1::Vec{N, T1}, v2::Vec{N, T2}) where {N,T1,T2}
-    T = promote_type(T1, T2)
-    Rect{N,T}(Vec{N, T}(v1), Vec{N, T}(v2))
+    Rect(Vec{N, T}(v1), Vec{N, T}(v2))
 end
 
-function Rect{N, T}(a::GeometryPrimitive) where {N, T}
-    Rect{N, T}(Vec{N, T}(minimum(a)), Vec{N, T}(widths(a)))
+function Rect{N}(v1::VecTypes{N, T1}, v2::VecTypes{N, T2}) where {N,T1,T2}
+    T = promote_type(T1, T2)
+    Rect(Vec{N, T}(v1), Vec{N, T}(v2))
+end
+
+function Rect{N, T}(a::AbstractGeometry) where {N, T}
+    Rect{N, T}(minimum(a), widths(a))
 end
 
 """
 ```
-HyperRectangle(vals::Number...)
+HyperRectangle(args::Number...)
 ```
 HyperRectangle constructor for indidually specified intervals.
 e.g. HyperRectangle(0,0,1,2) has origin == Vec(0,0) and
@@ -59,13 +62,24 @@ end
 #=
 From other types
 =#
-function Rect{2}(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
-    Rect{2}(values(xy), values(wh))
+function Rect(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
+    Rect(values(xy), values(wh))
 end
 
+Rect(args...) where N = Rect{ExtractN(args...), ExtractT(args...)}(args...)
+Rect{N}(args...) where N = Rect{N, ExtractT(args...)}(args...)
+
+Rect{N, T}(args...) where N = Rect{N, ExtractT(args...)}(args...)
+Rect{N}(args...) where N = Rect{N, ExtractT(args...)}(args...)
+
+
+Rect(args::Number...) = Rect()
+Rect(args...) = Rect()
+
 function Rect{3}(x::Rect{2, T}) where T
-    Rect{3, T}(Vec{3, T}(minimum(x)..., 0), Vec{3, T}(widths(x)..., 0.0))
+    Rect(Vec{3, T}(minimum(x)..., 0), Vec{3, T}(widths(x)..., 0.0))
 end
+
 
 function Rect{2}(xy::VecTypes{2}, w::Number, h::Number)
     Rect{2}(xy..., w, h)
@@ -219,9 +233,7 @@ function Rect{T}(a::Pyramid) where T
     Rect{T}(m-Vec{3,T}(w,w,0), m+Vec{3,T}(w, w, h))
 end
 
-Rect{T}(a::Cube) where T = Rect{T}(origin(a), widths(a))
-
-Rect{T}(a::AbstractMesh) where T = Rect{T}(vertices(a))
+Rect{T}(a::AbstractGeometry) where T = Rect{T}(coordinates(a))
 
 function positive_widths(rect::Rect{N, T}) where {N, T}
     mini, maxi = minimum(rect), maximum(rect)
@@ -257,15 +269,6 @@ function intersect(h1::Rect{N}, h2::Rect{N}) where N
     mm = min.(maximum(h1), maximum(h2))
     Rect{N}(m, mm - m)
 end
-
-function intersect(a::SimpleRectangle, b::SimpleRectangle)
-    min_n = max.(minimum(a), minimum(b))
-    max_n = min.(maximum(a), maximum(b))
-    w = max_n - min_n
-    SimpleRectangle(min_n[1], min_n[2], w[1], w[2])
-end
-
-
 
 function update(b::HyperRectangle{N, T}, v::Vec{N, T2}) where {N, T, T2}
     update(b, Vec{N, T}(v))
@@ -404,20 +407,6 @@ function finishes(b1::Rect{N}, b2::Rect{N}) where N
     end
 end
 
-#
-# Containment
-#
-function isinside(rect::SimpleRectangle, x::Real, y::Real)
-    rect.x <= x && rect.y <= y && rect.x + rect.w >= x && rect.y + rect.h >= y
-end
-
-# TODO only have point in c and deprecate above methods
-in(x::AbstractPoint{2}, c::Circle) = isinside(c, x...)
-in(x::AbstractPoint{2}, c::SimpleRectangle) = isinside(c, x...)
-
-
-
-
 """
 Check if HyperRectangles are contained in each other. This does not use
 strict inequality, so HyperRectangles may share faces and this will still
@@ -436,7 +425,7 @@ end
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
-function contains(b1::Rect{N, T}, pt::Union{FixedVector, AbstractVector}) where {T, N}
+function contains(b1::Rect{N, T}, pt::AbstractVector) where {T, N}
     for i = 1:N
         pt[i] <= maximum(b1)[i] && pt[i] >= minimum(b1)[i] || return false
     end
@@ -454,7 +443,7 @@ in(b1::Rect, b2::Rect) = contains(b2, b1)
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
-in(pt::Union{FixedVector, AbstractVector}, b1::Rect) = contains(b1, pt)
+in(pt::VecTypes, b1::Rect) = contains(b1, pt)
 
 
 
@@ -465,9 +454,6 @@ in(pt::Union{FixedVector, AbstractVector}, b1::Rect) = contains(b1, pt)
 
 
 isequal(b1::Rect, b2::Rect) = b1 == b2
-
-isless(a::SimpleRectangle, b::SimpleRectangle) = isless(area(a), area(b))
-
 
 centered(R::Type{HyperRectangle{N,T}}) where {N, T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
 centered(::Type{T}) where {T <: HyperRectangle} = centered(HyperRectangle{ndims_or(T, 3), eltype_or(T, Float32)})

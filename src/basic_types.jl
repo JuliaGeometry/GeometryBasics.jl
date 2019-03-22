@@ -19,7 +19,9 @@ abstract type AbstractNgonFace{N, T} <: AbstractFace{N, T} end
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
 @fixed_vector Point AbstractPoint
+@fixed_vector Vec AbstractPoint
 
+const VecTypes{N, T} = Union{StaticVector{N, T}, NTuple{N, T}}
 
 
 
@@ -30,7 +32,6 @@ Face index, connecting points to form a simplex
 @fixed_vector SimplexFace AbstractSimplexFace
 const LineFace{T} = SimplexFace{2, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
-Face(::Type{<: NSimplex{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
 
 

@@ -58,7 +58,7 @@ macro fixed_vector(name, parent)
                 $($(name)){S, T}($(idx...))
             end
         end
-        @generated function convert(::Type{$(name){S, T}}, x::$(name)) where {S, T}
+        @generated function Base.convert(::Type{$(name){S, T}}, x::$(name)) where {S, T}
             idx = [:(x[$i]) for i = 1:S]
             quote
                 $($(name)){S, T}($(idx...))
