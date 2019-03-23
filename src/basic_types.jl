@@ -82,7 +82,7 @@ Base.length(::NNgon{N}) where N = N
 """
 The Ngon Polytope element type when indexing an array of points with a SimplexFace
 """
-function Polytope(P::Type{<: AbstractPoint{Dim, T}}, ::Type{<: AbstractNgonFace{N}}) where {N, Dim, T}
+function Polytope(P::Type{<: AbstractPoint{Dim, T}}, ::Type{<: AbstractNgonFace{N, IT}}) where {N, Dim, T, IT}
     Ngon{Dim, T, N, P}
 end
 

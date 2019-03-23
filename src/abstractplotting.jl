@@ -47,3 +47,10 @@ function AbstractPlotting.convert_arguments(::Type{<: AbstractPlotting.Mesh}, me
         GeometryTypes.GLTriangle.(faces(mesh))
     ),)
 end
+
+
+function to_mesh(mesh::GeometryTypes.AbstractMesh)
+    points = GeometryBasics.Point{3, Float64}.(GeometryTypes.vertices(mesh))
+    facets = GeometryBasics.TriangleFace{Cint}.(GeometryTypes.faces(mesh))
+    Mesh(points, facets)
+end

@@ -48,8 +48,21 @@ E.g:
 MetaFree(PointMeta) == Point
 """
 MetaFree(::Type{T}) where T = error("No meta free Type for $T")
+
+"""
+    meta(x::MetaObject)
+Returns the metadata of `x`
+"""
 meta(x::T) where T = error("$T has no meta!")
-metafree(x::T) where T = error("$T has no meta free representation!")
+
+metafree(x::T) where T = x
+
+
+"""
+    meta(x::MetaObject; meta_data...)
+Attaches metadata to `x`
+"""
+meta(x::T) where T = error("$T has no meta!")
 
 
 macro meta_type(name, mainfield, supertype, params...)
@@ -104,9 +117,20 @@ macro meta_type(name, mainfield, supertype, params...)
         end
 
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
+            n = length(elements)
+            for (k, v) in meta
+                if v isa AbstractVector
+                    mn = length(v)
+                    mn != n && error("Metadata array needs to have same length as data.
+                    Found $(n) data items, and $mn metadata items")
+                else
+                    error("Metadata needs to be an array with the same length as data items. Found: $(typeof(v))")
+                end
+            end
             nt = values(meta)
             # get the first element to get the per element named tuple type
             ElementNT = typeof(map(first, nt))
+
             StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
         end
 
@@ -125,3 +149,23 @@ Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
+
+
+"""
+    pointmeta(mesh::Mesh; meta_data...)
+
+Attaches metadata to the coordinates of a mesh
+"""
+function pointmeta(mesh::Mesh; meta_data...)
+    Mesh(meta(coordinates(mesh); meta_data...), faces(mesh))
+end
+
+
+"""
+    facemeta(mesh::Mesh; meta_data...)
+
+Attaches metadata to the faces of a mesh
+"""
+function facemeta(mesh::Mesh; meta_data...)
+    Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
+end
