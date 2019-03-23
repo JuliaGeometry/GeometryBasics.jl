@@ -2,3 +2,4 @@ StaticArrays
 Tables
 StructArrays
 AbstractPlotting # temporary dependency for convenience
+GeometryTypes
