@@ -2,7 +2,7 @@ using GeometryBasics
 using GeometryBasics: Polygon, MultiPolygon, Point, LineFace, Polytope, Line
 using GeometryBasics: Simplex, connect, Triangle, NSimplex, Tetrahedron
 using GeometryBasics: QuadFace, hascolumn, getcolumn, metafree, coordinates, TetrahedronFace
-using GeometryBasics: TupleView, TriangleFace, SimplexFace, LineString, Mesh, meta
+using GeometryBasics: TupleView, TriangleFace, SimplexFace, LineString, Mesh, meta, column_names
 using Test, Random, Query, StructArrays, Tables
 using StaticArrays
 
@@ -23,6 +23,7 @@ using StaticArrays
             @test coordinates(mesh).normals === normals
             @test coordinates(mesh).normals === normals
             @test GeometryBasics.faces(mesh) === tfaces
+            @test column_names(coordinates(mesh)) == (:point, :normals, :stress)
 
         end
 
