@@ -119,6 +119,12 @@ struct FaceView{
     faces::F
 end
 
+Tables.schema(fw::FaceView) = Tables.schema(getfield(fw, :points))
+
+column_names(fw::FaceView) = column_names(getfield(fw, :points))
+column_types(fw::FaceView) = column_types(getfield(fw, :points))
+
+
 Base.size(x::FaceView) = size(x.faces)
 
 Base.show(io::IO, x::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")

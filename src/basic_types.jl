@@ -295,6 +295,9 @@ struct Mesh{
 
     simplices::V
 end
+column_names(fw::Mesh) = column_names(getfield(fw, :simplices))
+column_types(fw::Mesh) = column_types(getfield(fw, :simplices))
+
 function Base.summary(io::IO, x::Mesh{Dim, T, Element}) where {Dim, T, Element}
     print(io, "Mesh{$Dim, $T, ")
     summary(io, Element)

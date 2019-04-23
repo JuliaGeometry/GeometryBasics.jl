@@ -104,7 +104,6 @@ macro meta_type(name, mainfield, supertype, params...)
             return MT(obj, nt)
         end
 
-
         function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
             NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
         end
