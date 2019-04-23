@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/SimonDanisch/GeometryBasics.jl.svg?branch=master)](https://travis-ci.com/SimonDanisch/GeometryBasics.jl)
+
+[![Build Status](https://api.travis-ci.org/SimonDanisch/GeometryBasics.jl.svg?branch=master)](https://travis-ci.com/SimonDanisch/GeometryBasics.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/SimonDanisch/GeometryBasics.jl?svg=true)](https://ci.appveyor.com/project/SimonDanisch/GeometryBasics-jl)
 [![Codecov](https://codecov.io/gh/SimonDanisch/GeometryBasics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SimonDanisch/GeometryBasics.jl)
 
