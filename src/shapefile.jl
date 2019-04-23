@@ -18,7 +18,7 @@ struct Interval{T}
     right::T
 end
 
-struct MultiLineString {N, T <: Real, V <: AbstractVector{<: AbstractPoint{N, T}}} <: AbstractVector{Line{N, T}}
+struct MultiLineString{N, T <: Real, V <: AbstractVector{<: AbstractPoint{N, T}}} <: AbstractVector{Line{N, T}}
     points::V
 end
 
