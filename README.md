@@ -7,6 +7,9 @@
 
 Basic Geometry Types. 
 This package aimes to offer a standard set of Geometry types, which easily work with metadata, query frameworks on geometries and different memory layouts.
+
+It is planned to merge this package with [GeometryTypes](https://github.com/JuliaGeometry/GeometryTypes.jl/) once it's fully mature, or simply replace it!
+
 To get an idea, look at the runtests:
 
 ```julia
