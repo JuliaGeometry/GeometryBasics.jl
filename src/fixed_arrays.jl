@@ -1,35 +1,15 @@
-"""
-Compatibility layer for transferring from FixedSizeArrays. This provides
-alternative definitions of `Vec`, `Mat`, `Point`, `FixedVectorNoTuple`, `@fsa`,
-etc, using StaticArrays as a backend.
-The type definitions are not "perfect" matches because the type parameters are
-different. However, it should cover common method signatures and constructors.
-"""
-module FixedSizeArrays
-
-using StaticArrays
-
-export FixedArray
-export FixedVector
-export FixedMatrix
 export Mat
 export Vec
 export Point
-export FixedVectorNoTuple
+export unit
 
-const FixedArray = StaticArray
-const FixedVector = StaticVector
-const FixedMatrix = StaticMatrix
 const Mat = SMatrix
-const FixedVectorNoTuple = FieldVector
 
 function unit(::Type{T}, i::Integer) where T <: StaticVector
     T(ntuple(Val(length(T))) do j
         ifelse(i == j, 1, 0)
     end)
 end
-
-export unit
 
 macro fixed_vector(name, parent)
     esc(quote
@@ -125,8 +105,4 @@ macro fixed_vector(name, parent)
         end
 
     end)
-end
-
-export @fixed_vector
-
 end
