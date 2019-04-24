@@ -1,5 +1,5 @@
-using AbstractPlotting
-import GeometryTypes
+import AbstractPlotting
+import AbstractPlotting.GeometryTypes
 
 function to_triangle(triangles, tetra)
     push!(triangles, GeometryTypes.GLTriangle(tetra[1], tetra[2], tetra[3]))

@@ -58,13 +58,6 @@ meta(x::T) where T = error("$T has no meta!")
 metafree(x::T) where T = x
 
 
-"""
-    meta(x::MetaObject; meta_data...)
-Attaches metadata to `x`
-"""
-meta(x::T; kw_args...) where T = error("$T has no meta!")
-
-
 macro meta_type(name, mainfield, supertype, params...)
     MetaName = Symbol("$(name)Meta")
     field = QuoteNode(mainfield)
