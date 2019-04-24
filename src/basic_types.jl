@@ -33,7 +33,6 @@ const TetrahedronFace{T} = SimplexFace{4, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
 
-
 """
 Face index, connecting points to form an Ngon
 """
@@ -295,6 +294,9 @@ struct Mesh{
 
     simplices::V
 end
+
+Tables.schema(fw::Mesh) = Tables.schema(getfield(fw, :simplices))
+
 column_names(fw::Mesh) = column_names(getfield(fw, :simplices))
 column_types(fw::Mesh) = column_types(getfield(fw, :simplices))
 
