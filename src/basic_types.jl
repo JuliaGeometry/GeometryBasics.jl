@@ -297,16 +297,17 @@ end
 
 Tables.schema(fw::Mesh) = Tables.schema(getfield(fw, :simplices))
 
-column_names(fw::Mesh) = column_names(getfield(fw, :simplices))
-column_types(fw::Mesh) = column_types(getfield(fw, :simplices))
+function Base.getproperty(x::Mesh, name::Symbol)
+    getproperty(getfield(x, :simplices), name)
+end
 
 function Base.summary(io::IO, x::Mesh{Dim, T, Element}) where {Dim, T, Element}
     print(io, "Mesh{$Dim, $T, ")
     summary(io, Element)
     print(io, "}")
 end
-Base.size(x::Mesh) = size(x.simplices)
-Base.getindex(x::Mesh, i::Integer) = x.simplices[i]
+Base.size(x::Mesh) = size(getfield(x, :simplices))
+Base.getindex(x::Mesh, i::Integer) = getfield(x, :simplices)[i]
 
 
 function Mesh(elements::AbstractVector{<: Polytope{Dim, T}}) where {Dim, T}

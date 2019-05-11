@@ -130,7 +130,7 @@ macro meta_type(name, mainfield, supertype, params...)
     return esc(expr)
 end
 
-@meta_type(Point, point, AbstractPoint, Dim, T)
+@meta_type(Point, position, AbstractPoint, Dim, T)
 Base.getindex(x::PointMeta, idx::Int) = getindex(metafree(x), idx)
 
 

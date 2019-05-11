@@ -115,29 +115,29 @@ struct FaceView{
         F <: AbstractVector{Face}
     } <: AbstractVector{Element}
 
-    points::P
+    elements::P
     faces::F
 end
+function Base.getproperty(x::FaceView, name::Symbol)
+    getproperty(getfield(x, :elements), name)
+end
 
-Tables.schema(fw::FaceView) = Tables.schema(getfield(fw, :points))
-
-column_names(fw::FaceView) = column_names(getfield(fw, :points))
-column_types(fw::FaceView) = column_types(getfield(fw, :points))
+Tables.schema(fw::FaceView) = Tables.schema(getfield(fw, :elements))
 
 
-Base.size(x::FaceView) = size(x.faces)
+Base.size(x::FaceView) = size(getfield(x, :faces))
 
 Base.show(io::IO, x::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")
 
 
 @propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where Element
-    Element(map(idx-> x.points[idx], x.faces[i]))
+    Element(map(idx-> coordinates(x)[idx], faces(x)[i]))
 end
 
 @propagate_inbounds function Base.setindex!(x::FaceView{Element}, element::Element, i) where Element
-    face = x.faces[i]
+    face = faces(x)[i]
     for (i, f) in enumerate(face) # TODO unroll!?
-        x.points[face[i]] = element[i]
+        coordinates(x)[face[i]] = element[i]
     end
     return element
 end
@@ -146,13 +146,10 @@ function connect(points::AbstractVector{P}, faces::AbstractVector{F}) where {P <
     FaceView{Polytope(P, F), P, F, typeof(points), typeof(faces)}(points, faces)
 end
 
-
-
 const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
 
-function coordinates(mesh::FaceMesh)
-    mesh.simplices.points
-end
-function faces(mesh::FaceMesh)
-    mesh.simplices.faces
-end
+coordinates(mesh::FaceView) = getfield(mesh, :elements)
+faces(mesh::FaceView) = getfield(mesh, :faces)
+
+coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
+faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
