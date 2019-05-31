@@ -1,7 +1,7 @@
 name = "GeometryBasics"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 authors = ["SimonDanisch <sdanisch@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 GeometryTypes = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
