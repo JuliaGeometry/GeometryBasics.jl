@@ -6,7 +6,7 @@ using GeometryBasics: TupleView, TriangleFace, SimplexFace, LineString, Mesh, me
 using Test, Random, Query, StructArrays, Tables
 using StaticArrays
 
-
+@testset "GeometryBasics" begin
 @testset "embedding metadata" begin
     @testset "Meshes" begin
 
@@ -83,6 +83,14 @@ using StaticArrays
             @test length(filtered) == 7
         end
     end
+
+    @testset "point with metadata" begin
+        p = Point(1.1, 2.2)
+        @test p isa AbstractVector{Float64}
+        pm = GeometryBasics.PointMeta(1.1, 2.2; a=1, b=2)
+        @test meta(pm) === (a=1, b=2)
+        @test metafree(pm) === p
+    end
 end
 
 @testset "view" begin
@@ -146,6 +154,14 @@ end
         @test triangles == [Tetrahedron(points...)]
     end
 
+    @testset "reinterpret" begin
+        numbers = collect(reshape(1:6, 2, 3))
+        points = reinterpret(Point{2, Int}, numbers)
+        @test points[1] === Point(1, 2)
+        @test points[2] === Point(3, 4)
+        numbers[4] = 0
+        @test points[2] === Point(3, 0)
+    end
 end
 
 
@@ -219,4 +235,5 @@ end
 
     end
 
+end
 end
