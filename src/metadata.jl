@@ -87,9 +87,9 @@ macro meta_type(name, mainfield, supertype, params...)
 
         GeometryBasics.MetaFree(::Type{<: $MetaName{Typ}}) where Typ = Typ
         GeometryBasics.MetaFree(::Type{<: $MetaName}) = $name
-        GeometryBasics.metafree(x::$MetaName) = x.main
+        GeometryBasics.metafree(x::$MetaName) = getfield(x, :main)
         GeometryBasics.metafree(x::AbstractVector{<: $MetaName}) = getcolumns(x, $field)[1]
-        GeometryBasics.meta(x::$MetaName) = x.meta
+        GeometryBasics.meta(x::$MetaName) = getfield(x, :meta)
         GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
         function (MT::Type{<: $MetaName})(args...; meta...)
             nt = values(meta)
