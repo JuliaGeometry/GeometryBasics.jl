@@ -265,10 +265,9 @@ struct MultiPolygon{
         Element <: AbstractPolygon{Dim, T},
         A <: AbstractVector{Element}
     } <: AbstractVector{Element}
+
     polygons::A
 end
-
-
 
 function MultiPolygon(polygons::AbstractVector{P}; kw...) where P <: AbstractPolygon{Dim, T} where {Dim, T}
     MultiPolygon(meta(polygons; kw...))
@@ -283,8 +282,31 @@ struct MultiLineString{
         A <: AbstractVector{Element}
     } <: AbstractVector{Element}
 
-    polygons::A
+    linestrings::A
 end
+
+function MultiLineString(linestrings::AbstractVector{L}; kw...) where L <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
+    MultiLineString(meta(linestrings; kw...))
+end
+
+Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
+Base.size(ms::MultiLineString) = size(ms.linestrings)
+
+struct MultiPoint{
+    Dim, T <: Real,
+    Element <: Point{Dim, T},
+    A <: AbstractVector{Element}
+} <: AbstractVector{Element}
+
+    points::A
+end
+
+function MultiPoint(points::AbstractVector{P}; kw...) where P <: AbstractPoint{Dim, T} where {Dim, T}
+    MultiPoint(meta(points; kw...))
+end
+
+Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
+Base.size(mpt::MultiPoint) = size(mpt.points)
 
 struct Mesh{
         Dim, T <: Real,

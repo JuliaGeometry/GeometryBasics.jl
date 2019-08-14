@@ -1,8 +1,9 @@
 using GeometryBasics
-using GeometryBasics: Polygon, MultiPolygon, Point, LineFace, Polytope, Line
+using GeometryBasics: LineFace, Polytope, Line
+using GeometryBasics: Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
 using GeometryBasics: Simplex, connect, Triangle, NSimplex, Tetrahedron
 using GeometryBasics: QuadFace, hascolumn, getcolumn, metafree, coordinates, TetrahedronFace
-using GeometryBasics: TupleView, TriangleFace, SimplexFace, LineString, Mesh, meta, column_names
+using GeometryBasics: TupleView, TriangleFace, SimplexFace, Mesh, meta, column_names
 using Test, Random, Query, StructArrays, Tables
 using StaticArrays
 
@@ -233,6 +234,36 @@ end
         mesh = Mesh(points, faces)
         @test mesh == [Tetrahedron(points...)]
 
+    end
+
+    @testset "Multi geometries" begin
+        # coordinates from https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry#Geometric_objects
+        points = Point{2, Int}[(10, 40), (40, 30), (20, 20), (30, 10)]
+        multipoint = MultiPoint(points)
+        @test size(multipoint) === size(points)
+        @test multipoint[3] === points[3]
+        
+        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
+        multilinestring = MultiLineString([linestring1, linestring2])
+        @test size(multilinestring) === (2,)
+        @test multilinestring[1] === linestring1
+        @test multilinestring[2] === linestring2
+        
+        polygon11 = Polygon(Point{2, Int}[(30, 20), (45, 40), (10, 40), (30, 20)])
+        polygon12 = Polygon(Point{2, Int}[(15, 5), (40, 10), (10, 20), (5, 10), (15, 5)])
+        multipolygon1 = MultiPolygon([polygon11, polygon12])
+        @test size(multipolygon1) === (2,)
+        @test multipolygon1[1] === polygon11
+        @test multipolygon1[2] === polygon12
+        
+        polygon21 = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
+        polygon22 = Polygon(LineString(Point{2, Int}[(20, 35), (10, 30), (10, 10), (30, 5), (45, 20), (20, 35)]),
+            [LineString(Point{2, Int}[(30, 20), (20, 15), (20, 25), (30, 20)])])
+        multipolygon2 = MultiPolygon([polygon21, polygon22])
+        @test size(multipolygon2) === (2,)
+        @test multipolygon2[1] === polygon21
+        @test multipolygon2[2] === polygon22
     end
 
 end
