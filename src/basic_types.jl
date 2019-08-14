@@ -130,8 +130,7 @@ struct Simplex{
 end
 
 const NSimplex{N} = Simplex{Dim, T, N, P} where {Dim, T, P}
-const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 2, P}
-const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
+const Line{Dim, T} = Simplex{Dim, T, 2, P} where {P}
 const TetrahedronP{T, P <: AbstractPoint{3, T}} = Simplex{3, T, 4, P}
 const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
 
@@ -161,25 +160,24 @@ The fully concrete Simplex type, when constructed from a point type!
 function Polytope(::Type{<: NSimplex{N}}, P::Type{<: AbstractPoint{NDim, T}}) where {N, NDim, T}
     Simplex{NDim, T, N, P}
 end
-Base.show(io::IO, x::LineP) = print(io, "Line(", x[1], " => ", x[2], ")")
+Base.show(io::IO, x::Line) = print(io, "Line(", x[1], " => ", x[2], ")")
 
 """
 A LineString is a geometry of connected line segments
 """
-struct LineString{
+struct LineString{ 
         Dim, T <: Real,
-        P <: AbstractPoint,
-        V <: AbstractVector{<: LineP{Dim, T, P}}
-    } <: AbstractVector{LineP{Dim, T, P}}
-    points::V
+        V <: AbstractVector{<: Line{Dim, T}} 
+    } <: AbstractVector{Line{Dim, T}} 
+    lines::V 
 end
-coordinates(x::LineString) = x.points
+coordinates(x::LineString) = x.lines
 
 Base.size(x::LineString) = size(coordinates(x))
 Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
 
-function LineString(points::AbstractVector{LineP{Dim, T, P}}) where {Dim, T, P}
-    LineString{Dim, T, P, typeof(points)}(points)
+function LineString(points::AbstractVector{<:Line{Dim, T}}) where {Dim, T}
+    LineString{Dim, T, eltype(points)}(points)
 end
 
 """
@@ -194,11 +192,11 @@ linestring = LineString(points)
 ```
 """
 function LineString(points::AbstractVector{<: AbstractPoint}, skip = 1)
-    LineString(connect(points, LineP, skip))
+    LineString(connect(points, Line, skip))
 end
 
 function LineString(points::AbstractVector{<: Pair{P, P}}) where P <: AbstractPoint{N, T} where {N, T}
-    LineString(reinterpret(LineP{N, T, P}, points))
+    LineString(reinterpret(Simplex{N, T, 2, P}, points))
 end
 
 function LineString(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: LineFace})
@@ -232,7 +230,7 @@ end
 struct Polygon{
         Dim, T <: Real,
         P <: AbstractPoint{Dim, T},
-        L <: AbstractVector{<: LineP{Dim, T, P}},
+        L <: AbstractVector{<: Line{Dim, T}},
         V <: AbstractVector{L}
     } <: AbstractPolygon{Dim, T}
     exterior::L
@@ -241,11 +239,11 @@ end
 
 Base.:(==)(a::Polygon, b::Polygon) = (a.exterior == b.exterior) && (a.interiors == b.interiors)
 
-function Polygon(exterior::E, interiors::AbstractVector{E}) where E <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
-    Polygon{Dim, T, P, typeof(exterior), typeof(interiors)}(exterior, interiors)
+function Polygon(exterior::E, interiors::AbstractVector{E}) where E <: AbstractVector{<: Line{Dim, T}} where {Dim, T}
+    Polygon{Dim, T, Point{Dim, T}, typeof(exterior), typeof(interiors)}(exterior, interiors)
 end
 
-Polygon(exterior::L) where L <: AbstractVector{<: LineP} = Polygon(exterior, L[])
+Polygon(exterior::L) where L <: AbstractVector{<: Line} = Polygon(exterior, L[])
 
 function Polygon(exterior::AbstractVector{P}, skip::Int = 1) where P <: AbstractPoint{Dim, T} where {Dim, T}
     Polygon(LineString(exterior, skip))
@@ -278,14 +276,14 @@ Base.size(mp::MultiPolygon) = size(mp.polygons)
 
 struct MultiLineString{
         Dim, T <: Real,
-        Element <: LineString{Dim, T},
+        Element <: LineString{Dim, T, V} where {V},
         A <: AbstractVector{Element}
     } <: AbstractVector{Element}
 
     linestrings::A
 end
 
-function MultiLineString(linestrings::AbstractVector{L}; kw...) where L <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
+function MultiLineString(linestrings::AbstractVector{L}; kw...) where L <: AbstractVector{<: Line{Dim, T}} where {Dim, T}
     MultiLineString(meta(linestrings; kw...))
 end
 
