@@ -294,7 +294,7 @@ Base.size(ms::MultiLineString) = size(ms.linestrings)
 
 struct MultiPoint{
     Dim, T <: Real,
-    Element <: Point{Dim, T},
+    Element <: AbstractPoint{Dim, T},
     A <: AbstractVector{Element}
 } <: AbstractVector{Element}
 
