@@ -11,6 +11,7 @@ module GeometryBasics
     include("viewtypes.jl")
     include("geometry_primitives.jl")
     include("rectangles.jl")
+    include("triangulation.jl")
     include("meshes.jl")
 
 end # module

@@ -7,7 +7,7 @@ using GeometryBasics: QuadFace, hascolumn, getcolumn, metafree, coordinates, Tet
 using GeometryBasics: TupleView, TriangleFace, SimplexFace, Mesh, meta, column_names
 using GeometryBasics: TriangleFace, meta, Mesh, coordinates, hascolumn, faces, Triangle, OffsetInteger, FaceView, AbstractFace, AbstractPoint, TriangleP
 using GeometryBasics: SimpleFaceView, GLIndex, TriangleFace, Triangle, Mesh, PointMeta, faces, GLTriangleFace
-using GeometryBasics: SimpleTriangleMeshf0, UVMeshf03D, UVNormalMeshf03D, PointWithUV, TriangleMesh, Sphere
+using GeometryBasics: PointWithUV, TriangleMesh, Sphere, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
 using GeometryBasics: Rect2D, texturecoordinates, Rect3D, decompose, GLTriangleFace, GLNormalMesh3D
 using GeometryBasics: Sphere, GLNormalMesh2D, PlainTriangleMesh, Circle
 using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
@@ -245,11 +245,11 @@ using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
             uv = rand(Vec2f0, 8)
             mesh = Mesh(points, tfaces)
             meshuv = Mesh(meta(points; uv=uv), tfaces)
-            meshuvnormal = Mesh(meta(points; normal=normals, uv=uv), tfaces)
+            meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
 
-            @test mesh isa SimpleTriangleMeshf0
-            @test meshuv isa UVMeshf03D
-            @test meshuvnormal isa UVNormalMeshf03D
+            @test mesh isa GLPlainTriangleMesh
+            @test meshuv isa GLUVMesh3D
+            @test meshuvnormal isa GLUVNormalMesh3D
 
 
         end
@@ -304,4 +304,5 @@ end
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)
+    @test true # yay no errors so far!
 end
