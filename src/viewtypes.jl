@@ -118,20 +118,26 @@ struct FaceView{
     elements::P
     faces::F
 end
-function Base.getproperty(x::FaceView, name::Symbol)
-    getproperty(getfield(x, :elements), name)
+
+const SimpleFaceView{Dim, T, NFace, IndexType, PointType<:AbstractPoint{Dim, T}, FaceType<:AbstractFace{NFace, IndexType}} = FaceView{
+    Ngon{Dim, T, NFace, PointType}, PointType, FaceType, Vector{PointType}, Vector{FaceType}}
+
+function Base.getproperty(faceview::FaceView, name::Symbol)
+    return getproperty(getfield(faceview, :elements), name)
 end
 
-Tables.schema(fw::FaceView) = Tables.schema(getfield(fw, :elements))
+function Base.propertynames(faceview::FaceView)
+    return propertynames(getfield(faceview, :elements))
+end
 
+Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
 
-Base.size(x::FaceView) = size(getfield(x, :faces))
+Base.size(faceview::FaceView) = size(getfield(faceview, :faces))
 
-Base.show(io::IO, x::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")
-
+Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")
 
 @propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where Element
-    Element(map(idx-> coordinates(x)[idx], faces(x)[i]))
+    return Element(map(idx-> coordinates(x)[idx], faces(x)[i]))
 end
 
 @propagate_inbounds function Base.setindex!(x::FaceView{Element}, element::Element, i) where Element
@@ -146,10 +152,5 @@ function connect(points::AbstractVector{P}, faces::AbstractVector{F}) where {P <
     FaceView{Polytope(P, F), P, F, typeof(points), typeof(faces)}(points, faces)
 end
 
-const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
-
 coordinates(mesh::FaceView) = getfield(mesh, :elements)
 faces(mesh::FaceView) = getfield(mesh, :faces)
-
-coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
-faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))

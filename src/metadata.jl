@@ -25,10 +25,10 @@ end
 Gets a column from any Array like (Table/AbstractArray).
 For AbstractVectors, a column will be the field names of the element type.
 """
-function getcolumns(t, colnames::Symbol...)
-    named_tuple = Tables.columntable(Tables.select(t, colnames...))
-    getfield.((named_tuple,), colnames)
+function getcolumns(tablelike, colnames::Symbol...)
+    return getproperty.((tablelike,), colnames)
 end
+
 getcolumn(t, colname::Symbol) = getcolumns(t, colname)[1]
 
 """
@@ -56,7 +56,6 @@ Returns the metadata of `x`
 meta(x::T) where T = error("$T has no meta!")
 
 metafree(x::T) where T = x
-
 
 macro meta_type(name, mainfield, supertype, params...)
     MetaName = Symbol("$(name)Meta")
@@ -123,7 +122,7 @@ macro meta_type(name, mainfield, supertype, params...)
             # get the first element to get the per element named tuple type
             ElementNT = typeof(map(first, nt))
 
-            StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
+            return StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
         end
 
     end

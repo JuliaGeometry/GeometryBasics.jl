@@ -1,7 +1,8 @@
 """
 Abstract Geometry in R{Dim} with Number type T
 """
-abstract type AbstractGeometry{Dim, T <: Real} end
+abstract type AbstractGeometry{Dim, T <: Number} end
+abstract type GeometryPrimitive{Dim, T} <: AbstractGeometry{Dim, T} end
 
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
@@ -18,10 +19,14 @@ abstract type AbstractNgonFace{N, T} <: AbstractFace{N, T} end
 
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
-@fixed_vector Point AbstractPoint
 
-
-
+"""
+    coordinates(geometry)
+Returns the edges/vertices/coordinates of a geometry
+"""
+function coordinates(points::AbstractVector{<:AbstractPoint})
+    return points
+end
 
 """
 Face index, connecting points to form a simplex
@@ -65,10 +70,11 @@ struct Ngon{
 
     points::SVector{N, Point}
 end
+
 const NNgon{N} = Ngon{Dim, T, N, P} where {Dim, T, P}
 
 function (::Type{<: NNgon{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
-    Ngon{Dim, T, N, P}(SVector(points))
+    return Ngon{Dim, T, N, P}(SVector(points))
 end
 Base.show(io::IO, x::NNgon{N}) where N = print(io, "Ngon{$N}(", join(x, ", "), ")")
 
@@ -308,41 +314,56 @@ end
 Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
 Base.size(mpt::MultiPoint) = size(mpt.points)
 
+
+##
+# Meshes type
+
+const AbstractMesh{Element} = AbstractVector{Element}
+
+# const TriangleMesh{Dim, NumberType, PointType} = AbstractMesh{TriangleP{Dim, NumberType, PointType}}
+
+
+"""
+    Mesh <: AbstractVector{Element}
+"""
 struct Mesh{
         Dim, T <: Real,
         Element <: Polytope{Dim, T},
         V <: AbstractVector{Element}
     } <: AbstractVector{Element}
-
     simplices::V
 end
 
-Tables.schema(fw::Mesh) = Tables.schema(getfield(fw, :simplices))
+Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
 
-function Base.getproperty(x::Mesh, name::Symbol)
-    getproperty(getfield(x, :simplices), name)
+function Base.getproperty(mesh::Mesh, name::Symbol)
+    return getproperty(getfield(mesh, :simplices), name)
 end
 
-function Base.summary(io::IO, x::Mesh{Dim, T, Element}) where {Dim, T, Element}
+function Base.propertynames(mesh::Mesh)
+    return propertynames(getfield(mesh, :simplices))
+end
+
+function Base.summary(io::IO, ::Mesh{Dim, T, Element}) where {Dim, T, Element}
     print(io, "Mesh{$Dim, $T, ")
     summary(io, Element)
     print(io, "}")
 end
-Base.size(x::Mesh) = size(getfield(x, :simplices))
-Base.getindex(x::Mesh, i::Integer) = getfield(x, :simplices)[i]
 
+Base.size(mesh::Mesh) = size(getfield(mesh, :simplices))
+Base.getindex(mesh::Mesh, i::Integer) = getfield(mesh, :simplices)[i]
 
 function Mesh(elements::AbstractVector{<: Polytope{Dim, T}}) where {Dim, T}
-    Mesh{Dim, T, eltype(elements), typeof(elements)}(elements)
+    return Mesh{Dim, T, eltype(elements), typeof(elements)}(elements)
 end
 
 function Mesh(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: AbstractFace})
-    Mesh(connect(points, faces))
+    return Mesh(connect(points, faces))
 end
 
 function Mesh(
         points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: Integer},
         facetype = TriangleFace, skip = 1
     )
-    Mesh(connect(points, connect(faces, facetype, skip)))
+    return Mesh(connect(points, connect(faces, facetype, skip)))
 end
