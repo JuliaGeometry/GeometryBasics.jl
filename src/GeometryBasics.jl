@@ -14,6 +14,7 @@ module GeometryBasics
     include("triangulation.jl")
     include("meshes.jl")
     include("lines.jl")
+    include("boundingboxes.jl")
 
     export AbstractGeometry, GeometryPrimitive
     export Mat, Point, Vec

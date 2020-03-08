@@ -153,8 +153,8 @@ function FRect3D(x::Tuple{Tuple{<: Number, <: Number, <: Number}, Tuple{<: Numbe
 end
 
 origin(prim::Rect) = prim.origin
-maximum(prim::Rect) = origin(prim) + widths(prim)
-minimum(prim::Rect) = origin(prim)
+Base.maximum(prim::Rect) = origin(prim) + widths(prim)
+Base.minimum(prim::Rect) = origin(prim)
 Base.length(prim::Rect{N, T}) where {T, N} = N
 widths(prim::Rect) = prim.widths
 
@@ -303,7 +303,7 @@ end
 """
 Perform a union between two Rects.
 """
-function union(h1::Rect{N}, h2::Rect{N}) where N
+function Base.union(h1::Rect{N}, h2::Rect{N}) where N
     m = min.(minimum(h1), minimum(h2))
     mm = max.(maximum(h1), maximum(h2))
     Rect{N}(m, mm - m)
@@ -456,9 +456,6 @@ end
 ###
 # Containment
 
-# TODO only have point in c and deprecate above methods
-Base.in(x::AbstractPoint{2}, c::Circle) = isinside(c, x...)
-
 """
 Check if Rects are contained in each other. This does not use
 strict inequality, so Rects may share faces and this will still
@@ -477,7 +474,7 @@ end
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
-function contains(b1::Rect{N, T}, pt::AbstractPoint) where {T, N}
+function contains(b1::Rect{N, T}, pt::VecTypes) where {T, N}
     for i = 1:N
         pt[i] <= maximum(b1)[i] && pt[i] >= minimum(b1)[i] || return false
     end
@@ -495,7 +492,7 @@ Base.in(b1::Rect, b2::Rect) = contains(b2, b1)
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
-Base.in(pt::AbstractPoint, b1::Rect) = contains(b1, pt)
+Base.in(pt::VecTypes, b1::Rect) = contains(b1, pt)
 
 #
 # Equality

@@ -123,7 +123,6 @@ end
 ##
 # Some more primitive types
 
-
 """
 A `HyperSphere` is a generalization of a sphere into N-dimensions.
 A `center` and radius, `r`, must be specified.
@@ -178,7 +177,6 @@ its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """
 const Cylinder2{T} = Cylinder{2, T}
 const Cylinder3{T} = Cylinder{3, T}
-
 
 origin(c::Cylinder{N, T}) where {N, T} = c.origin
 extremity(c::Cylinder{N, T}) where {N, T} = c.extremity
@@ -235,30 +233,6 @@ function coordinates(c::Cylinder{3, T}, nvertices=30) where T
     return (inner(i) for i in range)
 end
 
-
-function coordinates(c::Cylinder{3}, nvertices=30)
-    isodd(nvertices) ? nvertices = 2 * div(nvertices, 2) : nothing
-    nvertices < 8 ? nvertices = 8 : nothing; nbv = Int(nvertices / 2)
-    indexes = Vector{GLTriangle}(undef, nvertices)
-    index = 1
-    for j = 1:(nbv-1)
-        indexes[index] = (index + 2, index + 1, index)
-        indexes[index + 1] = ( index + 3, index + 1, index + 2)
-        index += 2
-    end
-    indexes[index] = (1, index + 1, index)
-    indexes[index + 1] = (2, index + 1, 1)
-    for i in 1:length(indexes)
-        if i%2 == 1
-            push!(indexes, (indexes[i][1], indexes[i][3], 2*nbv+1))
-        else
-            push!(indexes, (indexes[i][2], indexes[i][1], 2*nbv+2))
-        end
-    end
-    return indexes
-end
-
-
 function texturecoordinates(s::Cylinder, nvertices=24)
     ux = LinRange(0, 1, nvertices)
     return ivec((Vec(φ, θ) for θ in reverse(ux), φ in ux))
@@ -272,7 +246,6 @@ function normals(s::Cylinder{T}, nvertices=24) where T
     return coordinates(Sphere(Point{3, T}(0), 1f0), nvertices)
 end
 
-
 ##
 # Sphere
 
@@ -281,9 +254,10 @@ HyperSphere{N}(p::Point{N, T}, number) where {N, T} = HyperSphere{N, T}(p, conve
 widths(c::HyperSphere{N, T}) where {N, T} = Vec{N, T}(radius(c)*2)
 radius(c::HyperSphere) = c.r
 origin(c::HyperSphere) = c.center
-minimum(c::HyperSphere{N, T}) where {N, T} = Vec{N, T}(origin(c)) - Vec{N, T}(radius(c))
-maximum(c::HyperSphere{N, T}) where {N, T} = Vec{N, T}(origin(c)) + Vec{N, T}(radius(c))
-function isinside(c::Circle, x::Real, y::Real)
+
+Base.minimum(c::HyperSphere{N, T}) where {N, T} = Vec{N, T}(origin(c)) - Vec{N, T}(radius(c))
+Base.maximum(c::HyperSphere{N, T}) where {N, T} = Vec{N, T}(origin(c)) + Vec{N, T}(radius(c))
+function Base.in(x::AbstractPoint{2}, c::Circle) = isinside(c, x...)
     @inbounds ox, oy = origin(c)
     xD = abs(ox - x)
     yD = abs(oy - y)
@@ -304,7 +278,6 @@ function coordinates(s::Sphere, n = 24, nvertices=24)
     inner(θ, φ) = Point(cos(φ)*sin(θ), sin(φ)*sin(θ), cos(θ)) .* s.r .+ s.center
     return ivec((inner(θ, φ) for θ in θ, φ in φ))
 end
-
 
 function texturecoordinates(s::Sphere, nvertices=24)
     ux = LinRange(0, 1, nvertices)
