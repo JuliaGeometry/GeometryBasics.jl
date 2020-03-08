@@ -2,6 +2,10 @@
 # Generic base overloads
 
 Base.extrema(primitive::GeometryPrimitive) = (minimum(primitive), maximum(primitive))
+function widths(x::AbstractRange)
+    mini, maxi = Float32.(extrema(x))
+    maxi - mini
+end
 
 ##
 # conversion & decompose
@@ -162,7 +166,7 @@ end
 A `Cylinder` is a 2D rectangle or a 3D cylinder defined by its origin point,
 its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """
-struct Cylinder{N,T<: AbstractFloat} <: GeometryPrimitive{N,T}
+struct Cylinder{N, T} <: GeometryPrimitive{N, T}
     origin::Point{N,T}
     extremity::Point{N,T}
     r::T

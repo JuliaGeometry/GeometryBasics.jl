@@ -299,39 +299,40 @@ Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 
 struct MultiPoint{
-    Dim, T <: Real,
-    Element <: AbstractPoint{Dim, T},
-    A <: AbstractVector{Element}
-} <: AbstractVector{Element}
+        Dim, T <: Real,
+        Element <: AbstractPoint{Dim, T},
+        A <: AbstractVector{Element}
+    } <: AbstractVector{Element}
 
     points::A
 end
 
 function MultiPoint(points::AbstractVector{P}; kw...) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    MultiPoint(meta(points; kw...))
+    return MultiPoint(meta(points; kw...))
 end
 
 Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
 Base.size(mpt::MultiPoint) = size(mpt.points)
 
+"""
+    AbstractMesh
 
-##
-# Meshes type
-
+An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
+The connections are defined via faces(mesh), the coordinates of the elements are returned by
+coordinates(mesh). Arbitrary meta information can be attached per point or per face
+"""
 const AbstractMesh{Element} = AbstractVector{Element}
-
-# const TriangleMesh{Dim, NumberType, PointType} = AbstractMesh{TriangleP{Dim, NumberType, PointType}}
-
 
 """
     Mesh <: AbstractVector{Element}
+The conrecte AbstractMesh implementation
 """
 struct Mesh{
         Dim, T <: Real,
         Element <: Polytope{Dim, T},
         V <: AbstractVector{Element}
-    } <: AbstractVector{Element}
-    simplices::V
+    } <: AbstractMesh{Element}
+    simplices::V # usually a FaceView, to connect a set of points via a set of faces.
 end
 
 Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))

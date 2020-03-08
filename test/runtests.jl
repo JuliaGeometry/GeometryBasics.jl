@@ -1,16 +1,5 @@
 using Test, Random, Query, StructArrays, Tables, StaticArrays
 using GeometryBasics
-using GeometryBasics: LineFace, Polytope, Line
-using GeometryBasics: Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
-using GeometryBasics: Simplex, connect, Triangle, NSimplex, Tetrahedron
-using GeometryBasics: QuadFace, hascolumn, getcolumn, metafree, coordinates, TetrahedronFace
-using GeometryBasics: TupleView, TriangleFace, SimplexFace, Mesh, meta, column_names
-using GeometryBasics: TriangleFace, meta, Mesh, coordinates, hascolumn, faces, Triangle, OffsetInteger, FaceView, AbstractFace, AbstractPoint, TriangleP
-using GeometryBasics: SimpleFaceView, GLIndex, TriangleFace, Triangle, Mesh, PointMeta, faces, GLTriangleFace
-using GeometryBasics: PointWithUV, TriangleMesh, Sphere, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
-using GeometryBasics: Rect2D, texturecoordinates, Rect3D, decompose, GLTriangleFace, GLNormalMesh3D
-using GeometryBasics: Sphere, GLNormalMesh2D, PlainTriangleMesh, Circle
-using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
 
 @testset "GeometryBasics" begin
     @testset "embedding metadata" begin
@@ -23,8 +12,8 @@ using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
                 stress = LinRange(0, 1, 8)
                 mesh = Mesh(meta(points, normals = normals, stress = stress), tfaces)
 
-                @test hascolumn(coordinates(mesh), :stress)
-                @test hascolumn(coordinates(mesh), :normals)
+                @test hasproperty(coordinates(mesh), :stress)
+                @test hasproperty(coordinates(mesh), :normals)
                 @test coordinates(mesh).stress === stress
                 @test coordinates(mesh).normals === normals
                 @test coordinates(mesh).normals === normals
@@ -55,7 +44,7 @@ using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
                 markers = Cint[-1, -2, 0, 0, 0, 0]
                 # attach some additional information to our faces!
                 mesh = Mesh(points, meta(facets, markers = markers))
-                @test hascolumn(GeometryBasics.faces(mesh), :markers)
+                @test hasproperty(GeometryBasics.faces(mesh), :markers)
                 # test with === to assert we're not doing any copies
                 @test GeometryBasics.faces(mesh).markers === markers
                 @test coordinates(mesh) === points
@@ -247,10 +236,9 @@ using GeometryBasics: triangle_mesh, gl_normal_mesh3d, normal_mesh
             meshuv = Mesh(meta(points; uv=uv), tfaces)
             meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
 
-            @test mesh isa GLPlainTriangleMesh
+            @test mesh isa GLPlainMesh
             @test meshuv isa GLUVMesh3D
-            @test meshuvnormal isa GLUVNormalMesh3D
-
+            @test meshuvnormal isa GLNormalUVMesh3D
 
         end
 

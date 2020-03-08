@@ -4,32 +4,66 @@ faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
 
 const GLTriangleElement = Triangle{3, Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
-
-const TriangleMesh{Dim, T, PointType} = AbstractVector{TriangleP{Dim, T, PointType}}
-
-const PlainTriangleMesh{Dim, T} = TriangleMesh{Dim, T, Point{Dim, T}}
-
-const GLPlainTriangleMesh = PlainTriangleMesh{3, Float32}
-
 const PointWithUV{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:uv,), Tuple{Vec{2, T}}}
 const PointWithNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals,), Tuple{Vec{3, T}}}
 const PointWithUVNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :uv), Tuple{Vec{3, T}, Vec{2, T}}}
+const PointWithUVWNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :uvw), Tuple{Vec{3, T}, Vec{3, T}}}
 
+"""
+Abstract Mesh with triangle elements
+"""
+const TriangleMesh{Dim, T, PointType} = AbstractMesh{TriangleP{Dim, T, PointType}}
+
+"""
+    PlainMesh
+Triangle mesh with no meta information (just points + triangle faces)
+"""
+const PlainMesh{Dim, T} = TriangleMesh{Dim, T, Point{Dim, T}}
+const GLPlainMesh{Dim} = PlainMesh{Dim, Float32}
+const GLPlainMesh2D = GLPlainMesh{2}
+const GLPlainMesh3D = GLPlainMesh{3}
+
+"""
+    UVMesh
+PlainMesh with texture coordinates meta at each point.
+`uvmesh.uv isa AbstractVector{Vec2f0}`
+"""
 const UVMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUV{Dim, T}}
 const GLUVMesh{Dim} = UVMesh{Dim, Float32}
 const GLUVMesh2D = UVMesh{2}
 const GLUVMesh3D = UVMesh{3}
 
-const UVNormalMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUVNormal{Dim, T}}
-const GLUVNormalMesh{Dim} = UVNormalMesh{Dim, Float32}
-const GLUVNormalMesh2D = UVNormalMesh{2}
-const GLUVNormalMesh3D = UVNormalMesh{3}
-
+"""
+    NormalMesh
+PlainMesh with normals meta at each point.
+`normalmesh.normals isa AbstractVector{Vec3f0}`
+"""
 const NormalMesh{Dim, T} = TriangleMesh{Dim, T, PointWithNormal{Dim, T}}
 const GLNormalMesh{Dim} = NormalMesh{Dim, Float32}
 const GLNormalMesh2D = GLNormalMesh{2}
 const GLNormalMesh3D = GLNormalMesh{3}
 
+"""
+    NormalUVMesh
+PlainMesh with normals and uv meta at each point.
+`normalmesh.normals isa AbstractVector{Vec3f0}`
+`normalmesh.uv isa AbstractVector{Vec2f0}`
+"""
+const NormalUVMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUVNormal{Dim, T}}
+const GLNormalUVMesh{Dim} = NormalUVMesh{Dim, Float32}
+const GLNormalUVMesh2D = GLNormalUVMesh{2}
+const GLNormalUVMesh3D = GLNormalUVMesh{3}
+
+"""
+    NormalUVWMesh
+PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
+`normalmesh.normals isa AbstractVector{Vec3f0}`
+`normalmesh.uvw isa AbstractVector{Vec3f0}`
+"""
+const NormalUVWMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUVWNormal{Dim, T}}
+const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
+const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
+const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
 function triangle_mesh(primitive)
     return Mesh(decompose(Point3f0, primitive), decompose(GLTriangleFace, primitive))

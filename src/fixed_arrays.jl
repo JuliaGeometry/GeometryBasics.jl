@@ -107,9 +107,9 @@ end
 
 abstract type AbstractPoint{Dim, T} <: StaticVector{Dim, T} end
 @fixed_vector Point AbstractPoint
+@fixed_vector Vec StaticVector
 
 const Mat = SMatrix
-const Vec = SVector
 const VecTypes{N, T} = Union{StaticVector{N, T}, NTuple{N, T}}
 const Vecf0{N} = Vec{N, Float32}
 const Pointf0{N} = Point{N, Float32}
