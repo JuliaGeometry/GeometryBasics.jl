@@ -4,20 +4,8 @@ Table interface for this functionality. Once this is in e.g. Tables.jl,
 it should be removed from GeometryBasics!
 =#
 
-"""
-Gets the column names of any Array like (Table/AbstractArray)
-"""
-function column_names(t)
-    s = Tables.schema(t)
-    if s === nothing
-        return propertynames(first(Tables.rows(t)))
-    else
-        s.names
-    end
-end
-
-function hascolumn(t, colname::Symbol)
-    return Base.sym_in(colname, column_names(t))
+function attributes(hasmeta)
+    return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
 end
 
 """
@@ -90,6 +78,7 @@ macro meta_type(name, mainfield, supertype, params...)
         GeometryBasics.metafree(x::AbstractVector{<: $MetaName}) = getcolumns(x, $field)[1]
         GeometryBasics.meta(x::$MetaName) = getfield(x, :meta)
         GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
+
         function (MT::Type{<: $MetaName})(args...; meta...)
             nt = values(meta)
             obj = MetaFree(MT)(args...)
