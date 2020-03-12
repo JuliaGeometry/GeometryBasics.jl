@@ -22,7 +22,7 @@ module GeometryBasics
     export LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
     export Simplex, connect, Triangle, NSimplex, Tetrahedron
     export QuadFace, metafree, coordinates, TetrahedronFace
-    export TupleView, SimplexFace, Mesh, meta, column_names
+    export TupleView, SimplexFace, Mesh, meta
     export Triangle, TriangleP
     export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
     export OffsetInteger, ZeroIndex, OneIndex, GLIndex

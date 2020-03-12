@@ -18,7 +18,7 @@ using GeometryBasics
                 @test coordinates(mesh).normals === normals
                 @test coordinates(mesh).normals === normals
                 @test GeometryBasics.faces(mesh) === tfaces
-                @test column_names(coordinates(mesh)) == (:position, :normals, :stress)
+                @test propertynames(coordinates(mesh)) == (:position, :normals, :stress)
 
             end
 
