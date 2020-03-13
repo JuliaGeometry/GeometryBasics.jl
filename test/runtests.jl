@@ -276,7 +276,7 @@ using LinearAlgebra
     end
 end
 
-@testset "decompose/triangulateion" begin
+@testset "decompose/triangulation" begin
     primitive = Sphere(Point3f0(0), 1)
     triangle_mesh(primitive)
     primitive = Rect2D(0, 0, 1, 1)
