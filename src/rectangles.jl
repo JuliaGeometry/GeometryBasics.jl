@@ -502,7 +502,8 @@ Base.:(==)(b1::Rect, b2::Rect) = minimum(b1) == minimum(b2) && widths(b1) == wid
 Base.isequal(b1::Rect, b2::Rect) = b1 == b2
 
 centered(R::Type{Rect{N,T}}) where {N, T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
-centered(::Type{T}) where {T <: Rect} = centered(Rect{ndims_or(T, 3), eltype_or(T, Float32)})
+centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
+centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 function faces(rect::Rect2D, nvertices=(2, 2))
     w, h = nvertices

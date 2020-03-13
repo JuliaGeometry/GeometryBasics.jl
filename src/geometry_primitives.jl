@@ -41,6 +41,9 @@ Extract all line segments in a Face.
     return v
 end
 
+to_pointn(::Type{T}, x) where T<:Point = simplex_convert(T, x)[1]
+
+simplex_convert(::Type{Point}, x::Point) = (x,)
 function simplex_convert(::Type{Point{N, T}}, x) where {N, T}
     N2 = length(x)
     return (Point{N, T}(ntuple(i-> i <= N2 ? T(x[i]) : T(0), N)),)
@@ -71,20 +74,20 @@ function decompose(::Type{T}, primitive::AbstractVector{T}) where {T}
     return primitive
 end
 
-function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
-    return collect_with_eltype(P, coordinates(primitive))
+function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
+    return collect_with_eltype(P, coordinates(primitive, args...))
 end
 
-function decompose(::Type{F}, primitive) where {F<:AbstractFace}
-    return collect_with_eltype(F, faces(primitive))
+function decompose(::Type{F}, primitive, args...) where {F<:AbstractFace}
+    return collect_with_eltype(F, faces(primitive, args...))
 end
 
-function decompose_uv(primitive::GeometryPrimitive)
-    return collect_with_eltype(Vec2f0, texturecoordinates(primitive))
+function decompose_uv(primitive::GeometryPrimitive, args...)
+    return collect_with_eltype(Vec2f0, texturecoordinates(primitive, args...))
 end
 
-function decompose_normals(primitive::GeometryPrimitive)
-    return collect_with_eltype(Vec3f0, normals(primitive))
+function decompose_normals(primitive::GeometryPrimitive, args...)
+    return collect_with_eltype(Vec3f0, normals(primitive, args...))
 end
 
 """
@@ -118,7 +121,6 @@ function normals(vertices::AbstractVector{Point{3, T}}, faces::AbstractVector{F}
     normals_result .= normalize.(normals_result)
     return normals_result
 end
-
 
 ##
 # Some more primitive types
@@ -203,12 +205,12 @@ function rotation(c::Cylinder{3, T}) where T
     return hcat(v, w, u)
 end
 
-function coordinates(s::Cylinder{2}, nvertices=24)
+function coordinates(c::Cylinder{2, T}, nvertices=(2, 2)) where T
     r = Rect(c.origin[1] - c.r/2, c.origin[2], c.r, height(c))
     M = rotation(c)
     points = coordinates(r, nvertices)
-    vo = origin(s)
-    return (M * ((point .- vo) .+ vo) for point in points)
+    vo = to_pointn(Point3{T}, origin(c))
+    return (M * (to_pointn(Point3{T}, point) .- vo) .+ vo for point in points)
 end
 
 function coordinates(c::Cylinder{3, T}, nvertices=30) where T
@@ -218,15 +220,14 @@ function coordinates(c::Cylinder{3, T}, nvertices=30) where T
     h = height(c)
     range = 1:(2 * nbv + 2)
     function inner(i)
-        phi = T((2π * (j - 1)) / nbv)
         if i == length(range)
             return c.extremity
         elseif i == length(range) - 1
-            origin(c)
-        elseif isodd(i)
-            return PT(M * PT(c.r * cos(phi), c.r * sin(phi),0)) .+ PT(c.origin)
+            return origin(c)
         else
-            PT(M * PT(c.r * cos(phi), c.r * sin(phi),h)) .+ PT(c.origin)
+            phi = T((2π * (((i + 1) ÷ 2) - 1)) / nbv)
+            up = ifelse(isodd(i), 0, h)
+            return (M * Point(c.r * cos(phi), c.r * sin(phi), up)) .+ c.origin
         end
     end
 
@@ -238,8 +239,27 @@ function texturecoordinates(s::Cylinder, nvertices=24)
     return ivec((Vec(φ, θ) for θ in reverse(ux), φ in ux))
 end
 
-function faces(sphere::Cylinder, nvertices=24)
-    return faces(Rect(0, 0, 1, 1), (nvertices, nvertices))
+function faces(sphere::Cylinder{2}, nvertices=(2, 2))
+    return faces(Rect(0, 0, 1, 1), nvertices)
+end
+
+function faces(c::Cylinder{3}, facets=30)
+    isodd(facets) ? facets = 2 * div(facets, 2) : nothing
+    facets < 8 ? facets = 8 : nothing; nbv = Int(facets / 2)
+    indexes = Vector{TriangleFace{Int}}(undef, facets)
+    index = 1
+    for j = 1:(nbv-1)
+        indexes[index] = (index + 2, index + 1, index)
+        indexes[index + 1] = ( index + 3, index + 1, index + 2)
+        index += 2
+    end
+    indexes[index] = (1, index + 1, index)
+    indexes[index + 1] = (2, index + 1, 1)
+
+    for i = 1:length(indexes)
+        i%2 == 1 ? push!(indexes, (indexes[i][1], indexes[i][3], 2*nbv+1)) : push!(indexes,(indexes[i][2], indexes[i][1], 2*nbv+2))
+    end
+    return indexes
 end
 
 function normals(s::Cylinder{T}, nvertices=24) where T
@@ -274,7 +294,7 @@ function coordinates(s::Circle, nvertices=64)
     return (inner(fi) for fi in LinRange(0, 2pi, nvertices))
 end
 
-function coordinates(s::Sphere, n = 24, nvertices=24)
+function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices); φ = LinRange(0, 2pi, nvertices)
     inner(θ, φ) = Point(cos(φ)*sin(θ), sin(φ)*sin(θ), cos(θ)) .* s.r .+ s.center
     return ivec((inner(θ, φ) for θ in θ, φ in φ))

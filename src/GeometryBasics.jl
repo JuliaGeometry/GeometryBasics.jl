@@ -18,7 +18,7 @@ module GeometryBasics
 
     export AbstractGeometry, GeometryPrimitive
     export Mat, Point, Vec
-    export LineFace, Polytope, Line
+    export LineFace, Polytope, Line, NgonFace, simplex_convert
     export LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
     export Simplex, connect, Triangle, NSimplex, Tetrahedron
     export QuadFace, metafree, coordinates, TetrahedronFace
@@ -47,7 +47,7 @@ module GeometryBasics
 
     export height, origin, radius, width, widths, xwidth, yheight
     export HyperSphere, Circle, Sphere
-    export Cylinder, Cylinder2, Cylinder3, Pyramid
+    export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
     export Rect, Rect2D, Rect3D, IRect, IRect2D, IRect3D, FRect, FRect2D, FRect3D
     export before, during, contains, isinside, isoutside, meets, overlaps, intersects, finishes
     export centered, direction, area, update

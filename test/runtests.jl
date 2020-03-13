@@ -1,5 +1,6 @@
 using Test, Random, Query, StructArrays, Tables, StaticArrays
 using GeometryBasics
+using LinearAlgebra
 
 @testset "GeometryBasics" begin
     @testset "embedding metadata" begin
@@ -293,4 +294,9 @@ end
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)
     @test true # yay no errors so far!
+end
+
+
+@testset "Tests from GeometryTypes" begin
+    include("geometrytypes.jl")
 end

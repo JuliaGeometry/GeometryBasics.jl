@@ -65,8 +65,8 @@ const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
-function triangle_mesh(primitive)
-    return Mesh(decompose(Point3f0, primitive), decompose(GLTriangleFace, primitive))
+function triangle_mesh(primitive, nvertices=25)
+    return Mesh(decompose(Point3f0, primitive, nvertices), decompose(GLTriangleFace, primitive, nvertices))
 end
 
 function triangle_mesh(primitive::AbstractVector{<:AbstractPoint})
@@ -105,4 +105,21 @@ function normal_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     points = decompose(Point{N, T}, primitive)
     fs = decompose(GLTriangleFace, primitive)
     return Mesh(meta(points; normals=normals(points, fs)), fs)
+end
+
+
+"""
+Calculate the signed volume of one tetrahedron. Be sure the orientation of your surface is right.
+"""
+function volume(triangle::Triangle) where {VT,FT}
+    v1, v2, v3 = triangle
+    sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
+    return sig * abs(v1 ⋅ ( v2 × v3 )) / 6
+end
+
+"""
+Calculate the signed volume of all tetrahedra. Be sure the orientation of your surface is right.
+"""
+function volume(mesh::Mesh) where {VT, FT}
+    return sum(volume, mesh)
 end

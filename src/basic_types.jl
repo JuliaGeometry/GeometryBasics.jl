@@ -29,6 +29,14 @@ function coordinates(points::AbstractVector{<:AbstractPoint})
 end
 
 """
+    faces(geometry)
+Returns the face connections of a geometry
+"""
+function faces(f::AbstractVector{<:AbstractFace})
+    return f
+end
+
+"""
 Face index, connecting points to form a simplex
 """
 
