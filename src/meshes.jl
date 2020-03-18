@@ -103,6 +103,13 @@ function gl_uv_triangle_mesh3d(primitive::GeometryPrimitive)
     return Mesh(meta(points; uv=uv), fs)
 end
 
+function gl_uvw_triangle_mesh3d(primitive::GeometryPrimitive)
+    points = decompose(Point3f0, primitive)
+    fs = decompose(GLTriangleFace, primitive)
+    uvw = decompose_uvw(primitive)
+    return Mesh(meta(points; uvw=uvw), fs)
+end
+
 function gl_uv_triangle_mesh2d(primitive::GeometryPrimitive)
     points = decompose(Point2f0, primitive)
     fs = decompose(GLTriangleFace, primitive)
