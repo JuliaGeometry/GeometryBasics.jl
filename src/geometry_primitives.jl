@@ -73,7 +73,9 @@ end
 function decompose(::Type{T}, primitive::AbstractVector{T}) where {T}
     return primitive
 end
-
+function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractPoint}
+    return primitive
+end
 function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
     return collect_with_eltype(P, coordinates(primitive, args...))
 end
@@ -84,6 +86,10 @@ end
 
 function decompose_uv(primitive::GeometryPrimitive, args...)
     return collect_with_eltype(Vec2f0, texturecoordinates(primitive, args...))
+end
+
+function decompose_uvw(primitive::GeometryPrimitive, args...)
+    return collect_with_eltype(Vec3f0, texturecoordinates(primitive, args...))
 end
 
 function decompose_normals(primitive::GeometryPrimitive, args...)

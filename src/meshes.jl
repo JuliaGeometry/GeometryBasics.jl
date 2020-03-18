@@ -81,6 +81,14 @@ function gl_triangle_mesh(primitive::GeometryPrimitive{N}) where {N}
     return Mesh(decompose(Point{N, Float32}, primitive), decompose(GLTriangleFace, primitive))
 end
 
+function gl_triangle_mesh(mesh::GLPlainMesh)
+    return mesh
+end
+
+function gl_triangle_mesh(poly::AbstractVector{<: AbstractPoint})
+    return Mesh(decompose(Point{2, Float32}, poly), decompose(GLTriangleFace, poly))
+end
+
 function uv_triangle_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     points = decompose(Point{N, T}, primitive)
     fs = decompose(GLTriangleFace, primitive)
@@ -92,7 +100,14 @@ function gl_uv_triangle_mesh3d(primitive::GeometryPrimitive)
     points = decompose(Point3f0, primitive)
     fs = decompose(GLTriangleFace, primitive)
     uv = decompose_uv(primitive)
-    return Mesh(meta(points; uv=uv, normals=normals(points, fs)), fs)
+    return Mesh(meta(points; uv=uv), fs)
+end
+
+function gl_uv_triangle_mesh2d(primitive::GeometryPrimitive)
+    points = decompose(Point2f0, primitive)
+    fs = decompose(GLTriangleFace, primitive)
+    uv = decompose_uv(primitive)
+    return Mesh(meta(points; uv=uv), fs)
 end
 
 function gl_normal_mesh3d(primitive::GeometryPrimitive)
@@ -106,7 +121,6 @@ function normal_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     fs = decompose(GLTriangleFace, primitive)
     return Mesh(meta(points; normals=normals(points, fs)), fs)
 end
-
 
 """
 Calculate the signed volume of one tetrahedron. Be sure the orientation of your surface is right.
@@ -122,4 +136,21 @@ Calculate the signed volume of all tetrahedra. Be sure the orientation of your s
 """
 function volume(mesh::Mesh) where {VT, FT}
     return sum(volume, mesh)
+end
+
+function Base.merge(meshes::AbstractVector{<: Mesh})
+    if isempty(meshes)
+        error("No meshes to merge")
+    elseif length(meshes) == 1
+        return meshes[1]
+    else
+        m1 = meshes[1]
+        ps = copy(coordinates(m1))
+        fs = copy(faces(m1))
+        for mesh in Iterators.drop(meshes, 1)
+            append!(fs, map(f-> f .+ length(ps), faces(mesh)))
+            append!(ps, coordinates(mesh))
+        end
+        return Mesh(ps, fs)
+    end
 end
