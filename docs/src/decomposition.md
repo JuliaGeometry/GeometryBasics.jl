@@ -7,15 +7,21 @@ To display geometry primitives, they need to be decomposable.
 This can be done for any arbitrary primitive, by overloading the following interface:
 
 ```julia
-# Lets take SimpleRectangle as an example:
-# Minimal set of decomposable attributes to build up a triangle mesh
+# Let's take SimpleRectangle as an example:
+# Below is a minimal set of decomposable attributes to build up a triangle mesh:
 isdecomposable(::Type{T}, ::Type{HR}) where {T<:Point, HR<:SimpleRectangle} = true
 isdecomposable(::Type{T}, ::Type{HR}) where {T<:Face, HR<:SimpleRectangle} = true
 
-# Example implementation of decompose for points
+# This is an example implementation of `decompose` for points.
 function GeometryBasics.decompose(P::Type{Point{3, PT}}, r::SimpleRectangle, resolution=(2,2)) where PT
     w,h = resolution
-    vec(P[(x,y,0) for x=range(r.x, stop = r.x+r.w, length = w), y=range(r.y, stop = r.y+r.h, length = h)])
+    vec(
+        PT[
+            (x,y,0)
+            for x in range(r.x, stop = r.x+r.w, length = w),
+                y in range(r.y, stop = r.y+ r .h, length = h)
+        ]
+    )
 end
 
 function GeometryBasics.decompose(::Type{T}, r::SimpleRectangle, resolution=(2,2)) where T <: Face
@@ -42,4 +48,4 @@ normals(m) # automatically calculated from mesh
 ```
 
 As you can see, the normals are automatically calculated only with the faces and points.
-You can overwrite that behavior, by also defining decompose for the `Normal` type!
+You can overwrite that behavior by also defining decompose for the `Normal` type!
