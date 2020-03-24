@@ -18,6 +18,7 @@ makedocs(
         "meshes.md",
         "decomposition.md",
         "distancefields.md",
+        "metadata.jl",
         "api.md",
     ],
     modules = [GeometryTypes]
