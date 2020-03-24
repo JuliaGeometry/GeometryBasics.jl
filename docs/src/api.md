@@ -1,5 +1,7 @@
 # API Reference
 
+## Exports
+
 ```@autodocs
 Modules = [GeometryBasics]
 Order   = [:module, :constant, :type, :function, :macro]
@@ -7,7 +9,7 @@ Public  = true
 Private = false
 ```
 
-## What isn't
+## Private
 
 ```@autodocs
 Modules = [GeometryBasics]
