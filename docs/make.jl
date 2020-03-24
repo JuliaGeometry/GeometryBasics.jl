@@ -12,9 +12,12 @@ makedocs(
     sitename = "GeometryBasics.jl",
     pages = [
         "index.md",
+        "primitives.md",
         "rectangles.md",
         "polygons.md",
         "meshes.md",
+        "decomposition.md",
+        "distancefields.md",
         "api.md",
     ],
     modules = [GeometryTypes]
