@@ -1,4 +1,6 @@
 """
+    TupleView{T, N, Skip, A}
+
 TupleView, groups elements of an array as tuples.
 N is the dimension of the tuple, M tells how many elements to skip to the next tuple.
 By default TupleView{N} defaults to skip N items.
@@ -92,6 +94,8 @@ end
 end
 
 """
+    FaceView{Elemnt, Point, Face, P, F}
+
 FaceView enables to link one array of points via a face array, to generate one
 abstract array of elements.
 E.g., this becomes possible:

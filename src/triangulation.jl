@@ -13,6 +13,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =#
 """
+    area(vertices::AbstractVector{AbstractPoint{3}}, face::TriangleFace)
+
 Calculate the area of one triangle.
 """
 function area(vertices::AbstractVector{<:AbstractPoint{3, VT}}, face::TriangleFace{FT}) where {VT,FT}
@@ -21,6 +23,8 @@ function area(vertices::AbstractVector{<:AbstractPoint{3, VT}}, face::TriangleFa
 end
 
 """
+    area(vertices::AbstractVector{AbstractPoint{3}}, faces::AbstractVector{TriangleFace})
+
 Calculate the area of all triangles.
 """
 function area(
@@ -53,6 +57,8 @@ function area(contour::AbstractVector{Point{3, T}}) where {T}
 end
 
 """
+    in(point, triangle)
+
  InsideTriangle decides if a point P is Inside of the triangle
  defined by A, B, C.
 """

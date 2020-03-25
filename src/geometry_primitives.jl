@@ -181,6 +181,8 @@ end
 # Some more primitive types
 
 """
+    HyperSphere{N, T}
+
 A `HyperSphere` is a generalization of a sphere into N-dimensions.
 A `center` and radius, `r`, must be specified.
 """
@@ -189,16 +191,22 @@ struct HyperSphere{N, T} <: GeometryPrimitive{N, T}
     r::T
 end
 """
-An alias for a HyperSphere of dimension 2. i.e. `Circle{T}` -> `HyperSphere{2, T}`
+    Circle{T}
+
+An alias for a HyperSphere of dimension 2. (i.e. `HyperSphere{2, T}`)
 """
 const Circle{T} = HyperSphere{2, T}
 
 """
-An alias for a HyperSphere of dimension 3. i.e. `Sphere{T}` -> `HyperSphere{3, T}`
+    Sphere{T}
+
+An alias for a HyperSphere of dimension 3. (i.e. `HyperSphere{3, T}`)
 """
 const Sphere{T} = HyperSphere{3, T}
 
 """
+    Quad{T}
+
 A rectangle in 3D space.
 """
 struct Quad{T} <: GeometryPrimitive{3, T}
@@ -219,6 +227,8 @@ struct Particle{N, T} <: GeometryPrimitive{N, T}
 end
 
 """
+    Cylinder{N, T}
+
 A `Cylinder` is a 2D rectangle or a 3D cylinder defined by its origin point,
 its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """
@@ -229,6 +239,9 @@ struct Cylinder{N, T} <: GeometryPrimitive{N, T}
 end
 
 """
+    Cylinder2{T}
+    Cylinder3{T}
+
 A `Cylinder2` or `Cylinder3` is a 2D/3D cylinder defined by its origin point,
 its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """

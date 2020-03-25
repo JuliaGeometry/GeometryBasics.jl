@@ -1,5 +1,7 @@
 
 """
+    HyperRectangle{N, T}
+
 A `HyperRectangle` is a generalization of a rectangle into N-dimensions.
 Formally it is the cartesian product of intervals, which is represented by the
 `origin` and `width` fields, whose indices correspond to each of the `N` axes.
@@ -61,6 +63,8 @@ end
 
 
 """
+    Rect(vals::Number...)
+
 ```
 Rect(vals::Number...)
 ```
@@ -162,6 +166,8 @@ width(prim::Rect) = prim.widths[1]
 height(prim::Rect) = prim.widths[2]
 
 """
+    split(rectangle, axis, value)
+
 Splits an Rect into two along an axis at a given location.
 """
 split(b::Rect, axis, value::Integer) = _split(b, axis, value)
@@ -180,6 +186,8 @@ end
 # Algebraic operations
 
 """
+    *(m::Mat, h::Rect)
+
 Transform a `Rect` using a matrix. Maintains axis-align properties
 so a significantly larger Rect may be generated.
 """
@@ -310,11 +318,15 @@ function Base.union(h1::Rect{N}, h2::Rect{N}) where N
 end
 
 """
+    diff(h1::Rect, h2::Rect)
+
 Perform a difference between two Rects.
 """
 diff(h1::Rect, h2::Rect) = h1
 
 """
+    intersect(h1::Rect, h2::Rect)
+
 Perform a intersection between two Rects.
 """
 function intersect(h1::Rect{N}, h2::Rect{N}) where N
@@ -457,6 +469,8 @@ end
 # Containment
 
 """
+    contains(b1::Rect, b2::Rect)
+
 Check if Rects are contained in each other. This does not use
 strict inequality, so Rects may share faces and this will still
 return true.
@@ -471,6 +485,8 @@ function Base.in(b2::Rect{N}, b1::Rect{N}) where N
 end
 
 """
+    contains(b1::Rect{N, T}, pt::VecTypes)
+
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
