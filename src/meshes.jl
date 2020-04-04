@@ -1,4 +1,5 @@
 const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
+
 coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
 faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
 
@@ -160,4 +161,9 @@ function Base.merge(meshes::AbstractVector{<: Mesh})
         end
         return Mesh(ps, fs)
     end
+end
+
+function decompose_normals(mesh::Mesh)
+    normal_vectors = normals(mesh)
+    return convert(Vector{Vec3f0}, normal_vectors)
 end

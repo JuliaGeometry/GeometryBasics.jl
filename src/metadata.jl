@@ -79,21 +79,8 @@ macro meta_type(name, mainfield, supertype, params...)
         GeometryBasics.meta(x::$MetaName) = getfield(x, :meta)
         GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
 
-        function (MT::Type{<: $MetaName})(args...; meta...)
-            nt = values(meta)
-            obj = MetaFree(MT)(args...)
-            return MT(obj, nt)
-        end
-
-        function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
-            NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
-        end
-
-        function StructArrays.createinstance(
-                ::Type{$MetaName{$(params...), Typ, Names, Types}},
-                metafree, args...
-            ) where {$(params...), Typ, Names, Types}
-            $MetaName(metafree, NamedTuple{Names, Types}(args))
+        function GeometryBasics.meta(main::$supertype; meta...)
+            return $MetaName(main; meta...)
         end
 
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
@@ -114,13 +101,31 @@ macro meta_type(name, mainfield, supertype, params...)
             return StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
         end
 
+        function (MT::Type{<: $MetaName})(args...; meta...)
+            nt = values(meta)
+            obj = MetaFree(MT)(args...)
+            return MT(obj, nt)
+        end
+
+        function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
+            NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
+        end
+
+        function StructArrays.createinstance(
+                ::Type{$MetaName{$(params...), Typ, Names, Types}},
+                metafree, args...
+            ) where {$(params...), Typ, Names, Types}
+            $MetaName(metafree, NamedTuple{Names, Types}(args))
+        end
+
+
+
     end
     return esc(expr)
 end
 
 @meta_type(Point, position, AbstractPoint, Dim, T)
 Base.getindex(x::PointMeta, idx::Int) = getindex(metafree(x), idx)
-
 
 @meta_type(NgonFace, ngon, AbstractNgonFace, N, T)
 Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
@@ -129,7 +134,6 @@ Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
-
 
 """
     pointmeta(mesh::Mesh; meta_data...)

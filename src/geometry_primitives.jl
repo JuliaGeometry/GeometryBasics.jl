@@ -128,6 +128,14 @@ function normals(vertices::AbstractVector{Point{3, T}}, faces::AbstractVector{F}
     return normals_result
 end
 
+function normals(mesh::AbstractMesh)
+    if hasproperty(mesh, :normals)
+        return mesh.normals
+    else
+        return normals(coordinates(mesh), faces(mesh))
+    end
+end
+
 ##
 # Some more primitive types
 

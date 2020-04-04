@@ -5,7 +5,6 @@ function unit(::Type{T}, i::Integer) where T <: StaticVector
     end)
 end
 
-
 macro fixed_vector(name, parent)
     esc(quote
 
