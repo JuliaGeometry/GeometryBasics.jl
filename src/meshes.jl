@@ -78,6 +78,10 @@ function triangle_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     return Mesh(decompose(Point{N, T}, primitive), decompose(GLTriangleFace, primitive))
 end
 
+function gl_triangle_mesh(primitive::GeometryPrimitive{N}, nvertices) where {N}
+    return Mesh(decompose(Point{N, Float32}, primitive, nvertices), decompose(GLTriangleFace, primitive, nvertices))
+end
+
 function gl_triangle_mesh(primitive::GeometryPrimitive{N}) where {N}
     return Mesh(decompose(Point{N, Float32}, primitive), decompose(GLTriangleFace, primitive))
 end
@@ -97,11 +101,19 @@ function uv_triangle_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     return Mesh(meta(points; uv=uv), fs)
 end
 
-function gl_uv_triangle_mesh3d(primitive::GeometryPrimitive)
-    points = decompose(Point3f0, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    uv = decompose_uv(primitive)
+function gl_uv_triangle_mesh3d(primitive::GeometryPrimitive, nvertices=25)
+    points = decompose(Point3f0, primitive, nvertices)
+    fs = decompose(GLTriangleFace, primitive, nvertices)
+    uv = decompose_uv(primitive, nvertices)
     return Mesh(meta(points; uv=uv), fs)
+end
+
+function gl_uv_normal_triangle_mesh3d(primitive::GeometryPrimitive, nvertices=25)
+    points = decompose(Point3f0, primitive, nvertices)
+    fs = decompose(GLTriangleFace, primitive, nvertices)
+    uv = decompose_uv(primitive, nvertices)
+    normals = decompose_normals(primitive, nvertices)
+    return Mesh(meta(points; uv=uv, normals=normals), fs)
 end
 
 function gl_uvw_triangle_mesh3d(primitive::GeometryPrimitive)
@@ -118,11 +130,18 @@ function gl_uv_triangle_mesh2d(primitive::GeometryPrimitive)
     return Mesh(meta(points; uv=uv), fs)
 end
 
-function gl_normal_mesh3d(primitive::GeometryPrimitive)
-    points = decompose(Point3f0, primitive)
-    fs = decompose(GLTriangleFace, primitive)
+function gl_normal_mesh3d(primitive::GeometryPrimitive, nfaces=30)
+    points = decompose(Point3f0, primitive, nfaces)
+    fs = decompose(GLTriangleFace, primitive, nfaces)
     return Mesh(meta(points; normals=normals(points, fs)), fs)
 end
+
+function gl_normal_mesh3d(points, faces)
+    _points = convert(Vector{Point3f0}, points)
+    _faces = decompose(GLTriangleFace, faces)
+    return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
+end
+
 
 function normal_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
     points = decompose(Point{N, T}, primitive)
@@ -166,4 +185,12 @@ end
 function decompose_normals(mesh::Mesh)
     normal_vectors = normals(mesh)
     return convert(Vector{Vec3f0}, normal_vectors)
+end
+
+function decompose_uv(mesh::Mesh)
+    if hasproperty(mesh, :uv)
+        return convert(Vector{Vec2f0}, mesh.uv)
+    else
+        error("Mesh doesn't have UV texture coordinates")
+    end
 end

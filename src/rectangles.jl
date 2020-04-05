@@ -527,17 +527,18 @@ function normals(rect::Rect2D, nvertices=(2,2))
     return Iterators.repeated((0,0,1), prod(nvertices))
 end
 
-function coordinates(rect::Rect3D)
+function coordinates(rect::Rect3D, nvertices=1)
+    # TODO use n
     w = widths(rect)
     o = origin(rect)
     return (ntuple(j-> o[j] + ((i >> (j - 1)) & 1) * w[j], 3) for i in 0:7)
 end
 
-function texturecoordinates(rect::Rect3D)
+function texturecoordinates(rect::Rect3D, nvertices=1)
     return coordinates(Rect3D(0,0,0,1,1,1))
 end
 
-function faces(rect::Rect3D)
+function faces(rect::Rect3D, nvertices=1)
     return QuadFace{Int}[
         (1,3,4,2),
         (2,4,8,6),

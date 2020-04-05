@@ -3,6 +3,7 @@ Abstract Geometry in R{Dim} with Number type T
 """
 abstract type AbstractGeometry{Dim, T <: Number} end
 abstract type GeometryPrimitive{Dim, T} <: AbstractGeometry{Dim, T} end
+Base.ndims(x::AbstractGeometry{Dim}) where Dim = Dim
 
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
@@ -44,7 +45,6 @@ Face index, connecting points to form a simplex
 const TetrahedronFace{T} = SimplexFace{4, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
 
-
 """
 Face index, connecting points to form an Ngon
 """
@@ -57,6 +57,7 @@ const QuadFace{T} = NgonFace{4, T}
 Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
 
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
+Face(F::Type{NgonFace{N, FT}}, ::Type{T}) where {FT, N, T} = F
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -106,6 +107,10 @@ function Polytope(::Type{<: NNgon{N}}, P::Type{<: AbstractPoint{NDim, T}}) where
     Ngon{NDim, T, N, P}
 end
 
+
+const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Ngon{Dim, T, 2, P}
+const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
+
 # Simplex{D, T, 3} & Ngon{D, T, 3} are both representing a triangle.
 # Since Ngon is supposed to be flat and a triangle is flat, lets prefer Ngon
 # for triangle:
@@ -144,8 +149,6 @@ struct Simplex{
 end
 
 const NSimplex{N} = Simplex{Dim, T, N, P} where {Dim, T, P}
-const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 2, P}
-const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
 const TetrahedronP{T, P <: AbstractPoint{3, T}} = Simplex{3, T, 4, P}
 const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
 

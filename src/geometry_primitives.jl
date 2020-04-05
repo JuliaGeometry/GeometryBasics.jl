@@ -73,9 +73,15 @@ end
 function decompose(::Type{T}, primitive::AbstractVector{T}) where {T}
     return primitive
 end
+
+function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractFace}
+    return primitive
+end
+
 function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractPoint}
     return primitive
 end
+
 function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
     return collect_with_eltype(P, coordinates(primitive, args...))
 end
@@ -83,6 +89,11 @@ end
 function decompose(::Type{F}, primitive, args...) where {F<:AbstractFace}
     return collect_with_eltype(F, faces(primitive, args...))
 end
+
+function decompose(::Type{Point}, primitive::GeometryPrimitive{Dim}, args...) where {Dim}
+    return collect_with_eltype(Point{Dim, Float32}, coordinates(primitive, args...))
+end
+
 
 function decompose_uv(primitive::GeometryPrimitive, args...)
     return collect_with_eltype(Vec2f0, texturecoordinates(primitive, args...))
@@ -113,10 +124,10 @@ normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
 ```
 Compute all vertex normals.
 """
-function normals(vertices::AbstractVector{Point{3, T}}, faces::AbstractVector{F}) where {T, F <: NgonFace}
+function normals(vertices::AbstractVector{<: AbstractPoint{3, T}}, faces::AbstractVector{F}) where {T, F <: NgonFace}
     normals_result = zeros(Vec{3, T}, length(vertices)) # initilize with same type as verts but with 0
     for face in faces
-        v = vertices[face]
+        v = metafree.(vertices[face])
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(v[1], v[2], v[3])
         for i =1:length(F)

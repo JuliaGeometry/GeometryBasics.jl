@@ -28,7 +28,7 @@ module GeometryBasics
     export OffsetInteger, ZeroIndex, OneIndex, GLIndex
     export FaceView, SimpleFaceView
     export AbstractPoint, PointMeta, PointWithUV
-    export decompose, coordinates, faces, normals
+    export decompose, coordinates, faces, normals, decompose_uv, decompose_normals
     export GLTriangleFace, GLNormalMesh3D, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
     export AbstractMesh, Mesh, TriangleMesh
     export GLNormalMesh2D, PlainTriangleMesh
@@ -43,7 +43,7 @@ module GeometryBasics
 
     # mesh creation functions
     export triangle_mesh, gl_triangle_mesh, uv_triangle_mesh
-    export gl_uv_triangle_mesh3d, gl_normal_mesh3d, normal_mesh
+    export gl_uv_triangle_mesh3d, gl_normal_mesh3d, normal_mesh, gl_uv_normal_triangle_mesh3d
 
     export height, origin, radius, width, widths, xwidth, yheight
     export HyperSphere, Circle, Sphere

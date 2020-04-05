@@ -117,9 +117,6 @@ macro meta_type(name, mainfield, supertype, params...)
             ) where {$(params...), Typ, Names, Types}
             $MetaName(metafree, NamedTuple{Names, Types}(args))
         end
-
-
-
     end
     return esc(expr)
 end
@@ -141,9 +138,22 @@ Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Attaches metadata to the coordinates of a mesh
 """
 function pointmeta(mesh::Mesh; meta_data...)
-    Mesh(meta(coordinates(mesh); meta_data...), faces(mesh))
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    foreach(k-> delete!(attr, k), keys(meta_data))
+    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
 end
 
+function pop_pointmeta(mesh::Mesh, property::Symbol)
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    m = pop!(attr, property)
+    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
+end
 
 """
     facemeta(mesh::Mesh; meta_data...)
