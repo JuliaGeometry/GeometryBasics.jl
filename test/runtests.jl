@@ -300,3 +300,23 @@ end
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
 end
+
+@testset "modifying meta" begin
+    xx = rand(10)
+    points = rand(Point3f0, 10)
+    m = GeometryBasics.Mesh(meta(points, xx=xx), GLTriangleFace[(1,2,3), (3,4,5)])
+    color = rand(10)
+    m = GeometryBasics.pointmeta(m; color=color)
+
+    @test hasproperty(m, :xx)
+    @test hasproperty(m, :color)
+
+    @test m.xx === xx
+    @test m.color === color
+
+    m, colpopt = GeometryBasics.pop_pointmeta(m, :color)
+    m, xxpopt = GeometryBasics.pop_pointmeta(m, :xx)
+    @test propertynames(m) == (:position,)
+    @test colpopt === color
+    @test xxpopt === xx
+end
