@@ -130,9 +130,15 @@ function gl_uv_triangle_mesh2d(primitive::GeometryPrimitive)
     return Mesh(meta(points; uv=uv), fs)
 end
 
-function gl_normal_mesh3d(primitive::GeometryPrimitive, nfaces=30)
-    points = decompose(Point3f0, primitive, nfaces)
-    fs = decompose(GLTriangleFace, primitive, nfaces)
+function gl_normal_mesh3d(primitive::GeometryPrimitive)
+    points = decompose(Point3f0, primitive)
+    fs = decompose(GLTriangleFace, primitive)
+    return Mesh(meta(points; normals=normals(points, fs)), fs)
+end
+
+function gl_normal_mesh3d(primitive::GeometryPrimitive, nvertices)
+    points = decompose(Point3f0, primitive, nvertices)
+    fs = decompose(GLTriangleFace, primitive, nvertices)
     return Mesh(meta(points; normals=normals(points, fs)), fs)
 end
 

@@ -49,7 +49,7 @@ module GeometryBasics
     export HyperSphere, Circle, Sphere
     export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
     export Rect, Rect2D, Rect3D, IRect, IRect2D, IRect3D, FRect, FRect2D, FRect3D
-    export before, during, contains, isinside, isoutside, meets, overlaps, intersects, finishes
+    export before, during, isinside, isoutside, meets, overlaps, intersects, finishes
     export centered, direction, area, update
     export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
     export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
