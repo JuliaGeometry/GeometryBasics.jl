@@ -80,7 +80,7 @@ end
             (4,5,6)
         ]
 
-        @test decompose(Point3{Float64},s,8) ≈ positions
+        @test decompose(Point3{Float64}, s, 8) ≈ positions
 
         faces = TriangleFace{Int}[
             (3, 2, 1),
@@ -103,11 +103,11 @@ end
         ]
         @test faces == decompose(TriangleFace{Int}, s, 8)
 
-        m = triangle_mesh(s, 8)
+        m = triangle_mesh(s, nvertices=8)
 
         @test GeometryBasics.faces(m) == faces
         @test GeometryBasics.coordinates(m) ≈ positions
-        m = gl_normal_mesh3d(s)# just test that it works without explicit resolution parameter
+        m = normal_mesh(s)# just test that it works without explicit resolution parameter
         @test m isa GLNormalMesh
     end
 end
@@ -117,26 +117,26 @@ end
     a = Rect(Vec(0,0),Vec(1,1))
     pt_expa = Point{2,Int}[(0,0), (1,0), (0,1), (1,1)]
     @test decompose(Point{2,Int},a) == pt_expa
-    mesh = gl_normal_mesh3d(a)
+    mesh = normal_mesh(a)
     @test decompose(Point2f0, mesh) == pt_expa
 
     b = Rect(Vec(1,1,1),Vec(1,1,1))
     pt_expb = Point{3,Int}[(1,1,1),(2,1,1),(1,2,1),(2,2,1),(1,1,2),(2,1,2),(1,2,2),(2,2,2)]
     @test decompose(Point{3,Int}, b) == pt_expb
-    mesh = gl_normal_mesh3d(b)
+    mesh = normal_mesh(b)
 end
 
 
 NFace = NgonFace
 
 @testset "Faces" begin
-    @test simplex_convert(GLTriangleFace, QuadFace{Int}(1,2,3,4)) == (GLTriangleFace(1,2,3), GLTriangleFace(1,3,4))
-    @test simplex_convert(NFace{3, ZeroIndex{Int}}, QuadFace{ZeroIndex{Int}}(1,2,3,4)) == (NFace{3,ZeroIndex{Int}}(1,2,3), NFace{3, ZeroIndex{Int}}(1,3,4))
-    @test simplex_convert(NFace{3, OffsetInteger{3, Int}}, NFace{4, OffsetInteger{2, Int}}(1,2,3,4)) == (
+    @test convert_simplex(GLTriangleFace, QuadFace{Int}(1,2,3,4)) == (GLTriangleFace(1,2,3), GLTriangleFace(1,3,4))
+    @test convert_simplex(NFace{3, ZeroIndex{Int}}, QuadFace{ZeroIndex{Int}}(1,2,3,4)) == (NFace{3,ZeroIndex{Int}}(1,2,3), NFace{3, ZeroIndex{Int}}(1,3,4))
+    @test convert_simplex(NFace{3, OffsetInteger{3, Int}}, NFace{4, OffsetInteger{2, Int}}(1,2,3,4)) == (
             NFace{3, OffsetInteger{3, Int}}(1,2,3),
             NFace{3, OffsetInteger{3, Int}}(1,3,4)
     )
-    @test simplex_convert(LineFace{Int}, QuadFace{Int}(1,2,3,4)) == (
+    @test convert_simplex(LineFace{Int}, QuadFace{Int}(1,2,3,4)) == (
         LineFace{Int}(1,2),
         LineFace{Int}(2,3),
         LineFace{Int}(3,4),
@@ -204,7 +204,7 @@ end
 
     # TODO circle mesh cant be 1:1 assembled from vertices + faces,
     # since middle point is missing...
-    # mesh = triangle_mesh(circle, 32)
+    # mesh = triangle_mesh(circle, nvertices=32)
     # # end-1, since we add a middle point for the mesh!
     # @test decompose(Point2f0, mesh)[1:end-1] ≈ decompose(Point2f0, circle, 32)
 

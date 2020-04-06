@@ -105,9 +105,9 @@ end
 Triangulates a Polygon given as an `AbstractArray{Point}` without holes.
 It will return a Vector{`facetype`}, defining indexes into `contour`
 """
-function faces(points::AbstractArray{P}, facetype=GLTriangleFace) where P <: AbstractPoint
+function decompose(::Type{FaceType}, points::AbstractArray{P}) where {P<:AbstractPoint, FaceType <: AbstractFace}
     #= allocate and initialize list of Vertices in polygon =#
-    result = facetype[]
+    result = FaceType[]
 
     # the algorithm doesn't like closed contours
     contour = if isapprox(last(points), first(points))
@@ -148,7 +148,7 @@ function faces(points::AbstractArray{P}, facetype=GLTriangleFace) where P <: Abs
             #= true names of the vertices =#
             a = V[u]; b = V[v]; c = V[w];
             #= output Triangle =#
-            push!(result, facetype(a, b, c))
+            push!(result, convert_simplex(FaceType, TriangleFace(a, b, c))...)
             #= remove v from remaining polygon =#
             s = v; t = v+1
             while t<=nv

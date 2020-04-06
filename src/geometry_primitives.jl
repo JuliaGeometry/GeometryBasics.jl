@@ -4,18 +4,18 @@
 Base.extrema(primitive::GeometryPrimitive) = (minimum(primitive), maximum(primitive))
 function widths(x::AbstractRange)
     mini, maxi = Float32.(extrema(x))
-    maxi - mini
+    return maxi - mini
 end
 
 ##
 # conversion & decompose
 
 """
-    simplex_convert(::Type{Face{3}}, f::Face{N})
+    convert_simplex(::Type{Face{3}}, f::Face{N})
 
 Triangulate an N-Face into a tuple of triangular faces.
 """
-@generated function simplex_convert(::Type{TriangleFace{T}}, f::NgonFace{N}) where {T, N}
+@generated function convert_simplex(::Type{TriangleFace{T}}, f::NgonFace{N}) where {T, N}
     3 <= N || error("decompose not implented for N <= 3 yet. N: $N")# other wise degenerate
     v = Expr(:tuple)
     for i = 3:N
@@ -25,11 +25,11 @@ Triangulate an N-Face into a tuple of triangular faces.
 end
 
 """
-    simplex_convert(::Type{Face{2}}, f::Face{N})
+    convert_simplex(::Type{Face{2}}, f::Face{N})
 
 Extract all line segments in a Face.
 """
-@generated function simplex_convert(::Type{LineFace{T}}, f::NgonFace{N}) where {T, N}
+@generated function convert_simplex(::Type{LineFace{T}}, f::NgonFace{N}) where {T, N}
     2 <= N || error("decompose not implented for N <= 2 yet. N: $N")# other wise degenerate
 
     v = Expr(:tuple)
@@ -41,19 +41,18 @@ Extract all line segments in a Face.
     return v
 end
 
-to_pointn(::Type{T}, x) where T<:Point = simplex_convert(T, x)[1]
+to_pointn(::Type{T}, x) where T<:Point = convert_simplex(T, x)[1]
 
-simplex_convert(::Type{Point}, x::Point) = (x,)
-function simplex_convert(::Type{Point{N, T}}, x) where {N, T}
+convert_simplex(::Type{Point}, x::Point) = (x,)
+function convert_simplex(::Type{Point{N, T}}, x) where {N, T}
     N2 = length(x)
     return (Point{N, T}(ntuple(i-> i <= N2 ? T(x[i]) : T(0), N)),)
 end
 
-function simplex_convert(::Type{Vec{N, T}}, x) where {N, T}
+function convert_simplex(::Type{Vec{N, T}}, x) where {N, T}
     N2 = length(x)
     return (Vec{N, T}(ntuple(i-> i <= N2 ? T(x[i]) : T(0), N)),)
 end
-
 
 function collect_with_eltype(::Type{T}, iter) where T
     # TODO we could be super smart about allocating the right length
@@ -61,13 +60,26 @@ function collect_with_eltype(::Type{T}, iter) where T
     # will need double the length etc - but could all be figured out ;)
     result = T[]
     for element in iter
-        # simplex_convert always returns a tuple,
+        # convert_simplex always returns a tuple,
         # so that e.g. convert(Triangle, quad) can return 2 elements
-        for telement in simplex_convert(T, element)
+        for telement in convert_simplex(T, element)
             push!(result, telement)
         end
     end
     return result
+end
+
+
+function faces(primitive, nvertices=30)
+    # doesn't have any specific algorithm to generate faces
+    # so will try to triangulate the coordinates!
+    return nothing
+end
+
+function decompose(::Type{F}, primitive, args...) where {F<:AbstractFace}
+    f = faces(primitive, args...)
+    f === nothing && return nothing
+    return collect_with_eltype(F, f)
 end
 
 function decompose(::Type{T}, primitive::AbstractVector{T}) where {T}
@@ -86,26 +98,44 @@ function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
     return collect_with_eltype(P, coordinates(primitive, args...))
 end
 
-function decompose(::Type{F}, primitive, args...) where {F<:AbstractFace}
-    return collect_with_eltype(F, faces(primitive, args...))
-end
+
 
 function decompose(::Type{Point}, primitive::GeometryPrimitive{Dim}, args...) where {Dim}
     return collect_with_eltype(Point{Dim, Float32}, coordinates(primitive, args...))
 end
 
+# Dispatch type to make `decompose(UV{Vec2f0}, priomitive)` work
+struct UV{T} end
+UV(::Type{T}) where T = UV{T}()
+struct UVW{T} end
+UVW(::Type{T}) where T = UVW{T}()
+struct Normal{T} end
+Normal(::Type{T}) where T = Normal{T}()
 
-function decompose_uv(primitive::GeometryPrimitive, args...)
-    return collect_with_eltype(Vec2f0, texturecoordinates(primitive, args...))
+function decompose(::UV{T}, primitive::GeometryPrimitive, args...) where T
+    return collect_with_eltype(T, texturecoordinates(primitive, args...))
 end
 
-function decompose_uvw(primitive::GeometryPrimitive, args...)
-    return collect_with_eltype(Vec3f0, texturecoordinates(primitive, args...))
+decompose_uv(args...) = decompose(UV(Vec2f0), args...)
+
+function decompose(::UVW{T}, primitive::GeometryPrimitive, args...) where T
+    return collect_with_eltype(T, texturecoordinates(primitive, args...))
 end
 
-function decompose_normals(primitive::GeometryPrimitive, args...)
-    return collect_with_eltype(Vec3f0, normals(primitive, args...))
+function normals(primitive, nvertices=30)
+    # doesn't have any specific algorithm to generate normals
+    # so will be generated from faces + positions
+    return nothing
 end
+
+
+function decompose(::Normal{T}, primitive::GeometryPrimitive, args...) where T
+    n = normals(primitive, args...)
+    n === nothing && return nothing
+    return collect_with_eltype(T, n)
+end
+
+decompose_normals(args...) = decompose(Normal(Vec3f0), args...)
 
 """
 The unnormalized normal of three vertices.
@@ -124,8 +154,10 @@ normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
 ```
 Compute all vertex normals.
 """
-function normals(vertices::AbstractVector{<: AbstractPoint{3, T}}, faces::AbstractVector{F}) where {T, F <: NgonFace}
-    normals_result = zeros(Vec{3, T}, length(vertices)) # initilize with same type as verts but with 0
+function normals(vertices::AbstractVector{<: AbstractPoint{3, T}},
+                 faces::AbstractVector{F};
+                 normaltype=Vec{3, T}) where {T, F <: NgonFace}
+    normals_result = zeros(normaltype, length(vertices)) # initilize with same type as verts but with 0
     for face in faces
         v = metafree.(vertices[face])
         # we can get away with two edges since faces are planar.
@@ -230,6 +262,8 @@ function rotation(c::Cylinder{3, T}) where T
     return hcat(v, w, u)
 end
 
+best_nvertices(x::Cylinder{2}) = (2, 2)
+
 function coordinates(c::Cylinder{2, T}, nvertices=(2, 2)) where T
     r = Rect(c.origin[1] - c.r/2, c.origin[2], c.r, height(c))
     M = rotation(c)
@@ -238,9 +272,19 @@ function coordinates(c::Cylinder{2, T}, nvertices=(2, 2)) where T
     return (M * (to_pointn(Point3{T}, point) .- vo) .+ vo for point in points)
 end
 
+function faces(sphere::Cylinder{2}, nvertices=(2, 2))
+    return faces(Rect(0, 0, 1, 1), nvertices)
+end
+
+best_nvertices(x::Cylinder{3}) = 30
+
 function coordinates(c::Cylinder{3, T}, nvertices=30) where T
-    isodd(nvertices) && (nvertices = 2 * div(nvertices, 2))
-    nbv = div(nvertices, 2)
+    if isodd(nvertices)
+        nvertices = 2 * (nvertices ÷ 2)
+    end
+    nvertices = max(8, nvertices);
+    nbv = nvertices ÷ 2
+
     M = rotation(c)
     h = height(c)
     range = 1:(2 * nbv + 2)
@@ -257,15 +301,6 @@ function coordinates(c::Cylinder{3, T}, nvertices=30) where T
     end
 
     return (inner(i) for i in range)
-end
-
-function texturecoordinates(s::Cylinder, nvertices=24)
-    ux = LinRange(0, 1, nvertices)
-    return ivec((Vec(φ, θ) for θ in reverse(ux), φ in ux))
-end
-
-function faces(sphere::Cylinder{2}, nvertices=(2, 2))
-    return faces(Rect(0, 0, 1, 1), nvertices)
 end
 
 function faces(c::Cylinder{3}, facets=30)
@@ -285,10 +320,6 @@ function faces(c::Cylinder{3}, facets=30)
         i%2 == 1 ? push!(indexes, (indexes[i][1], indexes[i][3], 2*nbv+1)) : push!(indexes,(indexes[i][2], indexes[i][1], 2*nbv+2))
     end
     return indexes
-end
-
-function normals(s::Cylinder{T}, nvertices=24) where T
-    return coordinates(Sphere(Point{3, T}(0), 1f0), nvertices)
 end
 
 ##
@@ -336,4 +367,26 @@ end
 
 function normals(s::Sphere{T}, nvertices=24) where {T}
     return coordinates(Sphere(Point{3, T}(0), 1), nvertices)
+end
+
+function coordinates(p::Pyramid{T}, nvertices=nothing) where {T}
+    leftup = Point{3, T}(-p.width , p.width, 0) / 2
+    leftdown = Point(-p.width, -p.width, 0) / 2
+    tip = Point{3, T}(p.middle + Point{3, T}(0, 0, p.length))
+    lu = Point{3, T}(p.middle + leftup)
+    ld = Point{3, T}(p.middle + leftdown)
+    ru = Point{3, T}(p.middle - leftdown)
+    rd = Point{3, T}(p.middle - leftup)
+    return Point{3, T}[
+        tip, rd, ru,
+        tip, ru, lu,
+        tip, lu, ld,
+        tip, ld, rd,
+        rd,  ru, lu,
+        lu,  ld, rd
+    ]
+end
+
+function faces(r::Pyramid, nvertices=nothing) where FT
+    return (TriangleFace(triangle) for triangle in TupleView{3}(1:18))
 end

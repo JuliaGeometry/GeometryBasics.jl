@@ -66,93 +66,108 @@ const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
-function triangle_mesh(primitive, nvertices=25)
-    return Mesh(decompose(Point3f0, primitive, nvertices), decompose(GLTriangleFace, primitive, nvertices))
+best_nvertices(any_primitive) = 24
+best_pointtype(::GeometryPrimitive{N, T}) where {N, T} = Point{N, T}
+
+
+"""
+    mesh(primitive::GeometryPrimitive;
+         pointtype=best_pointtype(primitive), facetype=GLTriangle,
+         uvtype=nothing, normaltype=nothing, nvertices=nothing)
+
+Creates a mesh from `primitive`.
+Uses the element types from the keyword arguments to create the attributes.
+The attributes that have their type set to nothing are not added to the mesh.
+`nvertices` specifies the numbers of vertices the primitive is decomposed to.
+Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is grid based.
+It also only losely correlates to the number of vertices, depending on the algorithm used.
+#TODO: find a better number here!
+"""
+function mesh(primitive::GeometryPrimitive;
+              pointtype=best_pointtype(primitive), facetype=GLTriangleFace,
+              uv=nothing, normaltype=nothing, nvertices=nothing)
+
+    if nvertices === nothing
+        nvertices = best_nvertices(primitive)
+    end
+
+    positions = decompose(pointtype, primitive, nvertices)
+    faces = decompose(facetype, primitive, nvertices)
+    # If faces returns nothing for primitive, we try to triangulate!
+    if faces === nothing
+        # triangulation.jl
+        faces = decompose(facetype, positions)
+    end
+    attributes = Dict{Symbol, Any}()
+
+    if uv !== nothing
+        attributes[:uv] = decompose(UV(uv), primitive, nvertices)
+    end
+
+    if normaltype !== nothing
+        primitive_normals = decompose(Normal(normaltype), primitive, nvertices)
+        if primitive_normals !== nothing
+            attributes[:normals] = primitive_normals
+        else
+            # Normals not implemented for primitive, so we calculate them!
+            attributes[:normals] = normals(positions, faces)
+        end
+    end
+
+    return Mesh(meta(positions; attributes...), faces)
 end
 
-function triangle_mesh(primitive::AbstractVector{<:AbstractPoint})
-    return Mesh(primitive, decompose(GLTriangleFace, primitive))
+"""
+    mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
+         normaltype=nothing)
+Polygon triangluation!
+"""
+function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
+              normaltype=nothing, nvertices=nothing) where {P<:AbstractPoint{2}}
+    faces = decompose(facetype, polygon)
+    positions = decompose(pointtype, polygon)
+    if nvertices !== nothing
+        error("Resampling polygon not supported!")
+    end
+    if normaltype !== nothing
+        n = normals(positions, faces; normaltype=normaltype)
+        positions = meta(positions; normals=n)
+    end
+    return Mesh(positions, faces)
 end
 
-function triangle_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
-    return Mesh(decompose(Point{N, T}, primitive), decompose(GLTriangleFace, primitive))
+mesh(m::Mesh) = m
+triangle_mesh(m::Mesh) = m
+
+function triangle_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+    return mesh(primitive; pointtype=Point{N, Float32}, facetype=GLTriangleFace, nvertices=nvertices)
 end
 
-function gl_triangle_mesh(primitive::GeometryPrimitive{N}, nvertices) where {N}
-    return Mesh(decompose(Point{N, Float32}, primitive, nvertices), decompose(GLTriangleFace, primitive, nvertices))
+
+function triangle_mesh(polygon::AbstractVector{<: AbstractPoint{2}})
+    return mesh(polygon; pointtype=Point{2, Float32}, facetype=GLTriangleFace)
 end
 
-function gl_triangle_mesh(primitive::GeometryPrimitive{N}) where {N}
-    return Mesh(decompose(Point{N, Float32}, primitive), decompose(GLTriangleFace, primitive))
+function uv_mesh(primitive::GeometryPrimitive{N, T}; nvertices=nothing) where {N, T}
+    return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0,
+                facetype=GLTriangleFace, nvertices=nvertices)
 end
 
-function gl_triangle_mesh(mesh::GLPlainMesh)
-    return mesh
+function uv_normal_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+    return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0, normaltype=Vec3f0,
+                facetype=GLTriangleFace, nvertices=nvertices)
 end
 
-function gl_triangle_mesh(poly::AbstractVector{<: AbstractPoint})
-    return Mesh(decompose(Point{2, Float32}, poly), decompose(GLTriangleFace, poly))
+function normal_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+    return mesh(primitive; pointtype=Point{N, Float32}, normaltype=Vec3f0,
+                facetype=GLTriangleFace, nvertices=nvertices)
 end
 
-function uv_triangle_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
-    points = decompose(Point{N, T}, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    uv = collect_with_eltype(Vec2f0, texturecoordinates(primitive))
-    return Mesh(meta(points; uv=uv), fs)
-end
-
-function gl_uv_triangle_mesh3d(primitive::GeometryPrimitive, nvertices=25)
-    points = decompose(Point3f0, primitive, nvertices)
-    fs = decompose(GLTriangleFace, primitive, nvertices)
-    uv = decompose_uv(primitive, nvertices)
-    return Mesh(meta(points; uv=uv), fs)
-end
-
-function gl_uv_normal_triangle_mesh3d(primitive::GeometryPrimitive, nvertices=25)
-    points = decompose(Point3f0, primitive, nvertices)
-    fs = decompose(GLTriangleFace, primitive, nvertices)
-    uv = decompose_uv(primitive, nvertices)
-    normals = decompose_normals(primitive, nvertices)
-    return Mesh(meta(points; uv=uv, normals=normals), fs)
-end
-
-function gl_uvw_triangle_mesh3d(primitive::GeometryPrimitive)
-    points = decompose(Point3f0, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    uvw = decompose_uvw(primitive)
-    return Mesh(meta(points; uvw=uvw), fs)
-end
-
-function gl_uv_triangle_mesh2d(primitive::GeometryPrimitive)
-    points = decompose(Point2f0, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    uv = decompose_uv(primitive)
-    return Mesh(meta(points; uv=uv), fs)
-end
-
-function gl_normal_mesh3d(primitive::GeometryPrimitive)
-    points = decompose(Point3f0, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    return Mesh(meta(points; normals=normals(points, fs)), fs)
-end
-
-function gl_normal_mesh3d(primitive::GeometryPrimitive, nvertices)
-    points = decompose(Point3f0, primitive, nvertices)
-    fs = decompose(GLTriangleFace, primitive, nvertices)
-    return Mesh(meta(points; normals=normals(points, fs)), fs)
-end
-
-function gl_normal_mesh3d(points, faces)
+function normal_mesh(points::AbstractVector{<:AbstractPoint},
+                     faces::AbstractVector{<:AbstractFace})
     _points = convert(Vector{Point3f0}, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
-end
-
-
-function normal_mesh(primitive::GeometryPrimitive{N, T}) where {N, T}
-    points = decompose(Point{N, T}, primitive)
-    fs = decompose(GLTriangleFace, primitive)
-    return Mesh(meta(points; normals=normals(points, fs)), fs)
 end
 
 """
@@ -188,14 +203,14 @@ function Base.merge(meshes::AbstractVector{<: Mesh})
     end
 end
 
-function decompose_normals(mesh::Mesh)
+function decompose(::Normal{T}, mesh::Mesh) where {T}
     normal_vectors = normals(mesh)
-    return convert(Vector{Vec3f0}, normal_vectors)
+    return decompose(T, normal_vectors)
 end
 
-function decompose_uv(mesh::Mesh)
+function decompose(::UV{T}, mesh::Mesh) where {T}
     if hasproperty(mesh, :uv)
-        return convert(Vector{Vec2f0}, mesh.uv)
+        return decompose(T, mesh.uv)
     else
         error("Mesh doesn't have UV texture coordinates")
     end

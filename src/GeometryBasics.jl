@@ -18,7 +18,7 @@ module GeometryBasics
 
     export AbstractGeometry, GeometryPrimitive
     export Mat, Point, Vec
-    export LineFace, Polytope, Line, NgonFace, simplex_convert
+    export LineFace, Polytope, Line, NgonFace, convert_simplex
     export LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
     export Simplex, connect, Triangle, NSimplex, Tetrahedron
     export QuadFace, metafree, coordinates, TetrahedronFace
@@ -42,8 +42,8 @@ module GeometryBasics
     export NormalUVWMesh, GLNormalUVWMesh, GLNormalUVWMesh2D, GLNormalUVWMesh3D
 
     # mesh creation functions
-    export triangle_mesh, gl_triangle_mesh, uv_triangle_mesh
-    export gl_uv_triangle_mesh3d, gl_normal_mesh3d, normal_mesh, gl_uv_normal_triangle_mesh3d
+    export triangle_mesh, triangle_mesh, uv_mesh
+    export uv_mesh, normal_mesh, uv_normal_mesh
 
     export height, origin, radius, width, widths, xwidth, yheight
     export HyperSphere, Circle, Sphere

@@ -108,6 +108,7 @@ using LinearAlgebra
             @test y == [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 1)]
 
         end
+        
         @testset "connected views" begin
             numbers = [1, 2, 3, 4, 5, 6]
             x = connect(numbers, Point{2})
@@ -285,11 +286,11 @@ end
     triangle_mesh(primitive)
 
     primitive = Sphere(Point3f0(0), 1)
-    gl_normal_mesh3d(primitive)
+    normal_mesh(primitive)
     primitive = Rect2D(0, 0, 1, 1)
-    gl_normal_mesh3d(primitive)
+    normal_mesh(primitive)
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
-    gl_normal_mesh3d(primitive)
+    normal_mesh(primitive)
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)

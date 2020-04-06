@@ -492,7 +492,11 @@ centered(R::Type{Rect{N,T}}) where {N, T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
 centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
 centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
-function faces(rect::Rect2D, nvertices=(2, 2))
+##
+# Rect2D decomposition
+best_nvertices(rect::Rect2D) = (2, 2) # not implemented yet
+
+function faces(rect::Rect2D, nvertices::Tuple=(2, 2))
     w, h = nvertices
     idx = LinearIndices(nvertices)
     quad(i, j) = QuadFace{Int}(idx[i, j], idx[i+1, j], idx[i+1, j+1], idx[i, j+1])
@@ -514,7 +518,10 @@ function normals(rect::Rect2D, nvertices=(2,2))
     return Iterators.repeated((0,0,1), prod(nvertices))
 end
 
-function coordinates(rect::Rect3D, nvertices=1)
+##
+# Rect3D decomposition
+best_nvertices(rect::Rect3D) = nothing # not implemented yet
+function coordinates(rect::Rect3D, nvertices=nothing)
     # TODO use n
     w = widths(rect)
     o = origin(rect)
