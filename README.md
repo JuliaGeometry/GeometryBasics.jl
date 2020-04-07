@@ -6,7 +6,7 @@
 
 # GeometryBasics.jl
 
-Basic Geometry Types. 
+Basic Geometry Types.
 This package aimes to offer a standard set of Geometry types, which easily work with metadata, query frameworks on geometries and different memory layouts.
 The aim is to create a solid basis for Graphics/Plotting, finite elements analysis, Geo applications, and general geometry manipulations - while offering a julian API, that still allows performant C-interop.
 
@@ -238,5 +238,3 @@ end
 
 end
 ```
-
-

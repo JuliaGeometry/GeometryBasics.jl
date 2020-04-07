@@ -4,20 +4,8 @@ Table interface for this functionality. Once this is in e.g. Tables.jl,
 it should be removed from GeometryBasics!
 =#
 
-"""
-Gets the column names of any Array like (Table/AbstractArray)
-"""
-function column_names(t)
-    s = Tables.schema(t)
-    if s === nothing
-        return propertynames(first(Tables.rows(t)))
-    else
-        s.names
-    end
-end
-
-function hascolumn(t, colname::Symbol)
-    return Base.sym_in(colname, column_names(t))
+function attributes(hasmeta)
+    return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
 end
 
 """
@@ -25,10 +13,10 @@ end
 Gets a column from any Array like (Table/AbstractArray).
 For AbstractVectors, a column will be the field names of the element type.
 """
-function getcolumns(t, colnames::Symbol...)
-    named_tuple = Tables.columntable(Tables.select(t, colnames...))
-    getfield.((named_tuple,), colnames)
+function getcolumns(tablelike, colnames::Symbol...)
+    return getproperty.((tablelike,), colnames)
 end
+
 getcolumn(t, colname::Symbol) = getcolumns(t, colname)[1]
 
 """
@@ -56,7 +44,6 @@ Returns the metadata of `x`
 meta(x::T) where T = error("$T has no meta!")
 
 metafree(x::T) where T = x
-
 
 macro meta_type(name, mainfield, supertype, params...)
     MetaName = Symbol("$(name)Meta")
@@ -91,21 +78,9 @@ macro meta_type(name, mainfield, supertype, params...)
         GeometryBasics.metafree(x::AbstractVector{<: $MetaName}) = getcolumns(x, $field)[1]
         GeometryBasics.meta(x::$MetaName) = getfield(x, :meta)
         GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
-        function (MT::Type{<: $MetaName})(args...; meta...)
-            nt = values(meta)
-            obj = MetaFree(MT)(args...)
-            return MT(obj, nt)
-        end
 
-        function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
-            NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
-        end
-
-        function StructArrays.createinstance(
-                ::Type{$MetaName{$(params...), Typ, Names, Types}},
-                metafree, args...
-            ) where {$(params...), Typ, Names, Types}
-            $MetaName(metafree, NamedTuple{Names, Types}(args))
+        function GeometryBasics.meta(main::$supertype; meta...)
+            return $MetaName(main; meta...)
         end
 
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
@@ -123,16 +98,31 @@ macro meta_type(name, mainfield, supertype, params...)
             # get the first element to get the per element named tuple type
             ElementNT = typeof(map(first, nt))
 
-            StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
+            return StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
         end
 
+        function (MT::Type{<: $MetaName})(args...; meta...)
+            nt = values(meta)
+            obj = MetaFree(MT)(args...)
+            return MT(obj, nt)
+        end
+
+        function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
+            NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
+        end
+
+        function StructArrays.createinstance(
+                ::Type{$MetaName{$(params...), Typ, Names, Types}},
+                metafree, args...
+            ) where {$(params...), Typ, Names, Types}
+            $MetaName(metafree, NamedTuple{Names, Types}(args))
+        end
     end
     return esc(expr)
 end
 
 @meta_type(Point, position, AbstractPoint, Dim, T)
 Base.getindex(x::PointMeta, idx::Int) = getindex(metafree(x), idx)
-
 
 @meta_type(NgonFace, ngon, AbstractNgonFace, N, T)
 Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
@@ -142,16 +132,28 @@ Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
 
-
 """
     pointmeta(mesh::Mesh; meta_data...)
 
 Attaches metadata to the coordinates of a mesh
 """
 function pointmeta(mesh::Mesh; meta_data...)
-    Mesh(meta(coordinates(mesh); meta_data...), faces(mesh))
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    foreach(k-> delete!(attr, k), keys(meta_data))
+    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
 end
 
+function pop_pointmeta(mesh::Mesh, property::Symbol)
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    m = pop!(attr, property)
+    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
+end
 
 """
     facemeta(mesh::Mesh; meta_data...)

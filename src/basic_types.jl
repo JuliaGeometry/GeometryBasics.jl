@@ -1,7 +1,9 @@
 """
 Abstract Geometry in R{Dim} with Number type T
 """
-abstract type AbstractGeometry{Dim, T <: Real} end
+abstract type AbstractGeometry{Dim, T <: Number} end
+abstract type GeometryPrimitive{Dim, T} <: AbstractGeometry{Dim, T} end
+Base.ndims(x::AbstractGeometry{Dim}) where Dim = Dim
 
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
@@ -18,32 +20,47 @@ abstract type AbstractNgonFace{N, T} <: AbstractFace{N, T} end
 
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
-@fixed_vector Point AbstractPoint
+"""
+    coordinates(geometry)
+Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy iterators!
+Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
+`ConcretePointType` to be something like `Point{3, Float32}`.
+"""
+function coordinates(points::AbstractVector{<:AbstractPoint})
+    return points
+end
 
-
-
+"""
+    faces(geometry)
+Returns the face connections of a geometry. Is allowed to return lazy iterators!
+Use `decompose(ConcreteFaceType, geometry)` to get `Vector{ConcreteFaceType}` with
+`ConcreteFaceType` to be something like `TriangleFace{Int}`.
+"""
+function faces(f::AbstractVector{<:AbstractFace})
+    return f
+end
 
 """
 Face index, connecting points to form a simplex
 """
 
 @fixed_vector SimplexFace AbstractSimplexFace
-const LineFace{T} = SimplexFace{2, T}
 const TetrahedronFace{T} = SimplexFace{4, T}
 Face(::Type{<: SimplexFace{N}}, ::Type{T}) where {N, T} = SimplexFace{N, T}
-
 
 """
 Face index, connecting points to form an Ngon
 """
 
 @fixed_vector NgonFace AbstractNgonFace
+const LineFace{T} = NgonFace{2, T}
 const TriangleFace{T} = NgonFace{3, T}
 const QuadFace{T} = NgonFace{4, T}
 
 Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
 
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
+Face(F::Type{NgonFace{N, FT}}, ::Type{T}) where {FT, N, T} = F
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -65,10 +82,11 @@ struct Ngon{
 
     points::SVector{N, Point}
 end
+
 const NNgon{N} = Ngon{Dim, T, N, P} where {Dim, T, P}
 
 function (::Type{<: NNgon{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
-    Ngon{Dim, T, N, P}(SVector(points))
+    return Ngon{Dim, T, N, P}(SVector(points))
 end
 Base.show(io::IO, x::NNgon{N}) where N = print(io, "Ngon{$N}(", join(x, ", "), ")")
 
@@ -91,6 +109,10 @@ The fully concrete Ngon type, when constructed from a point type!
 function Polytope(::Type{<: NNgon{N}}, P::Type{<: AbstractPoint{NDim, T}}) where {N, NDim, T}
     Ngon{NDim, T, N, P}
 end
+
+
+const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Ngon{Dim, T, 2, P}
+const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
 
 # Simplex{D, T, 3} & Ngon{D, T, 3} are both representing a triangle.
 # Since Ngon is supposed to be flat and a triangle is flat, lets prefer Ngon
@@ -130,8 +152,6 @@ struct Simplex{
 end
 
 const NSimplex{N} = Simplex{Dim, T, N, P} where {Dim, T, P}
-const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Simplex{Dim, T, 2, P}
-const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
 const TetrahedronP{T, P <: AbstractPoint{3, T}} = Simplex{3, T, 4, P}
 const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
 
@@ -293,56 +313,72 @@ Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 
 struct MultiPoint{
-    Dim, T <: Real,
-    Element <: AbstractPoint{Dim, T},
-    A <: AbstractVector{Element}
-} <: AbstractVector{Element}
+        Dim, T <: Real,
+        Element <: AbstractPoint{Dim, T},
+        A <: AbstractVector{Element}
+    } <: AbstractVector{Element}
 
     points::A
 end
 
 function MultiPoint(points::AbstractVector{P}; kw...) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    MultiPoint(meta(points; kw...))
+    return MultiPoint(meta(points; kw...))
 end
 
 Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
 Base.size(mpt::MultiPoint) = size(mpt.points)
 
+"""
+    AbstractMesh
+
+An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
+The connections are defined via faces(mesh), the coordinates of the elements are returned by
+coordinates(mesh). Arbitrary meta information can be attached per point or per face
+"""
+const AbstractMesh{Element} = AbstractVector{Element}
+
+"""
+    Mesh <: AbstractVector{Element}
+The conrecte AbstractMesh implementation
+"""
 struct Mesh{
         Dim, T <: Real,
         Element <: Polytope{Dim, T},
         V <: AbstractVector{Element}
-    } <: AbstractVector{Element}
-
-    simplices::V
+    } <: AbstractMesh{Element}
+    simplices::V # usually a FaceView, to connect a set of points via a set of faces.
 end
 
-Tables.schema(fw::Mesh) = Tables.schema(getfield(fw, :simplices))
+Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
 
-function Base.getproperty(x::Mesh, name::Symbol)
-    getproperty(getfield(x, :simplices), name)
+function Base.getproperty(mesh::Mesh, name::Symbol)
+    return getproperty(getfield(mesh, :simplices), name)
 end
 
-function Base.summary(io::IO, x::Mesh{Dim, T, Element}) where {Dim, T, Element}
+function Base.propertynames(mesh::Mesh)
+    return propertynames(getfield(mesh, :simplices))
+end
+
+function Base.summary(io::IO, ::Mesh{Dim, T, Element}) where {Dim, T, Element}
     print(io, "Mesh{$Dim, $T, ")
     summary(io, Element)
     print(io, "}")
 end
-Base.size(x::Mesh) = size(getfield(x, :simplices))
-Base.getindex(x::Mesh, i::Integer) = getfield(x, :simplices)[i]
 
+Base.size(mesh::Mesh) = size(getfield(mesh, :simplices))
+Base.getindex(mesh::Mesh, i::Integer) = getfield(mesh, :simplices)[i]
 
 function Mesh(elements::AbstractVector{<: Polytope{Dim, T}}) where {Dim, T}
-    Mesh{Dim, T, eltype(elements), typeof(elements)}(elements)
+    return Mesh{Dim, T, eltype(elements), typeof(elements)}(elements)
 end
 
 function Mesh(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: AbstractFace})
-    Mesh(connect(points, faces))
+    return Mesh(connect(points, faces))
 end
 
 function Mesh(
         points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: Integer},
         facetype = TriangleFace, skip = 1
     )
-    Mesh(connect(points, connect(faces, facetype, skip)))
+    return Mesh(connect(points, connect(faces, facetype, skip)))
 end
