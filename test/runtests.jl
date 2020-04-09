@@ -334,4 +334,7 @@ end
         @test meta(x) === x
         @test meta(x, value=[1]).position === x
     end
+    pos = Point2f0[(10, 2)]
+    m = Mesh(meta(pos, uv=[Vec2f0(1, 1)]), [GLTriangleFace(1, 1, 1)])
+    @test m.position === pos
 end

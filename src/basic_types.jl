@@ -354,7 +354,7 @@ Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
 function Base.getproperty(mesh::Mesh, name::Symbol)
     if name === :position
         # a mesh always has position defined by coordinates...
-        return coordinates(mesh)
+        return metafree(coordinates(mesh))
     else
         return getproperty(getfield(mesh, :simplices), name)
     end
