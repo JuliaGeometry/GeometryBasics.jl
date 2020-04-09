@@ -124,15 +124,19 @@ Polygon triangluation!
 """
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
               normaltype=nothing, nvertices=nothing) where {P<:AbstractPoint{2}}
+
     faces = decompose(facetype, polygon)
     positions = decompose(pointtype, polygon)
+
     if nvertices !== nothing
         error("Resampling polygon not supported!")
     end
+
     if normaltype !== nothing
         n = normals(positions, faces; normaltype=normaltype)
         positions = meta(positions; normals=n)
     end
+
     return Mesh(positions, faces)
 end
 
@@ -214,4 +218,41 @@ function decompose(::UV{T}, mesh::Mesh) where {T}
     else
         error("Mesh doesn't have UV texture coordinates")
     end
+end
+
+"""
+    pointmeta(mesh::Mesh; meta_data...)
+
+Attaches metadata to the coordinates of a mesh
+"""
+function pointmeta(mesh::Mesh; meta_data...)
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    foreach(k-> delete!(attr, k), keys(meta_data))
+    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
+end
+
+"""
+    pop_pointmeta(mesh::Mesh, property::Symbol)
+Remove `property` from point metadata.
+Returns the new mesh, and the property!
+"""
+function pop_pointmeta(mesh::Mesh, property::Symbol)
+    points = coordinates(mesh)
+    attr = GeometryBasics.attributes(points)
+    delete!(attr, :position) # position == metafree(points)
+    # delete overlapping attributes so we can replace with `meta_data`
+    m = pop!(attr, property)
+    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
+end
+
+"""
+    facemeta(mesh::Mesh; meta_data...)
+
+Attaches metadata to the faces of a mesh
+"""
+function facemeta(mesh::Mesh; meta_data...)
+    return Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
 end

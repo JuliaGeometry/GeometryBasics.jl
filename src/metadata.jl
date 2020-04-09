@@ -80,10 +80,12 @@ macro meta_type(name, mainfield, supertype, params...)
         GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
 
         function GeometryBasics.meta(main::$supertype; meta...)
+            isempty(meta) && return elements # no meta to add!
             return $MetaName(main; meta...)
         end
 
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
+            isempty(meta) && return elements # no meta to add!
             n = length(elements)
             for (k, v) in meta
                 if v isa AbstractVector
@@ -131,35 +133,3 @@ Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
-
-"""
-    pointmeta(mesh::Mesh; meta_data...)
-
-Attaches metadata to the coordinates of a mesh
-"""
-function pointmeta(mesh::Mesh; meta_data...)
-    points = coordinates(mesh)
-    attr = GeometryBasics.attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    foreach(k-> delete!(attr, k), keys(meta_data))
-    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
-end
-
-function pop_pointmeta(mesh::Mesh, property::Symbol)
-    points = coordinates(mesh)
-    attr = GeometryBasics.attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    m = pop!(attr, property)
-    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
-end
-
-"""
-    facemeta(mesh::Mesh; meta_data...)
-
-Attaches metadata to the faces of a mesh
-"""
-function facemeta(mesh::Mesh; meta_data...)
-    Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
-end
