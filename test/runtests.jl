@@ -108,7 +108,7 @@ using LinearAlgebra
             @test y == [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 1)]
 
         end
-        
+
         @testset "connected views" begin
             numbers = [1, 2, 3, 4, 5, 6]
             x = connect(numbers, Point{2})
@@ -320,4 +320,11 @@ end
     @test propertynames(m) == (:position,)
     @test colpopt === color
     @test xxpopt === xx
+    
+    @testset "creating meta" begin
+        x = Point3f0[(1,3,4)]
+        # no meta gets added, so should stay the same
+        @test meta(x) === x
+        @test meta(x, value=[1]).position === x
+    end
 end
