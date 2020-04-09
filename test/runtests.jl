@@ -279,9 +279,15 @@ end
 
 @testset "decompose/triangulation" begin
     primitive = Sphere(Point3f0(0), 1)
-    triangle_mesh(primitive)
+    mesh = triangle_mesh(primitive)
+    @test decompose(Point, mesh) isa Vector{Point3f0}
+    @test decompose(Point, primitive) isa Vector{Point3f0}
     primitive = Rect2D(0, 0, 1, 1)
-    triangle_mesh(primitive)
+    mesh = triangle_mesh(primitive)
+
+    @test decompose(Point, mesh) isa Vector{Point2f0}
+    @test decompose(Point, primitive) isa Vector{Point2f0}
+
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
     triangle_mesh(primitive)
 
@@ -295,8 +301,8 @@ end
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)
     @test true # yay no errors so far!
-end
 
+end
 
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
@@ -317,10 +323,11 @@ end
 
     m, colpopt = GeometryBasics.pop_pointmeta(m, :color)
     m, xxpopt = GeometryBasics.pop_pointmeta(m, :xx)
+
     @test propertynames(m) == (:position,)
     @test colpopt === color
     @test xxpopt === xx
-    
+
     @testset "creating meta" begin
         x = Point3f0[(1,3,4)]
         # no meta gets added, so should stay the same

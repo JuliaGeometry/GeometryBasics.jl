@@ -98,9 +98,7 @@ function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
     return collect_with_eltype(P, coordinates(primitive, args...))
 end
 
-
-
-function decompose(::Type{Point}, primitive::GeometryPrimitive{Dim}, args...) where {Dim}
+function decompose(::Type{Point}, primitive::Union{GeometryPrimitive{Dim}, Mesh{Dim}}, args...) where {Dim}
     return collect_with_eltype(Point{Dim, Float32}, coordinates(primitive, args...))
 end
 

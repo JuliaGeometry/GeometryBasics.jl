@@ -352,11 +352,22 @@ end
 Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
 
 function Base.getproperty(mesh::Mesh, name::Symbol)
-    return getproperty(getfield(mesh, :simplices), name)
+    if name === :position
+        # a mesh always has position defined by coordinates...
+        return coordinates(mesh)
+    else
+        return getproperty(getfield(mesh, :simplices), name)
+    end
 end
 
 function Base.propertynames(mesh::Mesh)
-    return propertynames(getfield(mesh, :simplices))
+    names = propertynames(getfield(mesh, :simplices))
+    if :positions in names
+        return names
+    else
+        # a mesh always has positions!
+        return (names..., :position)
+    end
 end
 
 function Base.summary(io::IO, ::Mesh{Dim, T, Element}) where {Dim, T, Element}
