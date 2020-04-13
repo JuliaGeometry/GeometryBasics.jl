@@ -11,12 +11,15 @@ const PointWithUVNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :u
 const PointWithUVWNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :uvw), Tuple{Vec{3, T}, Vec{3, T}}}
 
 """
-Abstract Mesh with triangle elements
+    TriangleMesh{Dim, T, PointType}
+
+Abstract Mesh with triangle elements of eltype `T`.
 """
 const TriangleMesh{Dim, T, PointType} = AbstractMesh{TriangleP{Dim, T, PointType}}
 
 """
-    PlainMesh
+    PlainMesh{Dim, T}
+
 Triangle mesh with no meta information (just points + triangle faces)
 """
 const PlainMesh{Dim, T} = TriangleMesh{Dim, T, Point{Dim, T}}
@@ -25,7 +28,8 @@ const GLPlainMesh2D = GLPlainMesh{2}
 const GLPlainMesh3D = GLPlainMesh{3}
 
 """
-    UVMesh
+    UVMesh{Dim, T}
+
 PlainMesh with texture coordinates meta at each point.
 `uvmesh.uv isa AbstractVector{Vec2f0}`
 """
@@ -35,7 +39,8 @@ const GLUVMesh2D = UVMesh{2}
 const GLUVMesh3D = UVMesh{3}
 
 """
-    NormalMesh
+    NormalMesh{Dim, T}
+
 PlainMesh with normals meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 """
@@ -45,7 +50,8 @@ const GLNormalMesh2D = GLNormalMesh{2}
 const GLNormalMesh3D = GLNormalMesh{3}
 
 """
-    NormalUVMesh
+    NormalUVMesh{Dim, T}
+
 PlainMesh with normals and uv meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 `normalmesh.uv isa AbstractVector{Vec2f0}`
@@ -56,7 +62,8 @@ const GLNormalUVMesh2D = GLNormalUVMesh{2}
 const GLNormalUVMesh3D = GLNormalUVMesh{3}
 
 """
-    NormalUVWMesh
+    NormalUVWMesh{Dim, T}
+
 PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 `normalmesh.uvw isa AbstractVector{Vec3f0}`
@@ -175,7 +182,10 @@ function normal_mesh(points::AbstractVector{<:AbstractPoint},
 end
 
 """
-Calculate the signed volume of one tetrahedron. Be sure the orientation of your surface is right.
+    volume(triangle)
+
+Calculate the signed volume of one tetrahedron. Be sure the orientation of your
+surface is right.
 """
 function volume(triangle::Triangle) where {VT,FT}
     v1, v2, v3 = triangle
@@ -184,7 +194,10 @@ function volume(triangle::Triangle) where {VT,FT}
 end
 
 """
-Calculate the signed volume of all tetrahedra. Be sure the orientation of your surface is right.
+    volume(mesh)
+
+Calculate the signed volume of all tetrahedra. Be sure the orientation of your
+surface is right.
 """
 function volume(mesh::Mesh) where {VT, FT}
     return sum(volume, mesh)

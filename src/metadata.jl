@@ -10,6 +10,7 @@ end
 
 """
     getcolumns(t, colnames::Symbol...)
+
 Gets a column from any Array like (Table/AbstractArray).
 For AbstractVectors, a column will be the field names of the element type.
 """
@@ -21,6 +22,7 @@ getcolumn(t, colname::Symbol) = getcolumns(t, colname)[1]
 
 """
     MetaType(::Type{T})
+
 Returns the Meta Type corresponding to `T`
 E.g:
 ```julia
@@ -30,6 +32,7 @@ MetaType(::Type{T}) where T = error("No Meta Type for $T")
 
 """
     MetaFree(::Type{T})
+
 Returns the original type containing no metadata for `T`
 E.g:
 ```julia
@@ -39,6 +42,7 @@ MetaFree(::Type{T}) where T = error("No meta free Type for $T")
 
 """
     meta(x::MetaObject)
+
 Returns the metadata of `x`
 """
 meta(x::T) where T = error("$T has no meta!")
