@@ -117,10 +117,12 @@ function mesh(primitive::GeometryPrimitive;
             attributes[:normals] = primitive_normals
         else
             # Normals not implemented for primitive, so we calculate them!
-            attributes[:normals] = normals(positions, faces)
+            n = normals(positions, faces)
+            if n !== nothing # ok jeez, this is a 2d mesh which cant have normals
+                attributes[:normals] = n
+            end
         end
     end
-
     return Mesh(meta(positions; attributes...), faces)
 end
 

@@ -361,6 +361,10 @@ function coordinates(s::Circle, nvertices=64)
     return (inner(fi) for fi in LinRange(0, 2pi, nvertices))
 end
 
+function texturecoordinates(s::Circle, nvertices=64)
+    return coordinates(Circle(Point2f0(0.5), 0.5f0), nvertices)
+end
+
 function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices); φ = LinRange(0, 2pi, nvertices)
     inner(θ, φ) = Point(cos(φ)*sin(θ), sin(φ)*sin(θ), cos(θ)) .* s.r .+ s.center
