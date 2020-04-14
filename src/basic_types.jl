@@ -362,7 +362,7 @@ end
 
 function Base.propertynames(mesh::Mesh)
     names = propertynames(getfield(mesh, :simplices))
-    if :positions in names
+    if :position in names
         return names
     else
         # a mesh always has positions!
