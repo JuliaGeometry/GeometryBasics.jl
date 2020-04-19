@@ -268,8 +268,8 @@ function Base.:(*)(m::Mat{4,4,T}, h::Rect{3,T}) where T
     Rect{3,T}(_vmin, _vmax - _vmin)
 end
 
-Base.:(-)(h::Rect{N, T}, move::Number) where {N,T} = h - Vec{N, N}(move)
-Base.:(+)(h::Rect{N, T}, move::Number) where {N,T} = h + Vec{N, N}(move)
+Base.:(-)(h::Rect{N, T}, move::Number) where {N,T} = h - Vec{N, T}(move)
+Base.:(+)(h::Rect{N, T}, move::Number) where {N,T} = h + Vec{N, T}(move)
 
 
 function Base.:(-)(h::Rect{N, T}, move::StaticVector{N}) where {N,T}

@@ -202,10 +202,36 @@ end
     points = decompose(Point2f0, circle, 20)
     @test length(points) == 20
 
-    # TODO circle mesh cant be 1:1 assembled from vertices + faces,
-    # since middle point is missing...
-    # mesh = triangle_mesh(circle, nvertices=32)
-    # # end-1, since we add a middle point for the mesh!
-    # @test decompose(Point2f0, mesh)[1:end-1] ≈ decompose(Point2f0, circle, 32)
+    mesh = triangle_mesh(circle, nvertices=32)
+    @test decompose(Point2f0, mesh)[1:end] ≈ decompose(Point2f0, circle, 32)
+end
 
+
+@testset "Rectangles" begin
+    rect = FRect2D(0, 7, 20, 3)
+    @test (rect + 4) == FRect2D(4, 11, 20, 3)
+    @test (rect + Vec(2, -2)) == FRect2D(2, 5, 20, 3)
+
+    @test (rect - 4) == FRect2D(-4, 3, 20, 3)
+    @test (rect - Vec(2, -2)) == FRect2D(-2, 9, 20, 3)
+
+    base = Vec3f0(1, 2, 3)
+    wxyz = Vec3f0(-2, 4, 2)
+    rect = FRect3D(base, wxyz)
+    @test (rect + 4) == FRect3D(base .+ 4, wxyz)
+    @test (rect + Vec(2, -2, 3)) == FRect3D(base .+ Vec(2, -2, 3), wxyz)
+
+    @test (rect - 4) == FRect3D(base .- 4, wxyz)
+    @test (rect - Vec(2, -2, 7)) == FRect3D(base .- Vec(2, -2, 7), wxyz)
+
+
+    rect = FRect2D(0, 7, 20, 3)
+    @test (rect * 4) == FRect2D(0, 7*4, 20*4, 3*4)
+    @test (rect * Vec(2, -2)) == FRect2D(0, -7*2, 20*2, -3*2)
+
+    base = Vec3f0(1, 2, 3)
+    wxyz = Vec3f0(-2, 4, 2)
+    rect = FRect3D(base, wxyz)
+    @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
+    @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
 end
