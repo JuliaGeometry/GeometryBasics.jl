@@ -268,11 +268,21 @@ function Base.:(*)(m::Mat{4,4,T}, h::Rect{3,T}) where T
     Rect{3,T}(_vmin, _vmax - _vmin)
 end
 
-function Base.:(-)(h::Rect{N, T}, move::Vec{N}) where {N,T}
+Base.:(-)(h::Rect{N, T}, move::Number) where {N,T} = h - Vec{N, N}(move)
+Base.:(+)(h::Rect{N, T}, move::Number) where {N,T} = h + Vec{N, N}(move)
+
+
+function Base.:(-)(h::Rect{N, T}, move::StaticVector{N}) where {N,T}
     Rect{N, T}(minimum(h) .- move, widths(h))
 end
-function Base.:(+)(h::Rect{N, T}, move::Vec{N}) where {N,T}
+
+function Base.:(+)(h::Rect{N, T}, move::StaticVector{N}) where {N,T}
     Rect{N, T}(minimum(h) .+ move, widths(h))
+end
+
+
+function Base.:(*)(rect::Rect, scaling::Union{Number, StaticVector})
+    return Rect(minimum(rect) .* scaling, widths(rect) .* scaling)
 end
 
 # Enables rectangular indexing into a matrix
