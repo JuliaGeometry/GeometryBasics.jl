@@ -21,10 +21,10 @@ makedocs(
         "metadata.jl",
         "api.md",
     ],
-    modules = [GeometryTypes]
+    modules = [GeometryBasics]
 )
 
 deploydocs(
-    repo = "github.com/JuliaGeometry/GeometryTypes.jl.git",
+    repo = "github.com/JuliaGeometry/GeometryBasics.jl.git",
     push_preview = true
 )
