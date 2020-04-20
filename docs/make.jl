@@ -18,7 +18,7 @@ makedocs(
         "meshes.md",
         "decomposition.md",
         "distancefields.md",
-        "metadata.jl",
+        "metadata.md",
         "api.md",
     ],
     modules = [GeometryBasics]
