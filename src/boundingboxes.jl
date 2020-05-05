@@ -24,22 +24,22 @@ function Rect{N1, T1}(geometry::AbstractArray{PT}) where {N1, T1, PT <: Abstract
 end
 
 function Rect(primitive::GeometryPrimitive{N, T}) where {N, T}
-    Rect{N, T}(primitive)
+    return Rect{N, T}(primitive)
 end
 
 function Rect{T}(primitive::GeometryPrimitive{N, T}) where {N, T}
-    Rect{N, T}(primitive)
+    return Rect{N, T}(primitive)
 end
 
 function Rect{T}(a::Pyramid) where T
     w,h = a.width / T(2), a.length
     m = Vec{3,T}(a.middle)
-    Rect{T}(m .- Vec{3,T}(w,w,0), m .+ Vec{3,T}(w, w, h))
+    return Rect{T}(m .- Vec{3,T}(w,w,0), m .+ Vec{3,T}(w, w, h))
 end
 
 function Rect{T}(a::Sphere) where T
     mini, maxi = extrema(a)
-    Rect{T}(mini, maxi .- mini)
+    return Rect{T}(mini, maxi .- mini)
 end
 
 Rect{T}(a) where T = Rect{T}(coordinates(a))
