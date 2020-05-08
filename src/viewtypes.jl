@@ -138,13 +138,11 @@ Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
 
 Base.size(faceview::FaceView) = size(getfield(faceview, :faces))
 
-Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")
-
 function Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element
     if @isdefined Element
-        print(io, "FaceView{", T, "}")
+        print(io, "FaceView{", Element, "}")
     else
-        print(io, "FaceView{Element}")
+        print(io, "FaceView{T}")
     end
 end
 
