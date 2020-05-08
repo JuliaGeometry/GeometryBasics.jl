@@ -2,6 +2,7 @@ const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
 
 coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
 faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
+best_nvertices(mesh::Mesh) = nothing
 
 const GLTriangleElement = Triangle{3, Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
@@ -73,9 +74,11 @@ const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
-best_nvertices(any_primitive) = 24
-best_pointtype(::GeometryPrimitive{N, T}) where {N, T} = Point{N, T}
+# Types that can be converted to a mesh via the functions below
+const MeshLike{N, T} = Union{Mesh{N, T}, GeometryPrimitive{N, T}, AbstractVector{<: AbstractPoint{N, T}}}
 
+best_nvertices(any_primitive) = nothing
+best_pointtype(::GeometryPrimitive{N, T}) where {N, T} = Point{N, T}
 
 """
     mesh(primitive::GeometryPrimitive;
@@ -90,7 +93,7 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::GeometryPrimitive;
+function mesh(primitive::MeshLike;
               pointtype=best_pointtype(primitive), facetype=GLTriangleFace,
               uv=nothing, normaltype=nothing, nvertices=nothing)
 
@@ -149,30 +152,18 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
     return Mesh(positions, faces)
 end
 
-mesh(m::Mesh) = m
-triangle_mesh(m::Mesh) = m
-
-function triangle_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+function triangle_mesh(primitive::MeshLike{N}; nvertices=nothing) where {N}
     return mesh(primitive; pointtype=Point{N, Float32}, facetype=GLTriangleFace, nvertices=nvertices)
 end
 
 
-function triangle_mesh(polygon::AbstractVector{<: AbstractPoint{2}})
-    return mesh(polygon; pointtype=Point{2, Float32}, facetype=GLTriangleFace)
-end
-
-function uv_mesh(primitive::GeometryPrimitive{N, T}; nvertices=nothing) where {N, T}
+function uv_mesh(primitive::MeshLike{N, T}; nvertices=nothing) where {N, T}
     return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0,
                 facetype=GLTriangleFace, nvertices=nvertices)
 end
 
-function uv_normal_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+function uv_normal_mesh(primitive::MeshLike{N}; nvertices=nothing) where {N}
     return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0, normaltype=Vec3f0,
-                facetype=GLTriangleFace, nvertices=nvertices)
-end
-
-function normal_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
-    return mesh(primitive; pointtype=Point{N, Float32}, normaltype=Vec3f0,
                 facetype=GLTriangleFace, nvertices=nvertices)
 end
 
@@ -181,6 +172,11 @@ function normal_mesh(points::AbstractVector{<:AbstractPoint},
     _points = convert(Vector{Point3f0}, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
+end
+
+function normal_mesh(primitive::MeshLike{N}; nvertices=nothing) where {N}
+    return mesh(primitive; pointtype=Point{N, Float32}, normaltype=Vec3f0,
+                facetype=GLTriangleFace, nvertices=nvertices)
 end
 
 """

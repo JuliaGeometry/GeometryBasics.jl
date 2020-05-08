@@ -69,7 +69,6 @@ function collect_with_eltype(::Type{T}, iter) where T
     return result
 end
 
-
 function faces(primitive, nvertices=30)
     # doesn't have any specific algorithm to generate faces
     # so will try to triangulate the coordinates!
@@ -92,6 +91,14 @@ end
 
 function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractPoint}
     return primitive
+end
+
+function decompose(::Type{T}, primitive::AbstractVector{T2}) where {T, T2 <: Union{StaticVector, AbstractPoint}}
+    return convert(Vector{T}, primitive)
+end
+
+function decompose(::Type{T}, primitive::AbstractVector, args...) where {T<:AbstractPoint}
+    return collect_with_eltype(P, coordinates(primitive, args...))
 end
 
 function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
@@ -364,6 +371,9 @@ end
 function texturecoordinates(s::Circle, nvertices=64)
     return coordinates(Circle(Point2f0(0.5), 0.5f0), nvertices)
 end
+
+best_nvertices(x::Circle) = 64
+best_nvertices(x::Sphere) = 24
 
 function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices); φ = LinRange(0, 2pi, nvertices)

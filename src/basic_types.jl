@@ -21,26 +21,6 @@ abstract type AbstractNgonFace{N, T} <: AbstractFace{N, T} end
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
 """
-    coordinates(geometry)
-Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy iterators!
-Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
-`ConcretePointType` to be something like `Point{3, Float32}`.
-"""
-function coordinates(points::AbstractVector{<:AbstractPoint})
-    return points
-end
-
-"""
-    faces(geometry)
-Returns the face connections of a geometry. Is allowed to return lazy iterators!
-Use `decompose(ConcreteFaceType, geometry)` to get `Vector{ConcreteFaceType}` with
-`ConcreteFaceType` to be something like `TriangleFace{Int}`.
-"""
-function faces(f::AbstractVector{<:AbstractFace})
-    return f
-end
-
-"""
 Face index, connecting points to form a simplex
 """
 
@@ -57,7 +37,9 @@ const LineFace{T} = NgonFace{2, T}
 const TriangleFace{T} = NgonFace{3, T}
 const QuadFace{T} = NgonFace{4, T}
 
-Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
+function Base.show(io::IO, x::TriangleFace{T}) where T
+    print(io, "TriangleFace(", join(x, ", "), ")")
+end
 
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
 Face(F::Type{NgonFace{N, FT}}, ::Type{T}) where {FT, N, T} = F
@@ -342,7 +324,7 @@ const AbstractMesh{Element} = AbstractVector{Element}
 The conrecte AbstractMesh implementation
 """
 struct Mesh{
-        Dim, T <: Real,
+        Dim, T <: Number,
         Element <: Polytope{Dim, T},
         V <: AbstractVector{Element}
     } <: AbstractMesh{Element}
