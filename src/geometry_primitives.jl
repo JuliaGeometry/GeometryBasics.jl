@@ -1,6 +1,5 @@
 ##
 # Generic base overloads
-
 Base.extrema(primitive::GeometryPrimitive) = (minimum(primitive), maximum(primitive))
 function widths(x::AbstractRange)
     mini, maxi = Float32.(extrema(x))
@@ -54,6 +53,10 @@ function convert_simplex(::Type{Vec{N, T}}, x) where {N, T}
     return (Vec{N, T}(ntuple(i-> i <= N2 ? T(x[i]) : T(0), N)),)
 end
 
+collect_with_eltype(::Type{T}, vec::Vector{T}) where T = vec
+collect_with_eltype(::Type{P}, vec::Vector{MetaPoint{P}}) where T = vec
+collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where T = collect(vec)
+
 function collect_with_eltype(::Type{T}, iter) where T
     # TODO we could be super smart about allocating the right length
     # but its kinda annoying, since e.g. T == Triangle and first(iter) isa Quad
@@ -69,78 +72,6 @@ function collect_with_eltype(::Type{T}, iter) where T
     return result
 end
 
-function faces(primitive, nvertices=30)
-    # doesn't have any specific algorithm to generate faces
-    # so will try to triangulate the coordinates!
-    return nothing
-end
-
-function decompose(::Type{F}, primitive, args...) where {F<:AbstractFace}
-    f = faces(primitive, args...)
-    f === nothing && return nothing
-    return collect_with_eltype(F, f)
-end
-
-function decompose(::Type{T}, primitive::AbstractVector{T}) where {T}
-    return primitive
-end
-
-function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractFace}
-    return primitive
-end
-
-function decompose(::Type{T}, primitive::AbstractVector{T}) where {T<:AbstractPoint}
-    return primitive
-end
-
-function decompose(::Type{T}, primitive::AbstractVector{T2}) where {T, T2 <: Union{StaticVector, AbstractPoint}}
-    return convert(Vector{T}, primitive)
-end
-
-function decompose(::Type{T}, primitive::AbstractVector, args...) where {T<:AbstractPoint}
-    return collect_with_eltype(P, coordinates(primitive, args...))
-end
-
-function decompose(::Type{P}, primitive, args...) where {P<:AbstractPoint}
-    return collect_with_eltype(P, coordinates(primitive, args...))
-end
-
-function decompose(::Type{Point}, primitive::Union{GeometryPrimitive{Dim}, Mesh{Dim}}, args...) where {Dim}
-    return collect_with_eltype(Point{Dim, Float32}, coordinates(primitive, args...))
-end
-
-# Dispatch type to make `decompose(UV{Vec2f0}, priomitive)` work
-struct UV{T} end
-UV(::Type{T}) where T = UV{T}()
-struct UVW{T} end
-UVW(::Type{T}) where T = UVW{T}()
-struct Normal{T} end
-Normal(::Type{T}) where T = Normal{T}()
-
-function decompose(::UV{T}, primitive::GeometryPrimitive, args...) where T
-    return collect_with_eltype(T, texturecoordinates(primitive, args...))
-end
-
-decompose_uv(args...) = decompose(UV(Vec2f0), args...)
-
-function decompose(::UVW{T}, primitive::GeometryPrimitive, args...) where T
-    return collect_with_eltype(T, texturecoordinates(primitive, args...))
-end
-
-function normals(primitive, nvertices=30)
-    # doesn't have any specific algorithm to generate normals
-    # so will be generated from faces + positions
-    return nothing
-end
-
-
-function decompose(::Normal{T}, primitive::GeometryPrimitive, args...) where T
-    n = normals(primitive, args...)
-    n === nothing && return nothing
-    return collect_with_eltype(T, n)
-end
-
-decompose_normals(args...) = decompose(Normal(Vec3f0), args...)
 
 """
 The unnormalized normal of three vertices.
@@ -371,9 +302,6 @@ end
 function texturecoordinates(s::Circle, nvertices=64)
     return coordinates(Circle(Point2f0(0.5), 0.5f0), nvertices)
 end
-
-best_nvertices(x::Circle) = 64
-best_nvertices(x::Sphere) = 24
 
 function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices); φ = LinRange(0, 2pi, nvertices)
