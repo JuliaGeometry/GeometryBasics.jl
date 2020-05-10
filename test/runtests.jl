@@ -345,7 +345,7 @@ end
     m = GeometryBasics.mesh(s)
     @test m isa Mesh{3, Float64}
     @test coordinates(m) isa Vector{Point{3, Float64}}
-
+    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
     # Check, that decompose isn't making a copy for matching eltype
     @test coordinates(m) === decompose(Point{3, Float64}, m)
 
@@ -357,4 +357,9 @@ end
     @test nmesh isa GLNormalMesh
     @test metafree(coordinates(nmesh)) === decompose(Point3f0, nmesh)
     @test normals(nmesh) === decompose_normals(nmesh)
+
+    m = GeometryBasics.mesh(s, pointtype=Point3f0)
+    @test m isa Mesh{3, Float32}
+    @test coordinates(m) isa Vector{Point3f0}
+    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end
