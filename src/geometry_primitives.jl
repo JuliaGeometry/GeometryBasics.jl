@@ -54,7 +54,6 @@ function convert_simplex(::Type{Vec{N, T}}, x) where {N, T}
 end
 
 collect_with_eltype(::Type{T}, vec::Vector{T}) where T = vec
-collect_with_eltype(::Type{P}, vec::Vector{MetaPoint{P}}) where T = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where T = collect(vec)
 
 function collect_with_eltype(::Type{T}, iter) where T
