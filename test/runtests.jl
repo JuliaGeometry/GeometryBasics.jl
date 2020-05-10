@@ -1,7 +1,6 @@
-using Test, Random, StructArrays, Tables, StaticArrays
+using Test, Random, Query, StructArrays, Tables, StaticArrays
 using GeometryBasics
 using LinearAlgebra
-using Query
 
 @testset "GeometryBasics" begin
     @testset "embedding metadata" begin
@@ -185,8 +184,7 @@ using Query
             linestring = LineString(points, faces, 2)
             @test linestring == LineString([a => b, c => d])
 
-            faces = [LineFace(1, 2)
-            , LineFace(3, 4)]
+            faces = [LineFace(1, 2), LineFace(3, 4)]
             linestring = LineString(points, faces)
             @test linestring == LineString([a => b, c => d])
         end
@@ -288,7 +286,7 @@ end
     mesh = triangle_mesh(primitive)
 
     @test decompose(Point, mesh) isa Vector{Point2f0}
-    @test decompose(Point, primitive) isa Vector{Point2{Int}}
+    @test decompose(Point, primitive) isa Vector{Point2f0}
 
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
     triangle_mesh(primitive)
@@ -303,6 +301,7 @@ end
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)
     @test true # yay no errors so far!
+
 end
 
 @testset "Tests from GeometryTypes" begin
@@ -338,28 +337,4 @@ end
     pos = Point2f0[(10, 2)]
     m = Mesh(meta(pos, uv=[Vec2f0(1, 1)]), [GLTriangleFace(1, 1, 1)])
     @test m.position === pos
-end
-
-@testset "mesh conversion" begin
-    s = Sphere(Point3(0.0), 1.0)
-    m = GeometryBasics.mesh(s)
-    @test m isa Mesh{3, Float64}
-    @test coordinates(m) isa Vector{Point{3, Float64}}
-    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
-    # Check, that decompose isn't making a copy for matching eltype
-    @test coordinates(m) === decompose(Point{3, Float64}, m)
-
-    tmesh = triangle_mesh(m)
-    @test tmesh isa GLPlainMesh
-    @test coordinates(tmesh) === decompose(Point3f0, tmesh)
-
-    nmesh = normal_mesh(m)
-    @test nmesh isa GLNormalMesh
-    @test metafree(coordinates(nmesh)) === decompose(Point3f0, nmesh)
-    @test normals(nmesh) === decompose_normals(nmesh)
-
-    m = GeometryBasics.mesh(s, pointtype=Point3f0)
-    @test m isa Mesh{3, Float32}
-    @test coordinates(m) isa Vector{Point3f0}
-    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end

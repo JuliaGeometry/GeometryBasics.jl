@@ -21,6 +21,26 @@ abstract type AbstractNgonFace{N, T} <: AbstractFace{N, T} end
 abstract type AbstractSimplex{Dim, N, T} <: StaticVector{Dim, T} end
 
 """
+    coordinates(geometry)
+Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy iterators!
+Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
+`ConcretePointType` to be something like `Point{3, Float32}`.
+"""
+function coordinates(points::AbstractVector{<:AbstractPoint})
+    return points
+end
+
+"""
+    faces(geometry)
+Returns the face connections of a geometry. Is allowed to return lazy iterators!
+Use `decompose(ConcreteFaceType, geometry)` to get `Vector{ConcreteFaceType}` with
+`ConcreteFaceType` to be something like `TriangleFace{Int}`.
+"""
+function faces(f::AbstractVector{<:AbstractFace})
+    return f
+end
+
+"""
 Face index, connecting points to form a simplex
 """
 
@@ -37,9 +57,7 @@ const LineFace{T} = NgonFace{2, T}
 const TriangleFace{T} = NgonFace{3, T}
 const QuadFace{T} = NgonFace{4, T}
 
-function Base.show(io::IO, x::TriangleFace{T}) where T
-    print(io, "TriangleFace(", join(x, ", "), ")")
-end
+Base.show(io::IO, x::TriangleFace{T}) where T = print(io, "TriangleFace(", join(x, ", "), ")")
 
 Face(::Type{<: NgonFace{N}}, ::Type{T}) where {N, T} = NgonFace{N, T}
 Face(F::Type{NgonFace{N, FT}}, ::Type{T}) where {FT, N, T} = F
@@ -82,14 +100,14 @@ Base.length(::NNgon{N}) where N = N
 The Ngon Polytope element type when indexing an array of points with a SimplexFace
 """
 function Polytope(P::Type{<: AbstractPoint{Dim, T}}, ::Type{<: AbstractNgonFace{N, IT}}) where {N, Dim, T, IT}
-    return Ngon{Dim, T, N, P}
+    Ngon{Dim, T, N, P}
 end
 
 """
 The fully concrete Ngon type, when constructed from a point type!
 """
 function Polytope(::Type{<: NNgon{N}}, P::Type{<: AbstractPoint{NDim, T}}) where {N, NDim, T}
-    return Ngon{NDim, T, N, P}
+    Ngon{NDim, T, N, P}
 end
 
 
@@ -139,10 +157,11 @@ const Tetrahedron{T} = TetrahedronP{T, Point{3, T}}
 
 Base.show(io::IO, x::TetrahedronP) = print(io, "Tetrahedron(", join(x, ", "), ")")
 
+
 coordinates(x::Simplex) = x.points
 
 function (::Type{<: NSimplex{N}})(points::Vararg{P, N}) where {P <: AbstractPoint{Dim, T}, N} where {Dim, T}
-    return Simplex{Dim, T, N, P}(SVector(points))
+    Simplex{Dim, T, N, P}(SVector(points))
 end
 
 # Base Array interface
@@ -153,14 +172,14 @@ Base.length(::NSimplex{N}) where N = N
 The Simplex Polytope element type when indexing an array of points with a SimplexFace
 """
 function Polytope(P::Type{<: AbstractPoint{Dim, T}}, ::Type{<: AbstractSimplexFace{N}}) where {N, Dim, T}
-    return Simplex{Dim, T, N, P}
+    Simplex{Dim, T, N, P}
 end
 
 """
 The fully concrete Simplex type, when constructed from a point type!
 """
 function Polytope(::Type{<: NSimplex{N}}, P::Type{<: AbstractPoint{NDim, T}}) where {N, NDim, T}
-    return Simplex{NDim, T, N, P}
+    Simplex{NDim, T, N, P}
 end
 Base.show(io::IO, x::LineP) = print(io, "Line(", x[1], " => ", x[2], ")")
 
@@ -174,14 +193,13 @@ struct LineString{
     } <: AbstractVector{LineP{Dim, T, P}}
     points::V
 end
-
 coordinates(x::LineString) = x.points
 
 Base.size(x::LineString) = size(coordinates(x))
 Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
 
 function LineString(points::AbstractVector{LineP{Dim, T, P}}) where {Dim, T, P}
-    return LineString{Dim, T, P, typeof(points)}(points)
+    LineString{Dim, T, P, typeof(points)}(points)
 end
 
 """
@@ -196,15 +214,15 @@ linestring = LineString(points)
 ```
 """
 function LineString(points::AbstractVector{<: AbstractPoint}, skip = 1)
-    return LineString(connect(points, LineP, skip))
+    LineString(connect(points, LineP, skip))
 end
 
 function LineString(points::AbstractVector{<: Pair{P, P}}) where P <: AbstractPoint{N, T} where {N, T}
-    return LineString(reinterpret(LineP{N, T, P}, points))
+    LineString(reinterpret(LineP{N, T, P}, points))
 end
 
 function LineString(points::AbstractVector{<: AbstractPoint}, faces::AbstractVector{<: LineFace})
-    return LineString(connect(points, faces))
+    LineString(connect(points, faces))
 end
 
 """
@@ -228,7 +246,7 @@ linestring = LineString(points, faces, 2)
 """
 function LineString(points::AbstractVector{<: AbstractPoint}, indices::AbstractVector{<: Integer}, skip = 1)
     faces = connect(indices, LineFace, skip)
-    return LineString(points, faces)
+    LineString(points, faces)
 end
 
 struct Polygon{
@@ -244,21 +262,21 @@ end
 Base.:(==)(a::Polygon, b::Polygon) = (a.exterior == b.exterior) && (a.interiors == b.interiors)
 
 function Polygon(exterior::E, interiors::AbstractVector{E}) where E <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
-    return Polygon{Dim, T, P, typeof(exterior), typeof(interiors)}(exterior, interiors)
+    Polygon{Dim, T, P, typeof(exterior), typeof(interiors)}(exterior, interiors)
 end
 
 Polygon(exterior::L) where L <: AbstractVector{<: LineP} = Polygon(exterior, L[])
 
 function Polygon(exterior::AbstractVector{P}, skip::Int = 1) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    return Polygon(LineString(exterior, skip))
+    Polygon(LineString(exterior, skip))
 end
 
 function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<: Integer}, skip::Int = 1) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    return Polygon(LineString(exterior, faces, skip))
+    Polygon(LineString(exterior, faces, skip))
 end
 
 function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<: LineFace}) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    return Polygon(LineString(exterior, faces))
+    Polygon(LineString(exterior, faces))
 end
 
 
@@ -272,7 +290,7 @@ struct MultiPolygon{
 end
 
 function MultiPolygon(polygons::AbstractVector{P}; kw...) where P <: AbstractPolygon{Dim, T} where {Dim, T}
-    return MultiPolygon(meta(polygons; kw...))
+    MultiPolygon(meta(polygons; kw...))
 end
 
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
@@ -288,7 +306,7 @@ struct MultiLineString{
 end
 
 function MultiLineString(linestrings::AbstractVector{L}; kw...) where L <: AbstractVector{LineP{Dim, T, P}} where {Dim, T, P}
-    return MultiLineString(meta(linestrings; kw...))
+    MultiLineString(meta(linestrings; kw...))
 end
 
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
@@ -324,7 +342,7 @@ const AbstractMesh{Element} = AbstractVector{Element}
 The conrecte AbstractMesh implementation
 """
 struct Mesh{
-        Dim, T <: Number,
+        Dim, T <: Real,
         Element <: Polytope{Dim, T},
         V <: AbstractVector{Element}
     } <: AbstractMesh{Element}

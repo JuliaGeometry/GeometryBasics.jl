@@ -32,9 +32,7 @@ OffsetInteger{O1, T1}(x::OffsetInteger{O2, T2}) where {O1, O2, T1 <: Integer, T2
 
 OffsetInteger{O}(x::Integer) where {O} = OffsetInteger{O, eltype(x)}(x)
 OffsetInteger{O}(x::OffsetInteger) where {O} = OffsetInteger{O, eltype(x)}(x)
-# This constructor has a massive method invalidation as a consequence,
-# and doesn't seem to be needed, so let's remove it!
-(::Type{IT})(x::OffsetInteger) where {IT <: Integer} = IT(value(x))
+(::Type{IT})(x::OffsetInteger{O, T}) where {IT <: Integer, O, T <: Integer} = IT(value(x))
 
 Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
 Base.promote_rule(::Type{T1}, ::Type{OffsetInteger{O, T2}}) where {T1 <: Integer, O, T2} = T1

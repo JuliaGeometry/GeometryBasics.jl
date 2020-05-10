@@ -520,8 +520,9 @@ centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
 # Rect2D decomposition
+best_nvertices(rect::Rect2D) = (2, 2) # not implemented yet
 
-function faces(rect::Rect2D, nvertices=(2, 2))
+function faces(rect::Rect2D, nvertices::Tuple=(2, 2))
     w, h = nvertices
     idx = LinearIndices(nvertices)
     quad(i, j) = QuadFace{Int}(idx[i, j], idx[i+1, j], idx[i+1, j+1], idx[i, j+1])
@@ -545,18 +546,19 @@ end
 
 ##
 # Rect3D decomposition
-function coordinates(rect::Rect3D)
+best_nvertices(rect::Rect3D) = nothing # not implemented yet
+function coordinates(rect::Rect3D, nvertices=nothing)
     # TODO use n
     w = widths(rect)
     o = origin(rect)
     return (ntuple(j-> o[j] + ((i >> (j - 1)) & 1) * w[j], 3) for i in 0:7)
 end
 
-function texturecoordinates(rect::Rect3D)
+function texturecoordinates(rect::Rect3D, nvertices=1)
     return coordinates(Rect3D(0,0,0,1,1,1))
 end
 
-function faces(rect::Rect3D)
+function faces(rect::Rect3D, nvertices=1)
     return QuadFace{Int}[
         (1,3,4,2),
         (2,4,8,6),
