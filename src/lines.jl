@@ -60,7 +60,6 @@ function intersects(a::Line{2, T1}, b::Line{2, T2}) where {T1, T2}
     return true, point
 end
 
-
 function simple_concat(vec::AbstractVector, range, endpoint::P) where P
     result = Vector{P}(undef, length(range) + 1)
     for (i, j) in enumerate(range)
@@ -69,7 +68,6 @@ function simple_concat(vec::AbstractVector, range, endpoint::P) where P
     result[end] = endpoint
     return result
 end
-
 
 function consecutive_pairs(arr)
     n = length(arr)
