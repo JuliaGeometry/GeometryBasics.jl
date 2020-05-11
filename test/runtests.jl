@@ -303,6 +303,19 @@ end
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     triangle_mesh(points)
     @test true # yay no errors so far!
+
+    m = GeometryBasics.mesh(Sphere(Point3f0(0), 1))
+    @test normals(m) == nothing
+    m_normals = pointmeta(m, Normal(Vec3f0))
+    @test normals(m_normals) isa Vector{Vec3f0}
+
+    @test texturecoordinates(m) == nothing
+    uv = decompose_uv(m)
+    @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
+
+    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    m = GeometryBasics.mesh(points)
+    @test coordinates(m) === points
 end
 
 @testset "Tests from GeometryTypes" begin

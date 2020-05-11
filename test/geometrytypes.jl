@@ -206,8 +206,6 @@ end
     @test decompose(Point2f0, mesh) ≈ decompose(Point2f0, tess_circle)
 end
 
-
-
 @testset "Rectangles" begin
     rect = FRect2D(0, 7, 20, 3)
     @test (rect + 4) == FRect2D(4, 11, 20, 3)

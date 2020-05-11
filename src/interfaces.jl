@@ -60,7 +60,6 @@ function Tesselation(primitive::GeometryPrimitive{Dim, T}, nvertices::NTuple{N, 
     return Tesselation{Dim, T, typeof(primitive), N}(primitive, Int.(nvertices))
 end
 
-
 Tesselation(primitive, nvertices::Integer) = Tesselation(primitive, (nvertices,))
 
 # This is a bit lazy, I guess we should just refactor these methods
@@ -85,10 +84,13 @@ const Meshable{Dim, T} = Union{Tesselation{Dim, T}, Mesh{Dim, T},
 
 struct UV{T} end
 UV(::Type{T}) where T = UV{T}()
+UV() = UV(Vec2f0)
 struct UVW{T} end
 UVW(::Type{T}) where T = UVW{T}()
+UVW() = UVW(Vec3f0)
 struct Normal{T} end
 Normal(::Type{T}) where T = Normal{T}()
+Normal() = Normal(Vec3f0)
 
 function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     f = faces(primitive)
@@ -108,16 +110,33 @@ function decompose(::Type{T}, primitive) where {T}
     return collect_with_eltype(T, primitive)
 end
 
-decompose_uv(primitive) = decompose(UV(Vec2f0), primitive)
-decompose_uvw(primitive) = decompose(UVW(Vec3f0), primitive)
-decompose_normals(primitive) = decompose(Normal(Vec3f0), primitive)
+decompose_uv(primitive) = decompose(UV(), primitive)
+decompose_uvw(primitive) = decompose(UVW(), primitive)
+decompose_normals(primitive) = decompose(Normal(), primitive)
 
-function decompose(::Normal{T}, primitive) where T
+function decompose(NT::Normal{T}, primitive) where T
     n = normals(primitive)
-    n === nothing && return nothing
+    if n === nothing
+        return decompose(NT, normals(coordinates(primitive), faces(primitive)))
+    end
     return collect_with_eltype(T, n)
 end
 
-function decompose(::Union{UV{T}, UVW{T}}, primitive) where T
-    return collect_with_eltype(T, texturecoordinates(primitive))
+function decompose(UVT::Union{UV{T}, UVW{T}}, primitive) where T
+    uv = texturecoordinates(primitive)
+    if uv === nothing
+        return decompose(UVT, texturecoordinates(coordinates(primitive)))
+    end
+    return collect_with_eltype(T, uv)
 end
+
+function texturecoordinates(positions::AbstractVector{<:VecTypes})
+    bb = Rect(positions)
+    return map(positions) do p
+        return (p .- minimum(bb)) ./ widths(bb)
+    end
+end
+
+# Stay backward compatible:
+
+decompose(::Type{T}, primitive::Meshable, nvertices) where T = decompose(T, Tesselation(primitive, nvertices))

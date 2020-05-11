@@ -106,14 +106,6 @@ function normals(vertices::AbstractVector{<: AbstractPoint{3, T}},
     return normals_result
 end
 
-function normals(mesh::AbstractMesh)
-    if hasproperty(mesh, :normals)
-        return mesh.normals
-    else
-        return normals(coordinates(mesh), faces(mesh))
-    end
-end
-
 ##
 # Some more primitive types
 
@@ -210,8 +202,6 @@ function rotation(c::Cylinder{3, T}) where T
     return hcat(v, w, u)
 end
 
-best_nvertices(x::Cylinder{2}) = (2, 2)
-
 function coordinates(c::Cylinder{2, T}, nvertices=(2, 2)) where T
     r = Rect(c.origin[1] - c.r/2, c.origin[2], c.r, height(c))
     M = rotation(c)
@@ -223,8 +213,6 @@ end
 function faces(sphere::Cylinder{2}, nvertices=(2, 2))
     return faces(Rect(0, 0, 1, 1), nvertices)
 end
-
-best_nvertices(x::Cylinder{3}) = 30
 
 function coordinates(c::Cylinder{3, T}, nvertices=30) where T
     if isodd(nvertices)
