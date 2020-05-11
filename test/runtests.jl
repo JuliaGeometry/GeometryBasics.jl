@@ -284,6 +284,7 @@ end
     mesh = triangle_mesh(primitive)
     @test decompose(Point, mesh) isa Vector{Point3f0}
     @test decompose(Point, primitive) isa Vector{Point3f0}
+
     primitive = Rect2D(0, 0, 1, 1)
     mesh = triangle_mesh(primitive)
 
@@ -294,19 +295,22 @@ end
     triangle_mesh(primitive)
 
     primitive = Sphere(Point3f0(0), 1)
-    normal_mesh(primitive)
+    m_normal = normal_mesh(primitive)
+    @test normals(m_normal) isa Vector{Vec3f0}
     primitive = Rect2D(0, 0, 1, 1)
-    normal_mesh(primitive)
+    m_normal = normal_mesh(primitive)
+    @test normals(m_normal) isa Vector{Vec3f0}
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
-    normal_mesh(primitive)
+    m_normal = normal_mesh(primitive)
+    @test normals(m_normal) isa Vector{Vec3f0}
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
-    triangle_mesh(points)
-    @test true # yay no errors so far!
+    tmesh = triangle_mesh(points)
+    @test normals(tmesh) == nothing
 
     m = GeometryBasics.mesh(Sphere(Point3f0(0), 1))
     @test normals(m) == nothing
-    m_normals = pointmeta(m, Normal(Vec3f0))
+    m_normals = pointmeta(m, Normal())
     @test normals(m_normals) isa Vector{Vec3f0}
 
     @test texturecoordinates(m) == nothing
@@ -327,7 +331,7 @@ end
     points = rand(Point3f0, 10)
     m = GeometryBasics.Mesh(meta(points, xx=xx), GLTriangleFace[(1,2,3), (3,4,5)])
     color = rand(10)
-    m = GeometryBasics.pointmeta(m; color=color)
+    m = pointmeta(m; color=color)
 
     @test hasproperty(m, :xx)
     @test hasproperty(m, :color)

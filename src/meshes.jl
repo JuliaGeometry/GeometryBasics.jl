@@ -150,7 +150,11 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
     return Mesh(positions, faces)
 end
 
-function triangle_mesh(primitive::Meshable{N}) where {N}
+function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+    if nvertices !== nothing
+        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
+        primitive = Tesselation(primitive, nvertices)
+    end
     return mesh(primitive; pointtype=Point{N, Float32}, facetype=GLTriangleFace)
 end
 
@@ -172,18 +176,13 @@ function normal_mesh(points::AbstractVector{<:AbstractPoint},
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
 end
 
-function normal_mesh(primitive::Meshable{N}) where {N}
+function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+    if nvertices !== nothing
+        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
+        primitive = Tesselation(primitive, nvertices)
+    end
     return mesh(primitive; pointtype=Point{N, Float32}, normaltype=Vec3f0,
                 facetype=GLTriangleFace)
-end
-
-## Backward compatibility
-function normal_mesh(primitive::GeometryPrimitive; nvertices=30)
-    return normal_mesh(Tesselation(primitive, nvertices))
-end
-
-function triangle_mesh(primitive::GeometryPrimitive; nvertices=30)
-    return triangle_mesh(Tesselation(primitive, nvertices))
 end
 
 """
@@ -244,7 +243,7 @@ function pointmeta(mesh::Mesh, uv::UV)
 end
 
 function pointmeta(mesh::Mesh, normal::Normal)
-    return pointmeta(mesh; normal=decompose(normal, mesh))
+    return pointmeta(mesh; normals=decompose(normal, mesh))
 end
 
 """

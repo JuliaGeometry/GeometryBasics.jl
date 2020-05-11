@@ -117,7 +117,7 @@ decompose_normals(primitive) = decompose(Normal(), primitive)
 function decompose(NT::Normal{T}, primitive) where T
     n = normals(primitive)
     if n === nothing
-        return decompose(NT, normals(coordinates(primitive), faces(primitive)))
+        return collect_with_eltype(T, normals(coordinates(primitive), faces(primitive)))
     end
     return collect_with_eltype(T, n)
 end
