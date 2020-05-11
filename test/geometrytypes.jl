@@ -2,14 +2,7 @@ using Test, GeometryBasics
 
 @testset "algorithms.jl" begin
     cube = Rect(Vec3f0(-0.5), Vec3f0(1))
-    cube_faces = decompose(TriangleFace{Int}, QuadFace{Int}[
-        (1,3,4,2),
-        (2,4,8,6),
-        (4,3,7,8),
-        (1,5,7,3),
-        (1,2,6,5),
-        (5,6,8,7),
-    ])
+    cube_faces = decompose(TriangleFace{Int}, faces(cube))
     cube_vertices = decompose(Point{3,Float32}, cube)
     @test area(cube_vertices, cube_faces) == 6
     mesh = Mesh(cube_vertices, cube_faces)
@@ -121,7 +114,7 @@ end
     @test decompose(Point2f0, mesh) == pt_expa
 
     b = Rect(Vec(1,1,1),Vec(1,1,1))
-    pt_expb = Point{3,Int}[(1,1,1),(2,1,1),(1,2,1),(2,2,1),(1,1,2),(2,1,2),(1,2,2),(2,2,2)]
+    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 2], [1, 2, 1], [1, 1, 1], [2, 1, 1], [2, 1, 2], [1, 1, 2], [1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 1, 1], [2, 2, 2], [1, 2, 2], [1, 1, 2], [2, 1, 2], [2, 2, 2], [2, 1, 2], [2, 1, 1], [2, 2, 1], [2, 2, 2], [2, 2, 1], [1, 2, 1], [1, 2, 2]]
     @test decompose(Point{3,Int}, b) == pt_expb
     mesh = normal_mesh(b)
 end
