@@ -3,12 +3,7 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/SimonDanisch/GeometryBasics.jl?svg=true)](https://ci.appveyor.com/project/SimonDanisch/GeometryBasics-jl)
 [![Codecov](https://codecov.io/gh/JuliaGeometry/GeometryBasics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SimonDanisch/GeometryBasics.jl)
 
-**Documentation**: [![][docs-stable-img]][docs-stable-url] [![][docs-master-img]][docs-master-url]
-
-[docs-stable-img]: https://img.shields.io/badge/docs-stable-lightgrey.svg
-[docs-stable-url]: http://juliageometry.github.io/GeometryBasics.jl/stable/
-[docs-master-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-master-url]: http://juliageometry.github.io/GeometryBasics.jl
+**Documentation**: [![][https://img.shields.io/badge/docs-stable-lightgrey.svg]][http://juliageometry.github.io/GeometryBasics.jl/stable/] [![][https://img.shields.io/badge/docs-dev-blue.svg]][http://juliageometry.github.io/GeometryBasics.jl/dev]
 
 # GeometryBasics.jl
 
