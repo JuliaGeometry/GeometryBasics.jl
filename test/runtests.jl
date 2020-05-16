@@ -208,6 +208,7 @@ using LinearAlgebra
             faces = [LineFace(1, 2), LineFace(3, 4)]
             polygon = Polygon(points, faces)
             @test polygon == Polygon(LineString(points, faces))
+            @test ndims(polygon) === 2
         end
 
         @testset "Mesh" begin
@@ -276,6 +277,7 @@ end
 
 @testset "decompose/triangulation" begin
     primitive = Sphere(Point3f0(0), 1)
+    @test ndims(primitive) === 3
     mesh = triangle_mesh(primitive)
     @test decompose(Point, mesh) isa Vector{Point3f0}
     @test decompose(Point, primitive) isa Vector{Point3f0}
@@ -374,4 +376,20 @@ end
     @test m isa Mesh{3, Float32}
     @test coordinates(m) isa Vector{Point3f0}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
+end
+
+@testset "lines intersects" begin
+    a = Line(Point(0.0, 0.0), Point(4.0, 1.0))
+    b = Line(Point(0.0, 0.25), Point(3.0, 0.25))
+    c = Line(Point(0.0, 0.25), Point(0.5, 0.25))
+    d = Line(Point(0.0, 0.0), Point(0.0, 4.0))
+    e = Line(Point(1.0, 0.0), Point(0.0, 4.0))
+    f = Line(Point(5.0, 0.0), Point(6.0, 0.0))
+
+    @test intersects(a, b) === (true, Point(1.0, 0.25))
+    @test intersects(a, c) === (false, Point(0.0, 0.0))
+    @test intersects(d, d) === (false, Point(0.0, 0.0))
+    found, point = intersects(d, e)
+    @test found && point ≈ Point(0.0, 4.0)
+    @test intersects(a, f) === (false, Point(0.0, 0.0))
 end

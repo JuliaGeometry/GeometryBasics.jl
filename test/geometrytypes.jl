@@ -226,4 +226,16 @@ end
     rect = FRect3D(base, wxyz)
     @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
     @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
+
+    rect1 = Rect(Vec(0.0, 0.0), Vec(1.0, 2.0))
+    rect2 = Rect(0.0, 0.0, 1.0, 2.0)
+    @test rect1 isa GeometryBasics.HyperRectangle{2, Float64}
+    @test rect1 == rect2
+
+    split1, split2 = GeometryBasics.split(rect1, 2, 1)
+    @test widths(split1) == widths(split2)
+    @test origin(split1) == Vec(0, 0)
+    @test origin(split2) == Vec(0, 1)
+    @test in(split1, rect1)
+    @test !in(rect1, split1)
 end
