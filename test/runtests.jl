@@ -1,7 +1,6 @@
 using Test, Random, StructArrays, Tables, StaticArrays
 using GeometryBasics
 using LinearAlgebra
-using Query
 
 @testset "GeometryBasics" begin
     @testset "embedding metadata" begin
@@ -72,11 +71,7 @@ using Query
                     @test mp.category == b
                 end
 
-                filtered = @from i in x begin
-                    @where i.value < 0.7
-                    @select i
-                    @collect
-                end
+                filtered = filter(i -> i.value < 0.7, x)
                 @test length(filtered) == 7
             end
         end
