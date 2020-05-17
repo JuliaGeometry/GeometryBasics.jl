@@ -479,23 +479,23 @@ end
 # Containment
 
 """
-    contains(b1::Rect, b2::Rect)
+    in(b1::Rect, b2::Rect)
 
-Check if Rects are contained in each other. This does not use
+Check if Rect `b1` is contained in `b2`. This does not use
 strict inequality, so Rects may share faces and this will still
 return true.
 """
-function Base.in(b2::Rect{N}, b1::Rect{N}) where N
+function Base.in(b1::Rect{N}, b2::Rect{N}) where N
     for i = 1:N
-        maximum(b2)[i] <= maximum(b1)[i] &&
-            minimum(b2)[i] >= minimum(b1)[i] ||
+        maximum(b1)[i] <= maximum(b2)[i] &&
+            minimum(b1)[i] >= minimum(b2)[i] ||
             return false
     end
     return true
 end
 
 """
-    contains(b1::Rect{N, T}, pt::VecTypes)
+    in(pt::VecTypes, b1::Rect{N, T})
 
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
