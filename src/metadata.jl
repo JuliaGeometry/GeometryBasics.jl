@@ -137,3 +137,7 @@ Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
+
+@meta_type(MultiPoint, points, AbstractVector, P)
+Base.getindex(x::MultiPointMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MultiPointMeta) = size(metafree(x))

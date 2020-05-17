@@ -307,11 +307,17 @@ end
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 
+
+"""
+    MultiPoint(points::AbstractVector{AbstractPoint})
+
+A collection of points
+"""
 struct MultiPoint{
         Dim, T <: Real,
-        Element <: AbstractPoint{Dim, T},
-        A <: AbstractVector{Element}
-    } <: AbstractVector{Element}
+        P <: AbstractPoint{Dim, T},
+        A <: AbstractVector{P}
+    } <: AbstractVector{P}
 
     points::A
 end
