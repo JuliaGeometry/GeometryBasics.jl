@@ -39,6 +39,10 @@ julia> poi = meta(p1, city="Abuja", rainfall=1221.2)
 julia> meta(poi)
 (city = "Abuja", rainfall = 1221.2)
 
+# specific metadata attributes can be directly retrieved
+julia> poi.rainfall
+1221.2
+
 # to remove the metadata and keep only the geometry, use metafree
 julia> metafree(poi)
 2-element Point{2,Int64} with indices SOneTo(2):
