@@ -83,6 +83,7 @@ using LinearAlgebra
         pm = GeometryBasics.PointMeta(1.1, 2.2; a=1, b=2)
         @test meta(pm) === (a=1, b=2)
         @test metafree(pm) === p
+        @test propertynames(pm) == (:position, :a, :b)
     end
 end
 
