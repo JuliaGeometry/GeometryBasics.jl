@@ -238,4 +238,90 @@ end
     @test origin(split2) == Vec(0, 1)
     @test in(split1, rect1)
     @test !in(rect1, split1)
+
+    prim = Rect(0.0, 0.0, 1.0, 1.0)
+    @test length(prim) == 2 
+
+    @test width(prim) == 1.0
+    @test height(prim) == 1.0
+
+    b1 = Rect2D(0.0, 0.0, 2.0, 2.0)
+    b2 = Rect2D(0, 0, 2, 2)
+    @test isequal(b1, b2)
+
+    pt = Point(1.0, 1.0)
+    b1 = Rect(0.0, 0.0, 1.0, 1.0)
+    @test in(pt, b1)
+
+    rect = Rect(0.0, 0.0, 1.0, 1.0)
+    @test GeometryBasics.positive_widths(rect) isa GeometryBasics.HyperRectangle{2,Float64}
+
+    h1 = Rect(0.0, 0.0, 1.0, 1.0)
+    h2 = Rect(1.0, 1.0, 2.0, 2.0)
+    @test union(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
+    @test GeometryBasics.diff(h1, h2) == h1
+    @test GeometryBasics.intersect(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
+
+    b = Rect(0.0, 0.0, 1.0, 1.0)
+    v = Vec(1, 2)
+    @test update(b, v) isa GeometryBasics.HyperRectangle{2,Float64}
+    v = Vec(1.0, 2.0)
+    @test update(b, v) isa GeometryBasics.HyperRectangle{2,Float64}
+    
+    p = Vec(5.0, 4.0)
+    rect = Rect(0.0, 0.0, 1.0, 1.0)
+    @test min_dist_dim(rect, p, 1) == 4.0
+    @test min_dist_dim(rect, p, 2) == 3.0
+    @test max_dist_dim(rect, p ,1) == 5.0
+    @test max_dist_dim(rect, p ,2) == 4.0
+
+    rect1 = Rect(0.0, 0.0, 1.0, 1.0)
+    rect2 = Rect(3.0, 1.0, 4.0, 2.0)
+    @test min_dist_dim(rect1, rect2, 1) == 2.0
+    @test min_dist_dim(rect1, rect2, 2) == 0.0
+    @test max_dist_dim(rect1, rect2, 1) == 7.0
+    @test max_dist_dim(rect1, rect2, 2) == 3.0
+
+    @test !before(rect1, rect2)
+    rect1 = Rect(0.0, 0.0, 1.0, 1.0)
+    rect2 = Rect(3.0, 2.0, 4.0, 2.0)
+    @test before(rect1, rect2)
+
+    @test !meets(rect1, rect2)
+    rect2 = Rect(1.0, 1.0, 4.0, 2.0)
+    @test meets(rect1, rect2)
+
+    rect1 = Rect(1.0, 1.0, 2.0, 2.0)
+    rect2 = Rect(0.0, 0.0, 2.0, 1.0)
+    @test !overlaps(rect1, rect2)
+    rect1 = Rect(1.0, 1.0, 2.0, 2.0)
+    rect2 = Rect(1.0, 1.0, 2.0, 2.0)
+    @test !overlaps(rect1, rect2)
+
+
+    rect1 = Rect(1.0, 1.0, 2.0, 2.0)
+    rect2 = Rect(0.0, 0.0, 2.0, 1.0)
+    @test !GeometryBasics.starts(rect1, rect2)
+    rect2 = Rect(1.0, 1.0, 1.5, 1.5)
+    @test !GeometryBasics.starts(rect1, rect2)
+    rect2 = Rect(1.0, 1.0, 3.0, 3.0)
+    @test GeometryBasics.starts(rect1, rect2)
+
+    rect1 = Rect(1.0, 1.0, 2.0, 2.0)
+    rect2 = Rect(0.0, 0.0, 4.0, 4.0)
+    @test during(rect1, rect2)
+    rect1 = Rect(0.0, 0.0, 2.0, 3.0)
+    rect2 = Rect(1.0, 1.0, 4.0, 2.0)
+    @test !during(rect1, rect2)
+
+    rect1 = Rect(1.0, 1.0, 2.0, 2.0)
+    rect2 = Rect(0.0, 0.0, 4.0, 4.0)
+    @test !finishes(rect1, rect2)
+    rect1 = Rect(1.0, 0.0, 1.0, 1.0)
+    rect2 = Rect(0.0, 0.0, 2.0, 1.0)
+    @test !finishes(rect1, rect2)
+    rect1 = Rect(1.0, 1.0, 1.0, 2.0)
+    rect2 = Rect(0.0, 0.0, 2.0, 3.0)
+    @test finishes(rect1, rect2)
+
 end

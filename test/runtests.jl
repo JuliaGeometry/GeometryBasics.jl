@@ -311,6 +311,10 @@ end
     @test normals(m_normals) isa Vector{Vec3f0}
 
     @test texturecoordinates(m) == nothing
+    r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
+    @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
+    r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
+    @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
     @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
 
