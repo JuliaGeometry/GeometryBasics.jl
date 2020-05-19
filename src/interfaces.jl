@@ -75,7 +75,7 @@ texturecoordinates(tesselation::Tesselation) = texturecoordinates(tesselation.pr
 
 
 ## Decompose methods
-# Dispatch type to make `decompose(UV{Vec2f0}, priomitive)` work
+# Dispatch type to make `decompose(UV{Vec2f0}, primitive)` work
 # and to pass through tesselation information
 
 # Types that can be converted to a mesh via the functions below
