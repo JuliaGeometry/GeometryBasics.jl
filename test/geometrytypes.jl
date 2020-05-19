@@ -2,14 +2,7 @@ using Test, GeometryBasics
 
 @testset "algorithms.jl" begin
     cube = Rect(Vec3f0(-0.5), Vec3f0(1))
-    cube_faces = decompose(TriangleFace{Int}, QuadFace{Int}[
-        (1,3,4,2),
-        (2,4,8,6),
-        (4,3,7,8),
-        (1,5,7,3),
-        (1,2,6,5),
-        (5,6,8,7),
-    ])
+    cube_faces = decompose(TriangleFace{Int}, faces(cube))
     cube_vertices = decompose(Point{3,Float32}, cube)
     @test area(cube_vertices, cube_faces) == 6
     mesh = Mesh(cube_vertices, cube_faces)
@@ -54,7 +47,7 @@ end
             (1.2322329, 5.767767, 0.0),
             (4.767767, 2.232233, 0.0)
         ]
-        @test decompose(Point3f0, s, (2, 3)) ≈ positions
+        @test decompose(Point3f0, Tesselation(s, (2, 3))) ≈ positions
 
         FT = TriangleFace{Int}
         faces = FT[
@@ -63,7 +56,7 @@ end
             (3,4,6),
             (3,6,5)
         ]
-        @test faces == decompose(FT, s, (2,3))
+        @test faces == decompose(FT, Tesselation(s, (2,3)))
 
         v1 = Point{3, Float64}(1,2,3); v2 = Point{3, Float64}(4,5,6); R = 5.0
         s = Cylinder(v1, v2, R)
@@ -80,7 +73,7 @@ end
             (4,5,6)
         ]
 
-        @test decompose(Point3{Float64}, s, 8) ≈ positions
+        @test decompose(Point3{Float64}, Tesselation(s, 8)) ≈ positions
 
         faces = TriangleFace{Int}[
             (3, 2, 1),
@@ -101,9 +94,9 @@ end
             (1, 7, 9),
             (8, 2, 10)
         ]
-        @test faces == decompose(TriangleFace{Int}, s, 8)
+        @test faces == decompose(TriangleFace{Int}, Tesselation(s, 8))
 
-        m = triangle_mesh(s, nvertices=8)
+        m = triangle_mesh(Tesselation(s, 8))
 
         @test GeometryBasics.faces(m) == faces
         @test GeometryBasics.coordinates(m) ≈ positions
@@ -121,7 +114,7 @@ end
     @test decompose(Point2f0, mesh) == pt_expa
 
     b = Rect(Vec(1,1,1),Vec(1,1,1))
-    pt_expb = Point{3,Int}[(1,1,1),(2,1,1),(1,2,1),(2,2,1),(1,1,2),(2,1,2),(1,2,2),(2,2,2)]
+    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 2], [1, 2, 1], [1, 1, 1], [2, 1, 1], [2, 1, 2], [1, 1, 2], [1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 1, 1], [2, 2, 2], [1, 2, 2], [1, 1, 2], [2, 1, 2], [2, 2, 2], [2, 1, 2], [2, 1, 1], [2, 2, 1], [2, 2, 2], [2, 2, 1], [1, 2, 1], [1, 2, 2]]
     @test decompose(Point{3,Int}, b) == pt_expb
     mesh = normal_mesh(b)
 end
@@ -183,7 +176,7 @@ end
 @testset "HyperSphere" begin
     sphere = Sphere{Float32}(Point3f0(0), 1f0)
 
-    points = decompose(Point, sphere, 3)
+    points = decompose(Point, Tesselation(sphere, 3))
     point_target = Point{3,Float32}[
         [0.0, 0.0, 1.0], [1.0, 0.0, 6.12323e-17], [1.22465e-16, 0.0, -1.0],
         [-0.0, 0.0, 1.0], [-1.0, 1.22465e-16, 6.12323e-17],
@@ -192,20 +185,19 @@ end
     ]
     @test points ≈ point_target
 
-    f = decompose(TriangleFace{Int}, sphere, 3)
+    f = decompose(TriangleFace{Int}, Tesselation(sphere, 3))
     face_target = TriangleFace{Int}[
         [1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5],
         [4, 5, 8], [4, 8, 7], [5, 6, 9], [5, 9, 8]
     ]
     @test f == face_target
     circle = Circle(Point2f0(0), 1f0)
-    points = decompose(Point2f0, circle, 20)
+    points = decompose(Point2f0, Tesselation(circle, 20))
     @test length(points) == 20
-
-    mesh = triangle_mesh(circle, nvertices=32)
-    @test decompose(Point2f0, mesh)[1:end] ≈ decompose(Point2f0, circle, 32)
+    tess_circle = Tesselation(circle, 32)
+    mesh = triangle_mesh(tess_circle)
+    @test decompose(Point2f0, mesh) ≈ decompose(Point2f0, tess_circle)
 end
-
 
 @testset "Rectangles" begin
     rect = FRect2D(0, 7, 20, 3)
@@ -234,4 +226,16 @@ end
     rect = FRect3D(base, wxyz)
     @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
     @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
+
+    rect1 = Rect(Vec(0.0, 0.0), Vec(1.0, 2.0))
+    rect2 = Rect(0.0, 0.0, 1.0, 2.0)
+    @test rect1 isa GeometryBasics.HyperRectangle{2, Float64}
+    @test rect1 == rect2
+
+    split1, split2 = GeometryBasics.split(rect1, 2, 1)
+    @test widths(split1) == widths(split2)
+    @test origin(split1) == Vec(0, 0)
+    @test origin(split2) == Vec(0, 1)
+    @test in(split1, rect1)
+    @test !in(rect1, split1)
 end

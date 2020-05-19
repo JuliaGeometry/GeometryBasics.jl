@@ -138,7 +138,13 @@ Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
 
 Base.size(faceview::FaceView) = size(getfield(faceview, :faces))
 
-Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element = print(io, "FaceView{", Element, "}")
+function Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element
+    if @isdefined Element
+        print(io, "FaceView{", Element, "}")
+    else
+        print(io, "FaceView{T}")
+    end
+end
 
 @propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where Element
     return Element(map(idx-> coordinates(x)[idx], faces(x)[i]))

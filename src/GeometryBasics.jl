@@ -7,6 +7,7 @@ module GeometryBasics
     include("fixed_arrays.jl")
     include("offsetintegers.jl")
     include("basic_types.jl")
+    include("interfaces.jl")
     include("metadata.jl")
     include("viewtypes.jl")
     include("geometry_primitives.jl")
@@ -28,7 +29,8 @@ module GeometryBasics
     export OffsetInteger, ZeroIndex, OneIndex, GLIndex
     export FaceView, SimpleFaceView
     export AbstractPoint, PointMeta, PointWithUV
-    export decompose, coordinates, faces, normals, decompose_uv, decompose_normals
+    export decompose, coordinates, faces, normals, decompose_uv, decompose_normals, texturecoordinates
+    export Tesselation, pointmeta, Normal, UV, UVW
     export GLTriangleFace, GLNormalMesh3D, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
     export AbstractMesh, Mesh, TriangleMesh
     export GLNormalMesh2D, PlainTriangleMesh

@@ -479,23 +479,23 @@ end
 # Containment
 
 """
-    contains(b1::Rect, b2::Rect)
+    in(b1::Rect, b2::Rect)
 
-Check if Rects are contained in each other. This does not use
+Check if Rect `b1` is contained in `b2`. This does not use
 strict inequality, so Rects may share faces and this will still
 return true.
 """
-function Base.in(b2::Rect{N}, b1::Rect{N}) where N
+function Base.in(b1::Rect{N}, b2::Rect{N}) where N
     for i = 1:N
-        maximum(b2)[i] <= maximum(b1)[i] &&
-            minimum(b2)[i] >= minimum(b1)[i] ||
+        maximum(b1)[i] <= maximum(b2)[i] &&
+            minimum(b1)[i] >= minimum(b2)[i] ||
             return false
     end
     return true
 end
 
 """
-    contains(b1::Rect{N, T}, pt::VecTypes)
+    in(pt::VecTypes, b1::Rect{N, T})
 
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
@@ -520,9 +520,8 @@ centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
 # Rect2D decomposition
-best_nvertices(rect::Rect2D) = (2, 2) # not implemented yet
 
-function faces(rect::Rect2D, nvertices::Tuple=(2, 2))
+function faces(rect::Rect2D, nvertices=(2, 2))
     w, h = nvertices
     idx = LinearIndices(nvertices)
     quad(i, j) = QuadFace{Int}(idx[i, j], idx[i+1, j], idx[i+1, j+1], idx[i, j+1])
@@ -546,25 +545,32 @@ end
 
 ##
 # Rect3D decomposition
-best_nvertices(rect::Rect3D) = nothing # not implemented yet
-function coordinates(rect::Rect3D, nvertices=nothing)
+function coordinates(rect::Rect3D)
     # TODO use n
     w = widths(rect)
     o = origin(rect)
-    return (ntuple(j-> o[j] + ((i >> (j - 1)) & 1) * w[j], 3) for i in 0:7)
+    return ((x .* w .+ o) for x in Point{3, Int}[
+        (0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0),
+        (0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1),
+        (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
+
+        (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1),
+        (1, 1, 1), (1, 0, 1), (1, 0, 0), (1, 1, 0),
+        (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)
+    ])
 end
 
-function texturecoordinates(rect::Rect3D, nvertices=1)
+function texturecoordinates(rect::Rect3D)
     return coordinates(Rect3D(0,0,0,1,1,1))
 end
 
-function faces(rect::Rect3D, nvertices=1)
+function faces(rect::Rect3D)
     return QuadFace{Int}[
-        (1,3,4,2),
-        (2,4,8,6),
-        (4,3,7,8),
-        (1,5,7,3),
-        (1,2,6,5),
-        (5,6,8,7),
+        (1,2,3,4),
+        (5,6,7,8),
+        (9,10,11,12),
+        (13,14,15,16),
+        (17,18,19,20),
+        (21,22,23,24),
     ]
 end
