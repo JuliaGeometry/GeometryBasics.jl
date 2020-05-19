@@ -165,6 +165,8 @@ end
 Base.show(io::IO, x::LineP) = print(io, "Line(", x[1], " => ", x[2], ")")
 
 """
+    LineString(points::AbstractVector{<:AbstractPoint})
+
 A LineString is a geometry of connected line segments
 """
 struct LineString{
@@ -177,6 +179,7 @@ end
 
 coordinates(x::LineString) = x.points
 
+Base.copy(x::LineString) = LineString(copy(x.points))
 Base.size(x::LineString) = size(coordinates(x))
 Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
 
@@ -231,6 +234,12 @@ function LineString(points::AbstractVector{<: AbstractPoint}, indices::AbstractV
     return LineString(points, faces)
 end
 
+
+"""
+    Polygon(exterior::AbstractVector{<:Point})
+    Polygon(exterior::AbstractVector{<:Point}, interiors::Vector{<:AbstractVector{<:AbstractPoint}})
+
+"""
 struct Polygon{
         Dim, T <: Real,
         P <: AbstractPoint{Dim, T},
@@ -240,6 +249,8 @@ struct Polygon{
     exterior::L
     interiors::V
 end
+
+Base.copy(x::Polygon) = Polygon(copy(x.exterior), copy(x.interiors))
 
 Base.:(==)(a::Polygon, b::Polygon) = (a.exterior == b.exterior) && (a.interiors == b.interiors)
 
@@ -261,7 +272,9 @@ function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<: LineFace}
     return Polygon(LineString(exterior, faces))
 end
 
-
+"""
+    MultiPolygon(polygons::AbstractPolygon)
+"""
 struct MultiPolygon{
         Dim, T <: Real,
         Element <: AbstractPolygon{Dim, T},
@@ -294,11 +307,17 @@ end
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 
+
+"""
+    MultiPoint(points::AbstractVector{AbstractPoint})
+
+A collection of points
+"""
 struct MultiPoint{
         Dim, T <: Real,
-        Element <: AbstractPoint{Dim, T},
-        A <: AbstractVector{Element}
-    } <: AbstractVector{Element}
+        P <: AbstractPoint{Dim, T},
+        A <: AbstractVector{P}
+    } <: AbstractVector{P}
 
     points::A
 end

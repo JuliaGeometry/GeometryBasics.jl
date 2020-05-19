@@ -113,6 +113,10 @@ macro meta_type(name, mainfield, supertype, params...)
             return MT(obj, nt)
         end
 
+        function Base.propertynames(::$MetaName{$(params...), Typ, Names, Types}) where {$(params...), Typ, Names, Types}
+            return ($field, Names...)
+        end
+
         function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
             NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
         end
@@ -137,3 +141,7 @@ Base.getindex(x::NgonFaceMeta, idx::Int) = getindex(metafree(x), idx)
 Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
+
+@meta_type(MultiPoint, points, AbstractVector, P)
+Base.getindex(x::MultiPointMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MultiPointMeta) = size(metafree(x))
