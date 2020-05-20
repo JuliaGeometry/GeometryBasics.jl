@@ -4,8 +4,14 @@ Table interface for this functionality. Once this is in e.g. Tables.jl,
 it should be removed from GeometryBasics!
 =#
 
+"""
+    attributes(hasmeta)
+Returns all attributes of meta as a Dict{Symbol, Any}.
+Needs to be overloaded, and returns empty dict for non overloaded types!
+Gets overloaded by default for all Meta types.
+"""
 function attributes(hasmeta)
-    return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+    return Dict{Symbol, Any}()
 end
 
 """
@@ -88,6 +94,10 @@ macro meta_type(name, mainfield, supertype, params...)
             return $MetaName(main; meta...)
         end
 
+        function GeometryBasics.attributes(hasmeta::$MetaName)
+            return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+        end
+
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
             isempty(meta) && return elements # no meta to add!
             n = length(elements)
@@ -127,6 +137,8 @@ macro meta_type(name, mainfield, supertype, params...)
             ) where {$(params...), Typ, Names, Types}
             $MetaName(metafree, NamedTuple{Names, Types}(args))
         end
+
+
     end
     return esc(expr)
 end

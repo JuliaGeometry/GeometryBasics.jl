@@ -275,3 +275,7 @@ Attaches metadata to the faces of a mesh
 function facemeta(mesh::Mesh; meta_data...)
     return Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
 end
+
+function attributes(hasmeta::Mesh)
+    return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+end
