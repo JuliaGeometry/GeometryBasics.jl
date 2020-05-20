@@ -11,6 +11,10 @@ function attributes(nometa::GeometryPrimitive)
     return Dict{Symbol, Any}()
 end
 
+function attributes(nometa::Tesselation)
+    return attributes(nometa.primitive)
+end
+
 ##
 # conversion & decompose
 
