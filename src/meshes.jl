@@ -110,25 +110,32 @@ function mesh(primitive::Meshable;
         # triangulation.jl
         faces = decompose(facetype, positions)
     end
-    attributes = Dict{Symbol, Any}()
+
+    # We want to preserve any existing attributes!
+    attrs = attributes(primitive)
+    # Make sure this doesn't contain position, we'll add position explicitely via meta!
+    delete!(attrs, :position)
 
     if uv !== nothing
-        attributes[:uv] = decompose(UV(uv), primitive)
+        # this may overwrite an existing :uv, but will only create a copy
+        # if it has a different eltype, otherwise it should replace it
+        # with exactly the same instance - which is what we want here
+        attrs[:uv] = decompose(UV(uv), primitive)
     end
 
     if normaltype !== nothing
         primitive_normals = normals(primitive)
         if primitive_normals !== nothing
-            attributes[:normals] = decompose(normaltype, primitive_normals)
+            attrs[:normals] = decompose(normaltype, primitive_normals)
         else
             # Normals not implemented for primitive, so we calculate them!
             n = normals(positions, faces)
             if n !== nothing # ok jeez, this is a 2d mesh which cant have normals
-                attributes[:normals] = n
+                attrs[:normals] = n
             end
         end
     end
-    return Mesh(meta(positions; attributes...), faces)
+    return Mesh(meta(positions; attrs...), faces)
 end
 
 """

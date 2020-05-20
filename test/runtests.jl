@@ -323,6 +323,27 @@ end
     include("geometrytypes.jl")
 end
 
+@testset "convert mesh + meta" begin
+    m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))
+    m_normal = normal_mesh(m)
+    # make sure we don't loose the uv
+    @test hasproperty(m_normal, :uv)
+    @test m == m_normal
+    # Make sure we don't create any copies
+    @test m.position === m_normal.position
+    @test m.normals === m_normal.normals
+    @test m.uv === m_normal.uv
+
+    m = GeometryBasics.mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3));
+                            uv=Vec2{Float64}, normaltype=Vec3{Float64}, pointtype=Point3{Float64})
+    m_normal = normal_mesh(m)
+    @test hasproperty(m_normal, :uv)
+    @test m.position !== m_normal.position
+    @test m.normals !== m_normal.normals
+    # uv stays untouched, since we don't specify the element type in normalmesh
+    @test m.uv === m_normal.uv
+end
+
 @testset "modifying meta" begin
     xx = rand(10)
     points = rand(Point3f0, 10)

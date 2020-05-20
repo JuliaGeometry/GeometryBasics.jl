@@ -6,6 +6,11 @@ function widths(x::AbstractRange)
     return maxi - mini
 end
 
+# GeometryPrimitive's don't have attributes per se
+function attributes(nometa::GeometryPrimitive)
+    return Dict{Symbol, Any}()
+end
+
 ##
 # conversion & decompose
 
