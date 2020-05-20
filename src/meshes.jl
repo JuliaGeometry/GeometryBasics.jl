@@ -129,7 +129,7 @@ function mesh(primitive::Meshable;
             attrs[:normals] = decompose(normaltype, primitive_normals)
         else
             # Normals not implemented for primitive, so we calculate them!
-            n = normals(positions, faces)
+            n = normals(positions, faces; normaltype=normaltype)
             if n !== nothing # ok jeez, this is a 2d mesh which cant have normals
                 attrs[:normals] = n
             end
@@ -238,7 +238,7 @@ Attaches metadata to the coordinates of a mesh
 """
 function pointmeta(mesh::Mesh; meta_data...)
     points = coordinates(mesh)
-    attr = GeometryBasics.attributes(points)
+    attr = attributes(points)
     delete!(attr, :position) # position == metafree(points)
     # delete overlapping attributes so we can replace with `meta_data`
     foreach(k-> delete!(attr, k), keys(meta_data))
@@ -260,7 +260,7 @@ Returns the new mesh, and the property!
 """
 function pop_pointmeta(mesh::Mesh, property::Symbol)
     points = coordinates(mesh)
-    attr = GeometryBasics.attributes(points)
+    attr = attributes(points)
     delete!(attr, :position) # position == metafree(points)
     # delete overlapping attributes so we can replace with `meta_data`
     m = pop!(attr, property)
@@ -277,5 +277,5 @@ function facemeta(mesh::Mesh; meta_data...)
 end
 
 function attributes(hasmeta::Mesh)
-    return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+    return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
 end

@@ -6,7 +6,6 @@ function widths(x::AbstractRange)
     return maxi - mini
 end
 
-
 ##
 # conversion & decompose
 

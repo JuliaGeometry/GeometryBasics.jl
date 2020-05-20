@@ -14,6 +14,10 @@ function attributes(hasmeta)
     return Dict{Symbol, Any}()
 end
 
+function attributes(hasmeta::StructArray)
+    return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+end
+
 """
     getcolumns(t, colnames::Symbol...)
 
@@ -95,7 +99,7 @@ macro meta_type(name, mainfield, supertype, params...)
         end
 
         function GeometryBasics.attributes(hasmeta::$MetaName)
-            return Dict((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+            return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
         end
 
         function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
