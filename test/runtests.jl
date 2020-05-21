@@ -445,11 +445,11 @@ end
     @test -(x, x1) == OffsetInteger{0,Int64}(-1)
     #test for /
     @test div(x, x1) == OffsetInteger{0,Int64}(0)
-    @test ==(x, x1) 
-    @test >=(x, x1) 
+    @test !==(x, x1) 
+    @test !>=(x, x1) 
     @test <=(x, x1)
     @test !>(x, x1)
-    @test !<(x, x1)
+    @test <(x, x1)
 end
 
 end  # testset "GeometryBasics"
