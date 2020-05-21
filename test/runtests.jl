@@ -75,6 +75,9 @@ using LinearAlgebra
             filtered = filter(i -> i.value < 0.7, x)
             @test length(filtered) == 7
         end
+        @test GeometryBasics.getcolumn(plain, :name) == pnames
+        @test GeometryBasics.MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
+        @test GeometryBasics.MetaType()
     end
 
     @testset "point with metadata" begin
@@ -360,6 +363,7 @@ end
 
     @test hasproperty(m, :xx)
     @test hasproperty(m, :color)
+    # @test GeometryBasics.MetaType(Simplex) == ERROR: No Meta Type for Simplex
 
     @test m.xx === xx
     @test m.color === color
