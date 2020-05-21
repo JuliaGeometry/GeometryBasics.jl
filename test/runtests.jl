@@ -75,9 +75,8 @@ using LinearAlgebra
             filtered = filter(i -> i.value < 0.7, x)
             @test length(filtered) == 7
         end
-        @test GeometryBasics.getcolumn(plain, :name) == pnames
-        @test GeometryBasics.MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
-        @test GeometryBasics.MetaType()
+        @test getcolumn(plain, :name) == pnames
+        @test MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
     end
 
     @testset "point with metadata" begin

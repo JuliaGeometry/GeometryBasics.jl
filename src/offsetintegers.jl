@@ -46,13 +46,13 @@ Base.to_index(I::OffsetInteger{0}) = convert(Int, raw(I))
 
 # basic operators
 for op in (:(-), :abs)
-    @eval Base.$op(x::T) where {T <: OffsetInteger} = T($(op)(GeometryBasics.value(x)))
+    @eval Base.$op(x::T) where {T <: OffsetInteger} = T($(op)(value(x)))
 end
 
 for op in (:(+), :(-), :(*), :(/), :div)
     @eval begin
         @inline function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where O
-            OffsetInteger{O}($op(GeometryBasics.value(x), GeometryBasics.value(y)))
+            OffsetInteger{O}($op(value(x), value(y)))
         end
     end
 end
