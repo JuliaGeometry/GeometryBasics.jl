@@ -3,10 +3,8 @@ language: julia
 os:
   - linux
 julia:
-  - 1.2
   - 1
 if: branch = master OR tag IS present OR type = pull_request
 notifications:
   email: false
-after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+codecov: true
