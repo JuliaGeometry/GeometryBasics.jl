@@ -75,6 +75,11 @@ using LinearAlgebra
             filtered = filter(i -> i.value < 0.7, x)
             @test length(filtered) == 7
         end
+        @test GeometryBasics.getcolumn(plain, :name) == pnames
+        @test GeometryBasics.MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
+        @test_throws ErrorException GeometryBasics.meta(plain)
+        @test GeometryBasics.MetaFree(PolygonMeta) == Polygon
+        
     end
 
     @testset "point with metadata" begin
@@ -360,7 +365,10 @@ end
 
     @test hasproperty(m, :xx)
     @test hasproperty(m, :color)
+    @test_throws ErrorException GeometryBasics.MetaType(Simplex)
+    @test_throws ErrorException GeometryBasics.MetaFree(Simplex)
 
+    
     @test m.xx === xx
     @test m.color === color
 
@@ -420,6 +428,36 @@ end
     found, point = intersects(d, e)
     @test found && point ≈ Point(0.0, 4.0)
     @test intersects(a, f) === (false, Point(0.0, 0.0))
+end
+@testset "Offsetintegers" begin
+    x = 1
+    @test GeometryBasics.raw(x) isa Int64
+    @test GeometryBasics.value(x) == x
+
+    x = ZeroIndex(1)
+    @test eltype(x) == Int64
+
+    x = OffsetInteger{0}(1)
+    @test typeof(x) == OffsetInteger{0,Int64}
+
+    x1 = OffsetInteger{0}(2)
+    @test GeometryBasics.pure_max(x, x1) == x1
+    @test promote_rule(typeof(x), typeof(x1)) == OffsetInteger{0,Int64}
+    x2 = 1
+    @test promote_rule(typeof(x2), typeof(x1)) == Int64
+    @test Base.to_index(x1) == 2
+    @test -(x1) == OffsetInteger{0,Int64}(-2)
+    @test abs(x1) == OffsetInteger{0,Int64}(2)
+    @test +(x, x1) == OffsetInteger{0,Int64}(3)
+    @test *(x, x1) == OffsetInteger{0,Int64}(2)
+    @test -(x, x1) == OffsetInteger{0,Int64}(-1)
+    #test for /
+    @test div(x, x1) == OffsetInteger{0,Int64}(0)
+    @test !==(x, x1) 
+    @test !>=(x, x1) 
+    @test <=(x, x1)
+    @test !>(x, x1)
+    @test <(x, x1)
 end
 
 end  # testset "GeometryBasics"

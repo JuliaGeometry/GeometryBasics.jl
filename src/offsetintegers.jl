@@ -4,7 +4,7 @@
 
 OffsetInteger type mainly for indexing.
 * `O` - The offset relative to Julia arrays. This helps reduce copying when
-communicating with 0-indexed systems such ad OpenGL.
+communicating with 0-indexed systems such as OpenGL.
 """
 struct OffsetInteger{O, T <: Integer} <: Integer
     i::T

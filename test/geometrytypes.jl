@@ -295,8 +295,8 @@ end
     rect2 = Rect(0.0, 0.0, 2.0, 1.0)
     @test !overlaps(rect1, rect2)
     rect1 = Rect(1.0, 1.0, 2.0, 2.0)
-    rect2 = Rect(1.0, 1.0, 2.0, 2.0)
-    @test !overlaps(rect1, rect2)
+    rect2 = Rect(1.5, 1.5, 2.0, 2.0)
+    @test overlaps(rect1, rect2)
 
 
     rect1 = Rect(1.0, 1.0, 2.0, 2.0)
