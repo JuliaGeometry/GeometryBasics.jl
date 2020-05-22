@@ -90,7 +90,7 @@ macro fixed_vector(name, parent)
         Base.Tuple(v::$(name)) = v.data
         Base.convert(::Type{$(name){S, T}}, x::NTuple{S, T}) where {S, T} = $(name){S, T}(x)
         function Base.convert(::Type{$(name){S, T}}, x::Tuple) where {S, T}
-            $(name){S, T}(convert(NTuple{S, T}, x))
+            return $(name){S, T}(convert(NTuple{S, T}, x))
         end
 
         @generated function StaticArrays.similar_type(::Type{SV}, ::Type{T}, s::Size{S}) where {SV <: $(name), T, S}
@@ -101,13 +101,14 @@ macro fixed_vector(name, parent)
             end
         end
 
+        Base.:(*)(a::$name, b::$name) = a .* b
+
     end)
 end
 
 abstract type AbstractPoint{Dim, T} <: StaticVector{Dim, T} end
 @fixed_vector Point AbstractPoint
 @fixed_vector Vec StaticVector
-
 
 const Mat = SMatrix
 const VecTypes{N, T} = Union{StaticVector{N, T}, NTuple{N, T}}

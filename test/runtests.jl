@@ -1,6 +1,7 @@
 using Test, Random, StructArrays, Tables, StaticArrays
 using GeometryBasics
 using LinearAlgebra
+using GeometryBasics: attributes
 
 @testset "GeometryBasics" begin
 
@@ -79,7 +80,12 @@ using LinearAlgebra
         @test GeometryBasics.MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
         @test_throws ErrorException GeometryBasics.meta(plain)
         @test GeometryBasics.MetaFree(PolygonMeta) == Polygon
-        
+
+        meta_p = meta(polys[1], boundingbox=Rect(0, 0, 2, 2))
+        @test meta_p.boundingbox === Rect(0, 0, 2, 2)
+        @test metafree(meta_p) === polys[1]
+        attributes(meta_p) == Dict{Symbol, Any}(:boundingbox => meta_p.boundingbox,
+                                                :polygon => polys[1])
     end
 
     @testset "point with metadata" begin
@@ -331,9 +337,7 @@ end
     @test coordinates(m) === points
 end
 
-@testset "Tests from GeometryTypes" begin
-    include("geometrytypes.jl")
-end
+
 
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))
@@ -368,7 +372,7 @@ end
     @test_throws ErrorException GeometryBasics.MetaType(Simplex)
     @test_throws ErrorException GeometryBasics.MetaFree(Simplex)
 
-    
+
     @test m.xx === xx
     @test m.color === color
 
@@ -429,6 +433,7 @@ end
     @test found && point ≈ Point(0.0, 4.0)
     @test intersects(a, f) === (false, Point(0.0, 0.0))
 end
+
 @testset "Offsetintegers" begin
     x = 1
     @test GeometryBasics.raw(x) isa Int64
@@ -453,11 +458,19 @@ end
     @test -(x, x1) == OffsetInteger{0,Int64}(-1)
     #test for /
     @test div(x, x1) == OffsetInteger{0,Int64}(0)
-    @test !==(x, x1) 
-    @test !>=(x, x1) 
+    @test !==(x, x1)
+    @test !>=(x, x1)
     @test <=(x, x1)
     @test !>(x, x1)
     @test <(x, x1)
+end
+
+@testset "Tests from GeometryTypes" begin
+    include("geometrytypes.jl")
+end
+
+@testset "Point & Vec type" begin
+    include("fixed_arrays.jl")
 end
 
 end  # testset "GeometryBasics"

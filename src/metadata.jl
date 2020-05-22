@@ -127,6 +127,11 @@ macro meta_type(name, mainfield, supertype, params...)
             return MT(obj, nt)
         end
 
+        function (MT::Type{<: $MetaName})(main::$(name); meta...)
+            nt = values(meta)
+            return MT(main, nt)
+        end
+
         function Base.propertynames(::$MetaName{$(params...), Typ, Names, Types}) where {$(params...), Typ, Names, Types}
             return ($field, Names...)
         end
