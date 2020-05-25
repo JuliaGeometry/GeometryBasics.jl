@@ -102,7 +102,7 @@ macro fixed_vector(name, parent)
         end
 
         Base.:(*)(a::$name, b::$name) = a .* b
-
+        Base.broadcasted(f, a::AbstractArray{T}, b::$name) where T <: $name = Base.broadcasted(f, a, (b,))
     end)
 end
 
