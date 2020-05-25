@@ -6,9 +6,11 @@ using Test
 end
 
 @testset "broadcast" begin
-    x = [Point(2, 3), Point(7, 3)]
+    @testset for T in (Vec, Point)
+        x = [T(2, 3), T(7, 3)]
 
-    @test [Point(4, 9), Point(14, 9)] == x .* (Point(2, 3),)
-    @test [Point(4, 6), Point(9, 6)] == x .+ (Point(2, 3),)
-    @test [Point(0, 0), Point(5, 0)] == x .- (Point(2, 3),)
+        @test [T(4, 9), T(14, 9)] == x .* T(2, 3)
+        @test [T(4, 6), T(9, 6)] == x .+ T(2, 3)
+        @test [T(0, 0), T(5, 0)] == x .- T(2, 3)
+    end
 end
