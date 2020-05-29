@@ -29,7 +29,7 @@ module GeometryBasics
     export OffsetInteger, ZeroIndex, OneIndex, GLIndex
     export FaceView, SimpleFaceView
     export AbstractPoint, PointMeta, PointWithUV
-    export PolygonMeta, MultiPointMeta
+    export PolygonMeta, MultiPointMeta, MultiLineStringMeta
     export decompose, coordinates, faces, normals, decompose_uv, decompose_normals, texturecoordinates
     export Tesselation, pointmeta, Normal, UV, UVW
     export GLTriangleFace, GLNormalMesh3D, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
