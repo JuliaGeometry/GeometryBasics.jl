@@ -166,3 +166,7 @@ Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 @meta_type(MultiPoint, points, AbstractVector, P)
 Base.getindex(x::MultiPointMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MultiPointMeta) = size(metafree(x))
+
+@meta_type(MultiLineString, linestrings, AbstractVector, P)
+Base.getindex(x::MultiLineStringMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MultiLineStringMeta) = size(metafree(x))
