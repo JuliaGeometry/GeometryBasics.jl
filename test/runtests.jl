@@ -99,6 +99,17 @@ using GeometryBasics: attributes
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
     end
+        
+     @testset "MultiLineString with metadata" begin
+        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
+        multilinestring = MultiLineString([linestring1, linestring2])
+        multilinestringmeta = MultiLineStringMeta([linestring1, linestring2]; boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
+        @test multilinestringmeta isa AbstractVector
+        @test meta(multilinestringmeta) === (boundingbox = GeometryBasics.HyperRectangle{2,Float64}([1.0, 1.0], [2.0, 2.0]),)
+        @test metafree(multilinestringmeta) == multilinestring
+        @test propertynames(multilinestringmeta) == (:linestrings, :boundingbox)
+    end   
 end
 
 @testset "view" begin
