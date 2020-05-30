@@ -336,7 +336,7 @@ An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
 The connections are defined via faces(mesh), the coordinates of the elements are returned by
 coordinates(mesh). Arbitrary meta information can be attached per point or per face
 """
-const AbstractMesh{Element<:Polytope} = AbstractVector{Element}
+abstract type AbstractMesh{Element<:Polytope} <: AbstractVector{Element} end
 
 """
     Mesh <: AbstractVector{Element}
