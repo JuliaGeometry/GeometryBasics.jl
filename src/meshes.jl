@@ -100,7 +100,7 @@ It also only losely correlates to the number of vertices, depending on the algor
 #TODO: find a better number here!
 """
 function mesh(primitive::Meshable;
-              pointtype=best_pointtype(primitive), facetype=GLTriangleFace,
+              pointtype=Point, facetype=GLTriangleFace,
               uv=nothing, normaltype=nothing)
 
     positions = decompose(pointtype, primitive)
