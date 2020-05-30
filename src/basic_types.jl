@@ -108,6 +108,10 @@ Base.summary(io::IO, x::Type{<: TriangleP}) = print(io, "Triangle")
 
 const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T}
 
+Base.show(io::IO, x::Quadrilateral) = print(io, "Quad(", join(x, ", "), ")")
+Base.summary(io::IO, x::Type{<: Quadrilateral}) = print(io, "Quad")
+
+
 """
 A `Simplex` is a generalization of an N-dimensional tetrahedra and can be thought
 of as a minimal convex set containing the specified points.
