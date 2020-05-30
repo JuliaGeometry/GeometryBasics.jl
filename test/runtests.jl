@@ -77,7 +77,7 @@ using GeometryBasics: attributes
             @test length(filtered) == 7
         end
         @test GeometryBasics.getcolumn(plain, :name) == pnames
-        @test GeometryBasics.MetaType(Polygon) == PolygonMeta{Polygon,T,Typ,Names,Types} where Types where Names where Typ<:GeometryBasics.AbstractPolygon{Polygon,T} where T
+        @test GeometryBasics.MetaType(Polygon) == PolygonMeta
         @test_throws ErrorException GeometryBasics.meta(plain)
         @test GeometryBasics.MetaFree(PolygonMeta) == Polygon
 
@@ -99,6 +99,25 @@ using GeometryBasics: attributes
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
     end
+
+     @testset "MultiLineString with metadata" begin
+        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
+        multilinestring = MultiLineString([linestring1, linestring2])
+        multilinestringmeta = MultiLineStringMeta([linestring1, linestring2]; boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
+        @test multilinestringmeta isa AbstractVector
+        @test meta(multilinestringmeta) === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+        @test metafree(multilinestringmeta) == multilinestring
+        @test propertynames(multilinestringmeta) == (:linestrings, :boundingbox)
+    end
+
+    @testset "Mesh with metadata" begin
+       m = triangle_mesh(Sphere(Point3f0(0), 1))
+       m_meta = MeshMeta(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
+       @test meta(m_meta) === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+       @test metafree(m_meta) === m
+       @test propertynames(m_meta) == (:mesh, :boundingbox)
+   end
 end
 
 @testset "view" begin
