@@ -63,46 +63,52 @@ macro meta_type(name, mainfield, supertype, params...)
     MetaName = Symbol("$(name)Meta")
     field = QuoteNode(mainfield)
     NoParams = Symbol("$(MetaName)NoParams")
+
+    params_sym = map(params) do param
+        param isa Symbol && return param
+        param isa Expr && param.head == :(<:) && return param.args[1]
+        error("Unsupported type parameter: $(param)")
+    end
+
     expr = quote
-        struct $MetaName{$(params...), Typ <: $supertype{$(params...)}, Names, Types} <: $supertype{$(params...)}
+        struct $MetaName{$(params...), Typ <: $supertype{$(params_sym...)}, Names, Types} <: $supertype{$(params_sym...)}
             main::Typ
             meta::NamedTuple{Names, Types}
         end
 
-        const $NoParams{Typ, Names, Types} = $MetaName{$(params...), Typ, Names, Types} where {$(params...)}
+        const $NoParams{Typ, Names, Types} = $MetaName{$(params_sym...), Typ, Names, Types} where {$(params_sym...)}
 
-        function Base.getproperty(x::$MetaName{$(params...), Typ, Names, Types}, field::Symbol) where {$(params...), Typ, Names, Types}
+        function Base.getproperty(x::$MetaName{$(params_sym...), Typ, Names, Types},
+                                  field::Symbol) where {$(params...), Typ, Names, Types}
             field === $field && return getfield(x, :main)
             field === :main && return getfield(x, :main)
             Base.sym_in(field, Names) && return getfield(getfield(x, :meta), field)
             error("Field $field not part of Element")
         end
 
-        GeometryBasics.MetaType(T::Type{<: $supertype}) = $MetaName{T}
-        function GeometryBasics.MetaType(
-                ST::Type{<: $supertype{$(params...)}},
-                ::Type{NamedTuple{Names, Types}}) where {$(params...), Names, Types}
-            return $MetaName{$(params...), ST, Names, Types}
+        function GeometryBasics.MetaType(XX::Type{<: $supertype{$(params_sym...)} where {$(params...)}})
+            return $MetaName
         end
 
+        function GeometryBasics.MetaType(
+                ST::Type{<: $supertype{$(params_sym...)}},
+                ::Type{NamedTuple{Names, Types}}) where {$(params...), Names, Types}
+            return $MetaName{$(params_sym...), ST, Names, Types}
+        end
 
         GeometryBasics.MetaFree(::Type{<: $MetaName{Typ}}) where Typ = Typ
         GeometryBasics.MetaFree(::Type{<: $MetaName}) = $name
         GeometryBasics.metafree(x::$MetaName) = getfield(x, :main)
-        GeometryBasics.metafree(x::AbstractVector{<: $MetaName}) = getcolumns(x, $field)[1]
+        GeometryBasics.metafree(x::AbstractVector{<: $MetaName}) = getproperty(x, $field)
         GeometryBasics.meta(x::$MetaName) = getfield(x, :meta)
-        GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getcolumns(x, :meta)[1]
+        GeometryBasics.meta(x::AbstractVector{<: $MetaName}) = getproperty(x, :meta)
 
-        function GeometryBasics.meta(main::$supertype; meta...)
+        function GeometryBasics.meta(main::$supertype{$(params_sym...)}; meta...) where {$(params...)}
             isempty(meta) && return elements # no meta to add!
             return $MetaName(main; meta...)
         end
 
-        function GeometryBasics.attributes(hasmeta::$MetaName)
-            return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
-        end
-
-        function GeometryBasics.meta(elements::AbstractVector{T}; meta...) where T <: $supertype
+        function GeometryBasics.meta(elements::AbstractVector{XX}; meta...) where XX <: $supertype{$(params_sym...)} where {$(params...)}
             isempty(meta) && return elements # no meta to add!
             n = length(elements)
             for (k, v) in meta
@@ -118,7 +124,11 @@ macro meta_type(name, mainfield, supertype, params...)
             # get the first element to get the per element named tuple type
             ElementNT = typeof(map(first, nt))
 
-            return StructArray{MetaType(T, ElementNT)}(($(mainfield) = elements, nt...))
+            return StructArray{MetaType(XX, ElementNT)}(($(mainfield) = elements, nt...))
+        end
+
+        function GeometryBasics.attributes(hasmeta::$MetaName)
+            return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
         end
 
         function (MT::Type{<: $MetaName})(args...; meta...)
@@ -132,22 +142,20 @@ macro meta_type(name, mainfield, supertype, params...)
             return MT(main, nt)
         end
 
-        function Base.propertynames(::$MetaName{$(params...), Typ, Names, Types}) where {$(params...), Typ, Names, Types}
+        function Base.propertynames(::$MetaName{$(params_sym...), Typ, Names, Types}) where {$(params...), Typ, Names, Types}
             return ($field, Names...)
         end
 
-        function StructArrays.staticschema(::Type{$MetaName{$(params...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
+        function StructArrays.staticschema(::Type{$MetaName{$(params_sym...), Typ, Names, Types}}) where {$(params...), Typ, Names, Types}
             NamedTuple{($field, Names...), Base.tuple_type_cons(Typ, Types)}
         end
 
         function StructArrays.createinstance(
-                ::Type{$MetaName{$(params...), Typ, Names, Types}},
+                ::Type{$MetaName{$(params_sym...), Typ, Names, Types}},
                 metafree, args...
             ) where {$(params...), Typ, Names, Types}
             $MetaName(metafree, NamedTuple{Names, Types}(args))
         end
-
-
     end
     return esc(expr)
 end
@@ -163,10 +171,14 @@ Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
 
-@meta_type(MultiPoint, points, AbstractVector, P)
+@meta_type(MultiPoint, points, AbstractVector, P <: AbstractPoint)
 Base.getindex(x::MultiPointMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MultiPointMeta) = size(metafree(x))
 
-@meta_type(MultiLineString, linestrings, AbstractVector, P)
+@meta_type(MultiLineString, linestrings, AbstractVector, P <: LineString)
 Base.getindex(x::MultiLineStringMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MultiLineStringMeta) = size(metafree(x))
+
+@meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
+Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MeshMeta) = size(metafree(x))
