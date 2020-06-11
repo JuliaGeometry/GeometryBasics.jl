@@ -277,8 +277,8 @@ end
         t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
         m = GeometryBasics.mesh(t, pointtype=Point3f0, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
-        @test faces(m2) isa Vector{QuadFace{GLIndex}}
-        @test coordinates(m2) isa Vector{Point3f0}
+        @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
+        @test GeometryBasics.coordinates(m2) isa Vector{Point3f0}
 
     end
 
