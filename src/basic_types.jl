@@ -8,7 +8,7 @@ Base.ndims(x::AbstractGeometry{Dim}) where Dim = Dim
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
 Connected as volume it will be a Simplex / Tri / Cube.
-Note That `Polytype{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
+Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
 """
 abstract type Polytope{Dim, T} <: AbstractGeometry{Dim, T} end
 abstract type AbstractPolygon{Dim, T} <: Polytope{Dim, T} end
