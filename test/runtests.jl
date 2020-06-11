@@ -274,6 +274,12 @@ end
         @test meshuv isa GLUVMesh3D
         @test meshuvnormal isa GLNormalUVMesh3D
 
+        t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
+        m = GeometryBasics.mesh(t, pointtype=Point3f0, facetype=QuadFace{Int})
+        m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
+        @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
+        @test GeometryBasics.coordinates(m2) isa Vector{Point3f0}
+
     end
 
     @testset "Multi geometries" begin
