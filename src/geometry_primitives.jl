@@ -9,6 +9,13 @@ end
 ##
 # conversion & decompose
 convert_simplex(::Type{T}, x::T) where T = (x,)
+
+function convert_simplex(NFT::Type{NgonFace{N, T1}}, f::Union{NgonFace{N, T2}}) where {T1, T2, N}
+    return (convert(NFT, f),)
+end
+
+convert_simplex(NFT::Type{NgonFace{3,T}}, f::NgonFace{3,T2}) where {T, T2} = (convert(NFT, f),)
+
 """
     convert_simplex(::Type{Face{3}}, f::Face{N})
 
