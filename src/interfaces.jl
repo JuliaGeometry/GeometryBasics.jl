@@ -33,6 +33,8 @@ function faces(primitive, nvertices=nothing)
     return nothing
 end
 
+texturecoordinates(primitive, nvertices=nothing) = nothing
+
 """
     Tesselation(primitive, nvertices)
 For abstract geometries, when we generate
@@ -123,16 +125,25 @@ function decompose(NT::Normal{T}, primitive) where T
 end
 
 function decompose(UVT::Union{UV{T}, UVW{T}}, primitive) where T
+    # This is the fallback for texture coordinates if a primitive doesn't overload them
+    # We just take the positions and normalize them
     uv = texturecoordinates(primitive)
     if uv === nothing
-        return decompose(UVT, texturecoordinates(coordinates(primitive)))
+        # If the primitive doesn't even have coordinates, we're out of options and return
+        # nothing, indicating that texturecoordinates aren't implemented
+        positions = decompose(Point, primitive)
+        positions === nothing && return nothing
+        # Let this overlord do the work
+        return decompose(UVT, positions)
     end
     return collect_with_eltype(T, uv)
 end
 
-function texturecoordinates(positions::AbstractVector{<:VecTypes})
-    bb = Rect(positions)
-    return map(positions) do p
+function decompose(UVT::Union{UV{T}, UVW{T}}, positions::AbstractVector{<:VecTypes}) where T
+    N = length(T)
+    positions_nd = decompose(Point{N, eltype(T)}, positions)
+    bb = Rect(positions_nd) # Make sure we get this as points
+    return map(positions_nd) do p
         return (p .- minimum(bb)) ./ widths(bb)
     end
 end

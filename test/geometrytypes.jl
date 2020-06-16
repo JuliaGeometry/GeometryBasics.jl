@@ -102,6 +102,9 @@ end
         @test GeometryBasics.coordinates(m) ≈ positions
         m = normal_mesh(s)# just test that it works without explicit resolution parameter
         @test m isa GLNormalMesh
+
+        muv = uv_mesh(s)
+        @test Rect(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
     end
 end
 
@@ -240,7 +243,7 @@ end
     @test !in(rect1, split1)
 
     prim = Rect(0.0, 0.0, 1.0, 1.0)
-    @test length(prim) == 2 
+    @test length(prim) == 2
 
     @test width(prim) == 1.0
     @test height(prim) == 1.0
@@ -267,7 +270,7 @@ end
     @test update(b, v) isa GeometryBasics.HyperRectangle{2,Float64}
     v = Vec(1.0, 2.0)
     @test update(b, v) isa GeometryBasics.HyperRectangle{2,Float64}
-    
+
     p = Vec(5.0, 4.0)
     rect = Rect(0.0, 0.0, 1.0, 1.0)
     @test min_dist_dim(rect, p, 1) == 4.0

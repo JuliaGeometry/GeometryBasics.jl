@@ -85,11 +85,9 @@ const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
-best_pointtype(::Meshable{Dim, T}) where {Dim, T} = Point{Dim, T}
-
 """
     mesh(primitive::GeometryPrimitive;
-         pointtype=best_pointtype(primitive), facetype=GLTriangle,
+         pointtype=Point, facetype=GLTriangle,
          uvtype=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
@@ -100,7 +98,7 @@ It also only losely correlates to the number of vertices, depending on the algor
 #TODO: find a better number here!
 """
 function mesh(primitive::Meshable;
-              pointtype=best_pointtype(primitive), facetype=GLTriangleFace,
+              pointtype=Point, facetype=GLTriangleFace,
               uv=nothing, normaltype=nothing)
 
     positions = decompose(pointtype, primitive)

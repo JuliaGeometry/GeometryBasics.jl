@@ -8,7 +8,7 @@ Base.ndims(x::AbstractGeometry{Dim}) where Dim = Dim
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
 Connected as volume it will be a Simplex / Tri / Cube.
-Note That `Polytype{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
+Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
 """
 abstract type Polytope{Dim, T} <: AbstractGeometry{Dim, T} end
 abstract type AbstractPolygon{Dim, T} <: Polytope{Dim, T} end
@@ -107,6 +107,10 @@ Base.show(io::IO, x::TriangleP) = print(io, "Triangle(", join(x, ", "), ")")
 Base.summary(io::IO, x::Type{<: TriangleP}) = print(io, "Triangle")
 
 const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T}
+
+Base.show(io::IO, x::Quadrilateral) = print(io, "Quad(", join(x, ", "), ")")
+Base.summary(io::IO, x::Type{<: Quadrilateral}) = print(io, "Quad")
+
 
 """
 A `Simplex` is a generalization of an N-dimensional tetrahedra and can be thought
@@ -336,7 +340,7 @@ An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
 The connections are defined via faces(mesh), the coordinates of the elements are returned by
 coordinates(mesh). Arbitrary meta information can be attached per point or per face
 """
-const AbstractMesh{Element} = AbstractVector{Element}
+abstract type AbstractMesh{Element<:Polytope} <: AbstractVector{Element} end
 
 """
     Mesh <: AbstractVector{Element}
