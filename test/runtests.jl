@@ -362,7 +362,11 @@ end
     @test coordinates(m) === points
 end
 
-
+@testset "convert mesh + meta" begin
+    m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
+    # for 2D primitives we dont actually calculate normals
+    @test !hasproperty(m, :normals)
+end
 
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))

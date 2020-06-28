@@ -18,7 +18,7 @@ function faces(f::AbstractVector{<:AbstractFace})
     return f
 end
 
-function normals(primitive, nvertices=nothing)
+function normals(primitive, nvertices=nothing; kw...)
     # doesn't have any specific algorithm to generate normals
     # so will be generated from faces + positions
     # which we indicate by returning nothing!
@@ -27,7 +27,7 @@ function normals(primitive, nvertices=nothing)
     return nothing
 end
 
-function faces(primitive, nvertices=nothing)
+function faces(primitive, nvertices=nothing; kw...)
     # doesn't have any specific algorithm to generate faces
     # so will try to triangulate the coordinates!
     return nothing
