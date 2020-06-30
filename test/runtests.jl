@@ -81,7 +81,6 @@ using GeometryBasics: attributes
         attributes(meta_p) == Dict{Symbol, Any}(:boundingbox => meta_p.boundingbox,
                                                 :polygon => polys[1])
     end
-  
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
         @test p isa AbstractVector{Float64}
