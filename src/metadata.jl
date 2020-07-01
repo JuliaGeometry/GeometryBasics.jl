@@ -171,6 +171,10 @@ Base.getindex(x::SimplexFaceMeta, idx::Int) = getindex(metafree(x), idx)
 
 @meta_type(Polygon, polygon, AbstractPolygon, N, T)
 
+@meta_type(LineString, lines, AbstractVector, P <: Line)
+Base.getindex(x::LineStringMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::LineStringMeta) = size(metafree(x))
+
 @meta_type(MultiPoint, points, AbstractVector, P <: AbstractPoint)
 Base.getindex(x::MultiPointMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MultiPointMeta) = size(metafree(x))
@@ -178,6 +182,10 @@ Base.size(x::MultiPointMeta) = size(metafree(x))
 @meta_type(MultiLineString, linestrings, AbstractVector, P <: LineString)
 Base.getindex(x::MultiLineStringMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MultiLineStringMeta) = size(metafree(x))
+
+@meta_type(MultiPolygon, polygons, AbstractVector, P <: Polygon)
+Base.getindex(x::MultiPolygonMeta, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MultiPolygonMeta) = size(metafree(x))
 
 @meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
 Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)

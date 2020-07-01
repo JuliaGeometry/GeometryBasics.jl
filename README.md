@@ -49,6 +49,11 @@ julia> metafree(poi)
  3
  1
 
+# for other geometries metatypes are predefined
+julia> multipoi = MultiPointMeta([p1], city="Abuja", rainfall=1221.2)
+1-element MultiPointMeta{Point{2,Int64},MultiPoint{2,Int64,Point{2,Int64},Array{Point{2,Int64},1}},(:city, :rainfall),Tuple{String,Float64}}:
+[3, 1]
+
 # connect the points with lines
 julia> l1 = Line(p1, p2)
 Line([3, 1] => [1, 3])
