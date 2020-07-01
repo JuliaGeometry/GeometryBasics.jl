@@ -35,7 +35,6 @@ struct TupleView{T, N, Skip, A} <: AbstractVector{T}
     data::A
     connect::Bool
 end
-Base.show(io::IO, ::Type{<: TupleView{T, N, Skip}}) where {T, N, Skip} = print(io, "TupleView{$T, $Skip}")
 
 function Base.size(x::TupleView{T, N, M}) where {T, N, M}
     nitems = length(x.data) ÷ (N - (N - M))
