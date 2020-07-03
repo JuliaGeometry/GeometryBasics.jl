@@ -56,30 +56,24 @@ using GeometryBasics: attributes
         end
 
     end
+   
     @testset "polygon with metadata" begin
         polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
         pnames = [randstring(4) for i in 1:10]
         numbers = LinRange(0.0, 1.0, 10)
         bin = rand(Bool, 10)
-        # create just an array
-        plain = meta(polys, name = pnames, value = numbers, category = bin)
+        # create a polygon
+        poly = PolygonMeta(polys[1], name = pnames[1], value = numbers[1], category = bin[1])
         # create a MultiPolygon with the right type & meta information!
-        multipoly = MultiPolygon(polys; name = pnames, value = numbers, category = bin)
-        for x in (plain, multipoly)
-            for (mp, p, n, num, b) in zip(x, polys, pnames, numbers, bin)
-                @test mp.polygon == p
-                @test mp.name == n
-                @test mp.value == num
-                @test mp.category == b
-            end
-
-            filtered = filter(i -> i.value < 0.7, x)
-            @test length(filtered) == 7
-        end
-        @test GeometryBasics.getcolumn(plain, :name) == pnames
-        @test GeometryBasics.MetaType(Polygon) == PolygonMeta
-        @test_throws ErrorException GeometryBasics.meta(plain)
+        multipoly = MultiPolygonMeta(polys, name = pnames, value = numbers, category = bin)
+        @test multipoly isa AbstractVector
+        @test poly isa GeometryBasics.AbstractPolygon
+        
+        @test GeometryBasics.getcolumn(poly, :name) == pnames[1]
         @test GeometryBasics.MetaFree(PolygonMeta) == Polygon
+
+        @test GeometryBasics.getcolumn(multipoly, :name) == pnames
+        @test GeometryBasics.MetaFree(MultiPolygonMeta) == MultiPolygon
 
         meta_p = meta(polys[1], boundingbox=Rect(0, 0, 2, 2))
         @test meta_p.boundingbox === Rect(0, 0, 2, 2)
@@ -87,7 +81,6 @@ using GeometryBasics: attributes
         attributes(meta_p) == Dict{Symbol, Any}(:boundingbox => meta_p.boundingbox,
                                                 :polygon => polys[1])
     end
-
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
         @test p isa AbstractVector{Float64}
@@ -99,8 +92,26 @@ using GeometryBasics: attributes
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
     end
+    
+    @testset "MultiPoint with metadata" begin
+        p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
+        @test p isa AbstractVector
+        mpm = MultiPointMeta(p, a=1, b=2)
+        @test coordinates(mpm) == mpm
+        @test meta(mpm) === (a=1, b=2)
+        @test metafree(mpm) == p
+        @test propertynames(mpm) == (:points, :a, :b)
+    end
 
-     @testset "MultiLineString with metadata" begin
+    @testset "LineString with metadata" begin
+        linestring = LineStringMeta(Point{2, Int}[(10, 10), (20, 20), (10, 40)], a = 1, b = 2)
+        @test linestring isa AbstractVector
+        @test meta(linestring) === (a = 1, b = 2)
+        @test metafree(linestring) == linestring
+        @test propertynames(linestring) == (:lines, :a, :b)
+    end
+
+    @testset "MultiLineString with metadata" begin
         linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
         linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
         multilinestring = MultiLineString([linestring1, linestring2])
@@ -362,7 +373,11 @@ end
     @test coordinates(m) === points
 end
 
-
+@testset "convert mesh + meta" begin
+    m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
+    # for 2D primitives we dont actually calculate normals
+    @test !hasproperty(m, :normals)
+end
 
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))
