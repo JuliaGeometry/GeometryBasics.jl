@@ -294,14 +294,14 @@ function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2D{IT}}) where {T, I
 end
 
 function minmax(p::StaticVector, vmin, vmax)
-    isnan(p) && return (vmin, vmax)
+    any(isnan, p) && return (vmin, vmax)
     min.(p, vmin), max.(p, vmax)
 end
 
 # Annoying special case for view(Vector{Point}, Vector{Face})
 function minmax(tup::Tuple, vmin, vmax)
     for p in tup
-        isnan(p) && continue
+        any(isnan, p) && continue
         vmin = min.(p, vmin)
         vmax = max.(p, vmax)
     end
@@ -353,7 +353,7 @@ end
 function update(b::Rect{N, T}, v::Vec{N, T}) where {N, T}
     m = min.(minimum(b), v)
     maxi = maximum(b)
-    mm = if isnan(maxi)
+    mm = if any(isnan, maxi)
         v-m
     else
         max.(v, maxi) - m
