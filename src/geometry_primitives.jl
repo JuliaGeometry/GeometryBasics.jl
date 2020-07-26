@@ -56,10 +56,10 @@ function convert_simplex(::Type{Point{N, T}}, x) where {N, T}
     N2 = length(x)
     return (Point{N, T}(ntuple(i-> i <= N2 ? T(x[i]) : T(0), N)),)
 end
-function convert_simplex(::Type{Point{N, T}}, x::Line) where {N, T}
-    N2 = length(x)
-    return (Point{N, T}[x[1], x[2]])
-end
+# function convert_simplex(::Type{Point{N, T}}, x::Line) where {N, T}
+#     N2 = length(x)
+#     return (Point{N, T}[x[1])
+# end
 
 function convert_simplex(::Type{Vec{N, T}}, x) where {N, T}
     N2 = length(x)
