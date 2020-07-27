@@ -371,6 +371,9 @@ end
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     m = GeometryBasics.mesh(points)
     @test coordinates(m) === points
+
+    linestring = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+    @test decompose(Point{2, Int}, linestring) == Point{2, Int64}[[10, 10], [20, 20], [10, 40]]
 end
 
 @testset "convert mesh + meta" begin
