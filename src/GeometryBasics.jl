@@ -16,6 +16,7 @@ module GeometryBasics
     include("meshes.jl")
     include("lines.jl")
     include("boundingboxes.jl")
+    include("metatest.jl")
 
     export AbstractGeometry, GeometryPrimitive
     export Mat, Point, Vec
