@@ -111,11 +111,8 @@ end
 function decompose(::Type{T}, primitive) where {T}
     return collect_with_eltype(T, primitive)
 end
-"""
-decompose a linesting into points
-"""
-decompose(::Type{P}, ls::LineString) where {P<:AbstractPoint} = ls.points.parent.data
 
+decompose(::Type{P}, ls::LineString) where {P<:AbstractPoint} = ls.points.parent.data
 decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)
