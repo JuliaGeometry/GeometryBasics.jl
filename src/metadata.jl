@@ -1,3 +1,30 @@
+struct Feature{T, Names, Types} #have a better name?
+    data::T
+    rest::NamedTuple{Names, Types}
+end
+
+Feature(x; kwargs...) = Feature(x, values(kwargs))
+
+Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
+Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
+
+getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types)
+
+function StructArrays.staticschema(::Type{f}) where {f<:Feature}
+    T, names, types = getnamestypes(f)
+    NamedTuple{(:data, names...), Base.tuple_type_cons(T, types)}
+end
+
+function StructArrays.createinstance(::Type{f}, x, args...) where {f<:Feature}
+    T, names, types = getnamestypes(f)
+    Feature(x, NamedTuple{names, types}(args))
+end
+
+#=---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+Old meta
+----------------------------------------------------------------------------------------------=#
+
 #=
 Helper functions that works around the fact, that there is no generic
 Table interface for this functionality. Once this is in e.g. Tables.jl,
@@ -190,3 +217,8 @@ Base.size(x::MultiPolygonMeta) = size(metafree(x))
 @meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
 Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MeshMeta) = size(metafree(x))
+
+
+# function Base.getproperty(b::F, s::Symbol)
+#     s == :data ? getfield(b, 1) : getproperty(getfield(b, 2), s)
+# end
