@@ -5,6 +5,7 @@ using GeometryBasics: attributes
 
 @testset "GeometryBasics" begin
 
+#= This left till meta is removed completely
 @testset "embedding metadata" begin
     @testset "Meshes" begin
 
@@ -129,6 +130,126 @@ using GeometryBasics: attributes
        @test metafree(m_meta) === m
        @test propertynames(m_meta) == (:mesh, :boundingbox)
    end
+end
+=#
+@testset "embedding metadata(new)" begin
+    # @testset "Meshes" begin
+
+    #     @testset "per vertex attributes" begin
+    #         points = rand(Point{3, Float64}, 8)
+    #         tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
+    #         normals = rand(SVector{3, Float64}, 8)
+    #         stress = LinRange(0, 1, 8)
+    #         mesh = Mesh(meta(points, normals = normals, stress = stress), tfaces)
+
+    #         @test hasproperty(coordinates(mesh), :stress)
+    #         @test hasproperty(coordinates(mesh), :normals)
+    #         @test coordinates(mesh).stress === stress
+    #         @test coordinates(mesh).normals === normals
+    #         @test coordinates(mesh).normals === normals
+    #         @test GeometryBasics.faces(mesh) === tfaces
+    #         @test propertynames(coordinates(mesh)) == (:position, :normals, :stress)
+
+    #     end
+
+    #     @testset "per face attributes" begin
+
+    #         # Construct a cube out of Quads
+    #         points = Point{3, Float64}[
+    #             (0.0, 0.0, 0.0), (2.0, 0.0, 0.0),
+    #             (2.0, 2.0, 0.0), (0.0, 2.0, 0.0),
+    #             (0.0, 0.0, 12.0), (2.0, 0.0, 12.0),
+    #             (2.0, 2.0, 12.0), (0.0, 2.0, 12.0)
+    #         ]
+
+    #         facets = QuadFace{Cint}[
+    #             1:4,
+    #             5:8,
+    #             [1,5,6,2],
+    #             [2,6,7,3],
+    #             [3, 7, 8, 4],
+    #             [4, 8, 5, 1]
+    #         ]
+
+    #         markers = Cint[-1, -2, 0, 0, 0, 0]
+    #         # attach some additional information to our faces!
+    #         mesh = Mesh(points, meta(facets, markers = markers))
+    #         @test hasproperty(GeometryBasics.faces(mesh), :markers)
+    #         # test with === to assert we're not doing any copies
+    #         @test GeometryBasics.faces(mesh).markers === markers
+    #         @test coordinates(mesh) === points
+    #         @test metafree(GeometryBasics.faces(mesh)) === facets
+
+    #     end
+
+    # end
+   
+    @testset "polygon with metadata" begin
+        polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
+        multipol = MultiPolygon(polys)
+        pnames = [randstring(4) for i in 1:10]
+        numbers = LinRange(0.0, 1.0, 10)
+        bin = rand(Bool, 10)
+        # create a polygon
+        poly = GeometryBasics.Feature(polys[1], name = pnames[1], value = numbers[1], category = bin[1])
+        # create a MultiPolygon with the right type & meta information!
+        multipoly = GeometryBasics.Feature(multipol, name = pnames, value = numbers, category = bin)
+        @test multipoly isa GeometryBasics.Feature
+        @test poly isa GeometryBasics.Feature
+        
+        @test GeometryBasics.getcolumn(poly, :name) == pnames[1]
+        @test GeometryBasics.getcolumn(multipoly, :name) == pnames
+        
+        meta_p = GeometryBasics.Feature(polys[1], boundingbox=Rect(0, 0, 2, 2))
+        @test meta_p.boundingbox === Rect(0, 0, 2, 2)
+    end
+    @testset "point with metadata" begin
+        p = Point(1.1, 2.2)
+        @test p isa AbstractVector{Float64}
+        pm = GeometryBasics.Feature(Point(1.1, 2.2); a=1, b=2)
+        p1 = Point(2.2, 3.6)
+        p2 = [p, p1]
+        @test coordinates(p2) == p2
+        @test pm.rest === (a=1, b=2)
+        @test pm.data === p
+        @test propertynames(pm) == (:data, :a, :b)
+    end
+    
+    @testset "MultiPoint with metadata" begin
+        p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
+        @test p isa AbstractVector
+        mpm = GeometryBasics.Feature(MultiPoint(p), a=1, b=2)
+        @test coordinates(mpm.data) == Point{2, Float64}[(x, x+1) for x in 1:5]
+        @test mpm.rest === (a=1, b=2)
+        @test mpm.data == p
+        @test propertynames(mpm) == (:data, :a, :b)
+    end
+
+    @testset "LineString with metadata" begin
+        linestring = GeometryBasics.Feature(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
+        @test linestring isa GeometryBasics.Feature
+        @test linestring.rest === (a = 1, b = 2)
+        @test propertynames(linestring) == (:data, :a, :b)
+    end
+
+    @testset "MultiLineString with metadata" begin
+        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
+        multilinestring = MultiLineString([linestring1, linestring2])
+        multilinestringmeta = GeometryBasics.Feature(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
+        @test multilinestringmeta isa GeometryBasics.Feature
+        @test multilinestringmeta.rest === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+        @test multilinestringmeta.data == multilinestring
+        @test propertynames(multilinestringmeta) == (:data, :boundingbox)
+    end
+
+#     @testset "Mesh with metadata" begin
+#        m = triangle_mesh(Sphere(Point3f0(0), 1))
+#        m_meta = MeshMeta(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
+#        @test meta(m_meta) === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+#        @test metafree(m_meta) === m
+#        @test propertynames(m_meta) == (:mesh, :boundingbox)
+#    end
 end
 
 @testset "view" begin
