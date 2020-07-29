@@ -6,10 +6,15 @@ end
 Feature(x; kwargs...) = Feature(x, values(kwargs))
 
 #can change names?
-GeometryBasics.metafree(F::Feature) = getproperty(F, :data)
-GeometryBasics.metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :data) for i in x]
-GeometryBasics.meta(x::Feature) = getfield(x, :rest)
-GeometryBasics.meta(x::AbstractVector{<: Feature}) = [getproperty(i, :rest) for i in x]
+function metafree(F::Feature)
+    getproperty(F, :data)
+end
+metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :data) for i in x]
+
+function meta(x::Feature)
+    getfield(x, :rest)
+end
+meta(x::AbstractVector{<: Feature}) = [getproperty(i, :rest) for i in x]
 
 Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
 Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
