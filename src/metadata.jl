@@ -8,16 +8,36 @@ Feature(x; kwargs...) = Feature(x, values(kwargs))
 Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
 Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
 
-getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types)
-
-function StructArrays.staticschema(::Type{f}) where {f<:Feature}
-    T, names, types = getnamestypes(f)
-    NamedTuple{(:data, names...), Base.tuple_type_cons(T, types)}
+#todo better function names
+"""
+Put a collection(Array) of Features in a StructArray
+"""
+function s_coll(iter::Array)
+    unnested_iter = Base.Generator(iter) do geom_meta
+        geom = getfield(geom_meta, :data) # well, the public accessor for this
+        metadata = getfield(geom_meta, :rest)
+        (; geometry=geom, metadata...) # I think the GeometryBasics name for this field is `:position`
+    end
+    soa = fieldarrays(StructArray(unnested_iter))
+    return Feature(soa.geometry; Base.tail(soa)...)
 end
 
-function StructArrays.createinstance(::Type{f}, x, args...) where {f<:Feature}
-    T, names, types = getnamestypes(f)
-    Feature(x, NamedTuple{names, types}(args))
+function GeometryBasics.Feature(elements::AbstractVector{XX}; rest...) where {XX}
+    isempty(rest) && return elements # no meta to add!
+    n = length(elements)
+    for (k, v) in rest
+        if v isa AbstractVector
+            mn = length(v)
+            mn != n && error("Metadata array needs to have same length as data.
+            Found $(n) data items, and $mn metadata items")
+        else
+            error("Metadata needs to be an array with the same length as data items. Found: $(typeof(v))")
+        end
+    end
+    nt = values(rest)
+    # get the first element to get the per element named tuple type
+    ElementNT = typeof(map(first, nt))
+    return StructArray((geometry = elements, nt...))
 end
 
 #=---------------------------------------------------------------------------------------------
@@ -217,8 +237,3 @@ Base.size(x::MultiPolygonMeta) = size(metafree(x))
 @meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
 Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MeshMeta) = size(metafree(x))
-
-
-# function Base.getproperty(b::F, s::Symbol)
-#     s == :data ? getfield(b, 1) : getproperty(getfield(b, 2), s)
-# end
