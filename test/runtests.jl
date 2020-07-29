@@ -626,6 +626,23 @@ end
     @test <(x, x1)
 end
 
+@testset "New Meta Methods"
+    ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
+    mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10]) 
+    poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
+    geom = [ls..., mls, poly]
+    prop = [(country_states = "India$(i)", rainfall = i*10) for i in 1:12]
+    
+    feat = [GeometryBasics.Feature(i, j) for (i,j)  = zip(geom, prop)]
+    sa = GeometryBasics.structarray(feat)
+
+    @test nameof(eltype(feat)) == :Feature
+    @test eltype(sa) === GeometryBasics.Feature{Any,(:country_states, :rainfall),Tuple{String,Int64}}
+    @test propertynames(sa) === (:data, :country_states, :rainfall)
+    @test getproperty(sa, :country_states) isa Array{String}
+    @test getproperty(sa, :data) == geom
+end
+
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
 end
