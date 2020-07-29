@@ -626,7 +626,7 @@ end
     @test <(x, x1)
 end
 
-@testset "New Meta Methods"
+@testset "New Meta Methods" begin
     ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
     mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10]) 
     poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
