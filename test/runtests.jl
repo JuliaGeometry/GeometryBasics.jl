@@ -207,7 +207,7 @@ using GeometryBasics: attributes
         @test GeometryBasics.metafree(poly) == polys[1]
         @test GeometryBasics.metafree(multipoly) == multipol
         @test GeometryBasics.meta(meta_p) == (boundingbox = GeometryBasics.HyperRectangle{2,Int64}([0, 0], [2, 2]),)
-        @test GeometryBasics.meta(poly) == (name = "cMlR", value = 0.0, category = true)
+        @test GeometryBasics.meta(poly) == (name = pnames[1], value = 0.0, category = bin[1])
         @test GeometryBasics.meta(multipoly) == (name = pnames, value = numbers, category = bin)    
     end
 
