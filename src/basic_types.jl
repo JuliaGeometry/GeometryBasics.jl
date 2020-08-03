@@ -50,11 +50,11 @@ Face(F::Type{NgonFace{N, FT}}, ::Type{T}) where {FT, N, T} = F
 
 """
 Fixed Size Polygon, e.g.
-N 1-2 : Illegal!
-N = 3 : Triangle
-N = 4 : Quadrilateral (or Quad, Or tetragon)
-N = 5 : Pentagon
-...
+- N 1-2 : Illegal!
+- N = 3 : Triangle
+- N = 4 : Quadrilateral (or Quad, Or tetragon)
+- N = 5 : Pentagon
+- ...
 """
 struct Ngon{
         Dim, T <: Real,
