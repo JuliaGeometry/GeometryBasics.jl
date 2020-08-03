@@ -1,63 +1,3 @@
-struct Feature{T, Names, Types} #have a better name?
-    data::T
-    rest::NamedTuple{Names, Types}
-end
-
-Feature(x; kwargs...) = Feature(x, values(kwargs))
-
-#can change names?
-"""
-Frees the Feature out of metadata
-i.e. returns and array of geometries
-"""
-function metafree(F::Feature)
-    getproperty(F, :data)
-end
-metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :data) for i in x]
-
-"""
-Returns the metadata of a Feature
-"""
-function meta(x::Feature)
-    getfield(x, :rest)
-end
-meta(x::AbstractVector{<: Feature}) = [getproperty(i, :rest) for i in x]
-
-# helper methods
-Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
-Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
-getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
-
-# explicitly give the "schema" of the object to StructArrays
-function StructArrays.staticschema(::Type{F}) where {F<:Feature} 
-    T, names, types = getnamestypes(F)
-    NamedTuple{(:data, names...), Base.tuple_type_cons(T, types)}
-end
-
-# generate an instance of Feature type
-function StructArrays.createinstance(::Type{F}, x, args...) where {F<:Feature}  
-     T , names, types = getnamestypes(F)
-     Feature(x, NamedTuple{names, types}(args))
-end
-
-"""
-Accepts an Array/iterator of Features and put it into a StructArray 
-"""
-function structarray(iter)
-    cols = Tables.columntable(iter)
-    structarray(first(cols), Base.tail(cols)) 
-end
-
-function structarray(data, rest::NamedTuple{names, types}) where {names, types}
-    F = Feature{eltype(data), names, StructArrays.eltypes(types)}
-    return StructArray{F}(; data=data, rest...)
-end
-
-#=---------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
-Old meta
-----------------------------------------------------------------------------------------------=#
-
 #=
 Helper functions that works around the fact, that there is no generic
 Table interface for this functionality. Once this is in e.g. Tables.jl,
@@ -250,3 +190,66 @@ Base.size(x::MultiPolygonMeta) = size(metafree(x))
 @meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
 Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MeshMeta) = size(metafree(x))
+
+
+#=
+`Feature` type acts same as Meta method 
+The difference lies in the fact that it is designed to handle
+heterogeneous types.
+=#
+struct Feature{T, Names, Types} #<:AbstractVector{T} 
+    data::T
+    rest::NamedTuple{Names, Types}
+end
+
+Feature(x; kwargs...) = Feature(x, values(kwargs))
+
+"""
+Frees the Feature out of metadata
+i.e. returns and array of geometries
+"""
+function metafree(F::Feature)
+    getproperty(F, :data)
+end
+metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :data) for i in x]
+
+"""
+Returns the metadata of a Feature
+"""
+function meta(x::Feature)
+    getfield(x, :rest)
+end
+meta(x::AbstractVector{<: Feature}) = [getproperty(i, :rest) for i in x]
+
+# helper methods
+Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
+Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
+getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
+
+# explicitly give the "schema" of the object to StructArrays
+function StructArrays.staticschema(::Type{F}) where {F<:Feature} 
+    T, names, types = getnamestypes(F)
+    NamedTuple{(:data, names...), Base.tuple_type_cons(T, types)}
+end
+
+# generate an instance of Feature type
+function StructArrays.createinstance(::Type{F}, x, args...) where {F<:Feature}  
+     T , names, types = getnamestypes(F)
+     Feature(x, NamedTuple{names, types}(args))
+end
+
+"""
+Accepts an Array/iterator of Features and put it into a StructArray 
+"""
+function collect_feature(iter)
+    cols = Tables.columntable(iter)
+    collect_feature(first(cols), Base.tail(cols)) 
+end
+
+function collect_feature(data, rest::NamedTuple{names, types}) where {names, types}
+    F = Feature{eltype(data), names, StructArrays.eltypes(types)}
+    return StructArray{F}(; data=data, rest...)
+end
+
+Base.getindex(f::Feature, idx::Int) = getindex(metafree(f), idx)
+Base.size(f::Feature) = size(metafree(f))
