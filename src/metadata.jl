@@ -192,12 +192,15 @@ Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MeshMeta) = size(metafree(x))
 
 
-#=
+"""
 `Feature` type acts same as Meta method 
 The difference lies in the fact that it is designed to handle
 heterogeneous types.
-=#
-struct Feature{T, Names, Types} #<:AbstractVector{T} 
+
+eg: A Point MetaGeometry is a `PointMeta`
+But a feature is represented as `Feature{Point}`
+"""
+struct Feature{T, Names, Types} 
     data::T
     rest::NamedTuple{Names, Types}
 end
@@ -253,3 +256,4 @@ end
 
 Base.getindex(f::Feature, idx::Int) = getindex(metafree(f), idx)
 Base.size(f::Feature) = size(metafree(f))
+
