@@ -165,9 +165,9 @@ end
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
         @test coordinates(p2) == p2
-        @test pm.rest === (a=1, b=2)
-        @test pm.data === p
-        @test propertynames(pm) == (:data, :a, :b)
+        @test pm.meta === (a=1, b=2)
+        @test pm.main === p
+        @test propertynames(pm) == (:main, :a, :b)
         @test GeometryBasics.metafree(pm) == p
         @test GeometryBasics.meta(pm) == (a = 1, b = 2)
     end
@@ -176,10 +176,10 @@ end
         p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
         @test p isa AbstractVector
         mpm = Feature(MultiPoint(p); a=1, b=2)
-        @test coordinates(mpm.data) == Point{2, Float64}[(x, x+1) for x in 1:5]
-        @test mpm.rest === (a=1, b=2)
-        @test mpm.data == p
-        @test propertynames(mpm) == (:data, :a, :b)
+        @test coordinates(mpm.main) == Point{2, Float64}[(x, x+1) for x in 1:5]
+        @test mpm.meta === (a=1, b=2)
+        @test mpm.main == p
+        @test propertynames(mpm) == (:main, :a, :b)
         @test GeometryBasics.metafree(mpm) == p
         @test GeometryBasics.meta(mpm) == (a = 1, b = 2)
     end
@@ -187,8 +187,8 @@ end
     @testset "Feature{LineString}" begin
         linestring = Feature(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
         @test linestring isa Feature
-        @test linestring.rest === (a = 1, b = 2)
-        @test propertynames(linestring) == (:data, :a, :b)
+        @test linestring.meta === (a = 1, b = 2)
+        @test propertynames(linestring) == (:main, :a, :b)
         @test GeometryBasics.metafree(linestring) == LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
         @test GeometryBasics.meta(linestring) == (a = 1, b = 2)
     end
@@ -199,9 +199,9 @@ end
         multilinestring = MultiLineString([linestring1, linestring2])
         multilinestringmeta = Feature(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
         @test multilinestringmeta isa Feature
-        @test multilinestringmeta.rest === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
-        @test multilinestringmeta.data == multilinestring
-        @test propertynames(multilinestringmeta) == (:data, :boundingbox)
+        @test multilinestringmeta.meta === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+        @test multilinestringmeta.main == multilinestring
+        @test propertynames(multilinestringmeta) == (:main, :boundingbox)
         @test GeometryBasics.metafree(multilinestringmeta) == multilinestring
         @test GeometryBasics.meta(multilinestringmeta) == (boundingbox = GeometryBasics.HyperRectangle{2,Float64}([1.0, 1.0], [2.0, 2.0]),)
     end
@@ -224,8 +224,8 @@ end
             @test hasproperty(mesh, :normals)
             @test mesh.stress == stress
             @test mesh.normals == normals
-            @test GeometryBasics.faces(mesh.data) == tfaces
-            @test propertynames(mesh) == (:data, :normals, :stress)
+            @test GeometryBasics.faces(mesh.main) == tfaces
+            @test propertynames(mesh) == (:main, :normals, :stress)
         end
     end
 end
@@ -617,9 +617,9 @@ end
 
     @test nameof(eltype(feat)) == :Feature
     @test eltype(sa) === Feature{Any,(:country_states, :rainfall),Tuple{Any,Float64}}
-    @test propertynames(sa) === (:data, :country_states, :rainfall)
+    @test propertynames(sa) === (:main, :country_states, :rainfall)
     @test getproperty(sa, :country_states) isa Array{Any}
-    @test getproperty(sa, :data) == geom
+    @test getproperty(sa, :main) == geom
 end
 
 @testset "Tests from GeometryTypes" begin

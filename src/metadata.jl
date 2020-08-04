@@ -201,8 +201,8 @@ eg: A Point MetaGeometry is a `PointMeta`
 But a feature is represented as `Feature{Point}`
 """
 struct Feature{T, Names, Types} 
-    data::T
-    rest::NamedTuple{Names, Types}
+    main::T
+    meta::NamedTuple{Names, Types}
 end
 
 Feature(x; kwargs...) = Feature(x, values(kwargs))
@@ -212,27 +212,27 @@ Frees the Feature out of metadata
 i.e. returns and array of geometries
 """
 function metafree(F::Feature)
-    getproperty(F, :data)
+    getproperty(F, :main)
 end
-metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :data) for i in x]
+metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :main) for i in x]
 
 """
 Returns the metadata of a Feature
 """
 function meta(x::Feature)
-    getfield(x, :rest)
+    getfield(x, :meta)
 end
-meta(x::AbstractVector{<: Feature}) = [getproperty(i, :rest) for i in x]
+meta(x::AbstractVector{<: Feature}) = [getproperty(i, :meta) for i in x]
 
 # helper methods
-Base.getproperty(f::Feature, s::Symbol) = s == :data ? getfield(f, 1) : s == :rest ? getfield(f, 2) : getproperty(getfield(f, 2), s)
-Base.propertynames(f::Feature) = (:data, propertynames(f.rest)...)
+Base.getproperty(f::Feature, s::Symbol) = s == :main ? getfield(f, 1) : s == :meta ? getfield(f, 2) : getproperty(getfield(f, 2), s)
+Base.propertynames(f::Feature) = (:main, propertynames(f.meta)...)
 getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
 
 # explicitly give the "schema" of the object to StructArrays
 function StructArrays.staticschema(::Type{F}) where {F<:Feature} 
     T, names, types = getnamestypes(F)
-    NamedTuple{(:data, names...), Base.tuple_type_cons(T, types)}
+    NamedTuple{(:main, names...), Base.tuple_type_cons(T, types)}
 end
 
 # generate an instance of Feature type
@@ -249,9 +249,9 @@ function collect_feature(iter)
     collect_feature(first(cols), Base.tail(cols)) 
 end
 
-function collect_feature(data, rest::NamedTuple{names, types}) where {names, types}
-    F = Feature{eltype(data), names, StructArrays.eltypes(types)}
-    return StructArray{F}(; data=data, rest...)
+function collect_feature(main, meta::NamedTuple{names, types}) where {names, types}
+    F = Feature{eltype(main), names, StructArrays.eltypes(types)}
+    return StructArray{F}(; main=main, meta...)
 end
 
 Base.getindex(f::Feature, idx::Int) = getindex(metafree(f), idx)
