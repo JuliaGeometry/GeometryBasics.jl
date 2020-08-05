@@ -121,8 +121,7 @@ macro meta_type(name, mainfield, supertype, params...)
                 end
             end
             nt = values(meta)
-            # get the first element to get the per element named tuple type
-            # ElementNT = typeof(map(first, nt))
+            # figure out the NamedTuple type for the struct of arrays element type
             eltypes = map(eltype, values(nt))
             ElementNT = NamedTuple{keys(nt),Tuple{eltypes...}}
             return StructArray{MetaType(XX, ElementNT)}(($(mainfield) = elements, nt...))
