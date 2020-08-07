@@ -37,6 +37,7 @@ Returns the Meta Type corresponding to `T`
 E.g:
 ```julia
 MetaType(Point) == PointMeta
+```
 """
 MetaType(::Type{T}) where T = error("No Meta Type for $T")
 
@@ -47,6 +48,7 @@ Returns the original type containing no metadata for `T`
 E.g:
 ```julia
 MetaFree(PointMeta) == Point
+```
 """
 MetaFree(::Type{T}) where T = error("No meta free Type for $T")
 
