@@ -131,24 +131,24 @@ using GeometryBasics: attributes
    end
 end
 
-@testset "embedding Feature" begin
-    @testset "Feature{Polygon}" begin
+@testset "embedding MetaT" begin
+    @testset "MetaT{Polygon}" begin
         polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
         multipol = MultiPolygon(polys)
         pnames = [randstring(4) for i in 1:10]
         numbers = LinRange(0.0, 1.0, 10)
         bin = rand(Bool, 10)
         # create a polygon
-        poly = Feature(polys[1], name = pnames[1], value = numbers[1], category = bin[1])
+        poly = MetaT(polys[1], name = pnames[1], value = numbers[1], category = bin[1])
         # create a MultiPolygon with the right type & meta information!
-        multipoly = Feature(multipol, name = pnames, value = numbers, category = bin)
-        @test multipoly isa Feature
-        @test poly isa Feature
+        multipoly = MetaT(multipol, name = pnames, value = numbers, category = bin)
+        @test multipoly isa MetaT
+        @test poly isa MetaT
         
         @test GeometryBasics.getcolumn(poly, :name) == pnames[1]
         @test GeometryBasics.getcolumn(multipoly, :name) == pnames
         
-        meta_p = Feature(polys[1], boundingbox=Rect(0, 0, 2, 2))
+        meta_p = MetaT(polys[1], boundingbox=Rect(0, 0, 2, 2))
         @test meta_p.boundingbox === Rect(0, 0, 2, 2)
         @test GeometryBasics.metafree(meta_p) == polys[1]
         @test GeometryBasics.metafree(poly) == polys[1]
@@ -158,10 +158,10 @@ end
         @test GeometryBasics.meta(multipoly) == (name = pnames, value = numbers, category = bin)    
     end
 
-    @testset "Feature{Point}" begin
+    @testset "MetaT{Point}" begin
         p = Point(1.1, 2.2)
         @test p isa AbstractVector{Float64}
-        pm = Feature(Point(1.1, 2.2); a=1, b=2)
+        pm = MetaT(Point(1.1, 2.2); a=1, b=2)
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
         @test coordinates(p2) == p2
@@ -172,10 +172,10 @@ end
         @test GeometryBasics.meta(pm) == (a = 1, b = 2)
     end
     
-    @testset "Feature{MultiPoint}" begin
+    @testset "MetaT{MultiPoint}" begin
         p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
         @test p isa AbstractVector
-        mpm = Feature(MultiPoint(p); a=1, b=2)
+        mpm = MetaT(MultiPoint(p); a=1, b=2)
         @test coordinates(mpm.main) == Point{2, Float64}[(x, x+1) for x in 1:5]
         @test mpm.meta === (a=1, b=2)
         @test mpm.main == p
@@ -184,21 +184,21 @@ end
         @test GeometryBasics.meta(mpm) == (a = 1, b = 2)
     end
 
-    @testset "Feature{LineString}" begin
-        linestring = Feature(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
-        @test linestring isa Feature
+    @testset "MetaT{LineString}" begin
+        linestring = MetaT(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
+        @test linestring isa MetaT
         @test linestring.meta === (a = 1, b = 2)
         @test propertynames(linestring) == (:main, :a, :b)
         @test GeometryBasics.metafree(linestring) == LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
         @test GeometryBasics.meta(linestring) == (a = 1, b = 2)
     end
 
-    @testset "Feature{MultiLineString}" begin
+    @testset "MetaT{MultiLineString}" begin
         linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
         linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
         multilinestring = MultiLineString([linestring1, linestring2])
-        multilinestringmeta = Feature(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
-        @test multilinestringmeta isa Feature
+        multilinestringmeta = MetaT(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
+        @test multilinestringmeta isa MetaT
         @test multilinestringmeta.meta === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
         @test multilinestringmeta.main == multilinestring
         @test propertynames(multilinestringmeta) == (:main, :boundingbox)
@@ -207,18 +207,18 @@ end
     end
 
     #=
-    So mesh works differently for Feature
-    since `Feature{Point}` not subtyped to `AbstractPoint`
+    So mesh works differently for MetaT
+    since `MetaT{Point}` not subtyped to `AbstractPoint`
     =#
 
-   @testset "Feature{Mesh}" begin
+   @testset "MetaT{Mesh}" begin
         @testset "per vertex attributes" begin
             points = rand(Point{3, Float64}, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(SVector{3, Float64}, 8)
             stress = LinRange(0, 1, 8)
             mesh_nometa = Mesh(points, tfaces)
-            mesh = Feature(mesh_nometa, normals = normals, stress = stress)
+            mesh = MetaT(mesh_nometa, normals = normals, stress = stress)
 
             @test hasproperty(mesh, :stress)
             @test hasproperty(mesh, :normals)
@@ -604,7 +604,7 @@ end
     @test <(x, x1)
 end
 
-@testset "Feature and heterogeneous data" begin
+@testset "MetaT and heterogeneous data" begin
     ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
     mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10]) 
     poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
@@ -612,11 +612,11 @@ end
     prop = Any[(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:11]
     push!(prop, (country_states = 12, rainfall = 1000))   # a pinch of heterogeneity
 
-    feat = [Feature(i, j) for (i,j) = zip(geom, prop)]
-    sa = collect_feature(feat)
+    feat = [MetaT(i, j) for (i,j) = zip(geom, prop)]
+    sa = collect_MetaT(feat)
 
-    @test nameof(eltype(feat)) == :Feature
-    @test eltype(sa) === Feature{Any,(:country_states, :rainfall),Tuple{Any,Float64}}
+    @test nameof(eltype(feat)) == :MetaT
+    @test eltype(sa) === MetaT{Any,(:country_states, :rainfall),Tuple{Any,Float64}}
     @test propertynames(sa) === (:main, :country_states, :rainfall)
     @test getproperty(sa, :country_states) isa Array{Any}
     @test getproperty(sa, :main) == geom

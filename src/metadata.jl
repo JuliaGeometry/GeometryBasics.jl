@@ -196,57 +196,57 @@ Base.size(x::MeshMeta) = size(metafree(x))
 
 """
 
-    Feature(::type{T}, Names, Types)
+    MetaT(::type{T}, Names, Types)
     
-Returns a `Feature` that holds a geometry and it's metadata
+Returns a `MetaT` that holds a geometry and it's metadata
 
-`Feature` acts the same as `Meta` method.
+`MetaT` acts the same as `Meta` method.
 The difference lies in the fact that it is designed to handle
 geometries and metadata of different/heterogeneous types.
 
-eg: While a Point MetaGeometry is a `PointMeta`, the Feature representation is `Feature{Point}`
+eg: While a Point MetaGeometry is a `PointMeta`, the MetaT representation is `MetaT{Point}`
 The downside being it's not subtyped to `AbstractPoint` like a `PointMeta` is.
 
 Example:
 ```julia
-julia> Feature(Point(1, 2), city = "Mumbai")
-Feature{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
+julia> MetaT(Point(1, 2), city = "Mumbai")
+MetaT{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
 ```
 """
-struct Feature{T, Names, Types} 
+struct MetaT{T, Names, Types} 
     main::T
     meta::NamedTuple{Names, Types}
 end
 
-Feature(x; kwargs...) = Feature(x, values(kwargs))
+MetaT(x; kwargs...) = MetaT(x, values(kwargs))
 
 """
 
-    metafree(x::Feature)
-    metafree(x::Array{Feature})
+    metafree(x::MetaT)
+    metafree(x::Array{MetaT})
 
-Free the Feature from metadata
+Free the MetaT from metadata
 i.e. returns the geometry/array of geometries
 """
-function metafree(x::Feature)
+function metafree(x::MetaT)
     getfield(x, 1)
 end
-metafree(x::AbstractVector{<: Feature}) = map(metafree, x)
+metafree(x::AbstractVector{<: MetaT}) = map(metafree, x)
 
 """
 
-    meta(x::Feature)
-    meta(x::Array{Feature})
+    meta(x::MetaT)
+    meta(x::Array{MetaT})
     
-Returns the metadata of a `Feature`
+Returns the metadata of a `MetaT`
 """
-function meta(x::Feature)
+function meta(x::MetaT)
     getfield(x, 2)
 end
-meta(x::AbstractVector{<: Feature}) = map(meta, x)
+meta(x::AbstractVector{<: MetaT}) = map(meta, x)
 
 # helper methods
-function Base.getproperty(x::Feature, field::Symbol)
+function Base.getproperty(x::MetaT, field::Symbol)
     if field == :main 
         metafree(x)
     elseif field == :meta
@@ -256,34 +256,34 @@ function Base.getproperty(x::Feature, field::Symbol)
     end
 end
 
-Base.propertynames(x::Feature) = (:main, propertynames(meta(x))...)
-getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
+Base.propertynames(x::MetaT) = (:main, propertynames(meta(x))...)
+getnamestypes(::Type{MetaT{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
 
 # explicitly give the "schema" of the object to StructArrays
-function StructArrays.staticschema(::Type{F}) where {F<:Feature} 
+function StructArrays.staticschema(::Type{F}) where {F<:MetaT} 
     T, names, types = getnamestypes(F)
     NamedTuple{(:main, names...), Base.tuple_type_cons(T, types)}
 end
 
-# generate an instance of Feature type
-function StructArrays.createinstance(::Type{F}, x, args...) where {F<:Feature}  
+# generate an instance of MetaT type
+function StructArrays.createinstance(::Type{F}, x, args...) where {F<:MetaT}  
      T , names, types = getnamestypes(F)
-     Feature(x, NamedTuple{names, types}(args))
+     MetaT(x, NamedTuple{names, types}(args))
 end
 
 """
-Accepts an iterable of Features and put it into a StructArray 
+Accepts an iterable of MetaTs and put it into a StructArray 
 """
-function collect_feature(iter)
+function collect_MetaT(iter)
     cols = Tables.columntable(iter)
-    collect_feature(first(cols), Base.tail(cols)) 
+    collect_MetaT(first(cols), Base.tail(cols)) 
 end
 
-function collect_feature(main, meta::NamedTuple{names, types}) where {names, types}
-    F = Feature{eltype(main), names, StructArrays.eltypes(types)}
+function collect_MetaT(main, meta::NamedTuple{names, types}) where {names, types}
+    F = MetaT{eltype(main), names, StructArrays.eltypes(types)}
     return StructArray{F}(; main=main, meta...)
 end
 
-Base.getindex(x::Feature, idx::Int) = getindex(metafree(x), idx)
-Base.size(x::Feature) = size(metafree(x))
+Base.getindex(x::MetaT, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MetaT) = size(metafree(x))
 
