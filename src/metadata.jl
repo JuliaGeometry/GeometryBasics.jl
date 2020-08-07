@@ -221,25 +221,42 @@ end
 Feature(x; kwargs...) = Feature(x, values(kwargs))
 
 """
-Frees the Feature out of metadata
-i.e. returns and array of geometries
+
+    metafree(x::Feature)
+    metafree(x::Array{Feature})
+
+Free the Feature from metadata
+i.e. returns the geometry/array of geometries
 """
-function metafree(F::Feature)
-    getproperty(F, :main)
+function metafree(x::Feature)
+    getfield(x, 1)
 end
-metafree(x::AbstractVector{<: Feature}) = [getproperty(i, :main) for i in x]
+metafree(x::AbstractVector{<: Feature}) = map(metafree, x)
 
 """
-Returns the metadata of a Feature
+
+    meta(x::Feature)
+    meta(x::Array{Feature})
+    
+Returns the metadata of a `Feature`
 """
 function meta(x::Feature)
-    getfield(x, :meta)
+    getfield(x, 2)
 end
-meta(x::AbstractVector{<: Feature}) = [getproperty(i, :meta) for i in x]
+meta(x::AbstractVector{<: Feature}) = map(meta, x)
 
 # helper methods
-Base.getproperty(f::Feature, s::Symbol) = s == :main ? getfield(f, 1) : s == :meta ? getfield(f, 2) : getproperty(getfield(f, 2), s)
-Base.propertynames(f::Feature) = (:main, propertynames(f.meta)...)
+function Base.getproperty(x::Feature, field::Symbol)
+    if field == :main 
+        metafree(x)
+    elseif field == :meta
+        meta(x)
+    else
+        getproperty(meta(x), field)
+    end
+end
+
+Base.propertynames(x::Feature) = (:main, propertynames(meta(x))...)
 getnamestypes(::Type{Feature{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
 
 # explicitly give the "schema" of the object to StructArrays
