@@ -620,6 +620,17 @@ end
     @test propertynames(sa) === (:main, :country_states, :rainfall)
     @test getproperty(sa, :country_states) isa Array{Any}
     @test getproperty(sa, :main) == geom
+    
+    @test GeometryBasics.getnamestypes(typeof(feat[1])) == 
+    (LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
+    (:country_states, :rainfall), Tuple{String,Float64})
+    
+    @test StructArrays.staticschema(typeof(feat[1])) == 
+    NamedTuple{(:main, :country_states, :rainfall),Tuple{LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
+    String,Float64}}
+
+    @test Base.getindex(feat[1], 1) isa Line
+    @test Base.size(feat[1]) == (2,)
 end
 
 @testset "Tests from GeometryTypes" begin
