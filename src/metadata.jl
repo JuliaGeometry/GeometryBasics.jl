@@ -195,12 +195,23 @@ Base.size(x::MeshMeta) = size(metafree(x))
 
 
 """
-`Feature` type acts same as Meta method 
-The difference lies in the fact that it is designed to handle
-heterogeneous types.
 
-eg: A Point MetaGeometry is a `PointMeta`
-But a feature is represented as `Feature{Point}`
+    Feature(::type{T}, Names, Types)
+    
+Returns a `Feature` that holds a geometry and it's metadata
+
+`Feature` acts the same as `Meta` method.
+The difference lies in the fact that it is designed to handle
+geometries and metadata of different/heterogeneous types.
+
+eg: While a Point MetaGeometry is a `PointMeta`, the Feature representation is `Feature{Point}`
+The downside being it's not subtyped to `AbstractPoint` like a `PointMeta` is.
+
+Example:
+```julia
+julia> Feature(Point(1, 2), city = "Mumbai")
+Feature{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
+```
 """
 struct Feature{T, Names, Types} 
     main::T
@@ -244,7 +255,7 @@ function StructArrays.createinstance(::Type{F}, x, args...) where {F<:Feature}
 end
 
 """
-Accepts an Array/iterator of Features and put it into a StructArray 
+Accepts an iterable of Features and put it into a StructArray 
 """
 function collect_feature(iter)
     cols = Tables.columntable(iter)
@@ -256,6 +267,6 @@ function collect_feature(main, meta::NamedTuple{names, types}) where {names, typ
     return StructArray{F}(; main=main, meta...)
 end
 
-Base.getindex(f::Feature, idx::Int) = getindex(metafree(f), idx)
-Base.size(f::Feature) = size(metafree(f))
+Base.getindex(x::Feature, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::Feature) = size(metafree(x))
 
