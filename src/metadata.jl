@@ -196,9 +196,10 @@ Base.size(x::MeshMeta) = size(metafree(x))
 
 """
 
-    MetaT(::type{T}, Names, Types)
+    MetaT(geometry, meta::NamedTuple)
+    MetaT(geometry; meta...)
     
-Returns a `MetaT` that holds a geometry and it's metadata
+Returns a `MetaT` that holds a geometry and its metadata
 
 `MetaT` acts the same as `Meta` method.
 The difference lies in the fact that it is designed to handle
