@@ -116,10 +116,9 @@ function decompose(::Type{P}, pol::Polygon) where {P<:AbstractPoint}
     if isempty(pol.interiors)
         return decompose(P, pol.exterior)
     else
-        arr = P[]
-        push!(arr, decompose(P, pol.exterior)...)
+        arr = copy(decompose(P, pol.exterior))
         for i in pol.interiors
-            push!(arr, decompose(P, i)...)
+            append!(arr, decompose(P, i))
         end
         return arr
     end
