@@ -229,7 +229,7 @@ Free the MetaT from metadata
 i.e. returns the geometry/array of geometries
 """
 function metafree(x::MetaT)
-    getfield(x, 1)
+    getfield(x, :main)
 end
 metafree(x::AbstractVector{<: MetaT}) = map(metafree, x)
 
@@ -241,7 +241,7 @@ metafree(x::AbstractVector{<: MetaT}) = map(metafree, x)
 Returns the metadata of a `MetaT`
 """
 function meta(x::MetaT)
-    getfield(x, 2)
+    getfield(x, :meta)
 end
 meta(x::AbstractVector{<: MetaT}) = map(meta, x)
 
