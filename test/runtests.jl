@@ -613,7 +613,7 @@ end
     push!(prop, (country_states = 12, rainfall = 1000))   # a pinch of heterogeneity
 
     feat = [MetaT(i, j) for (i,j) = zip(geom, prop)]
-    sa = collect_MetaT(feat)
+    sa = meta_table(feat)
 
     @test nameof(eltype(feat)) == :MetaT
     @test eltype(sa) === MetaT{Any,(:country_states, :rainfall),Tuple{Any,Float64}}

@@ -35,7 +35,7 @@ module GeometryBasics
     export GLTriangleFace, GLNormalMesh3D, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
     export AbstractMesh, Mesh, TriangleMesh
     export GLNormalMesh2D, PlainTriangleMesh
-    export MetaT, collect_MetaT
+    export MetaT, meta_table
     
     # all the different predefined mesh types
     # Note: meshes can contain arbitrary meta information,

@@ -272,14 +272,14 @@ function StructArrays.createinstance(::Type{F}, x, args...) where {F<:MetaT}
 end
 
 """
-Accepts an iterable of MetaTs and put it into a StructArray 
+Puts an iterable of MetaT's into a StructArray 
 """
-function collect_MetaT(iter)
+function meta_table(iter)
     cols = Tables.columntable(iter)
-    collect_MetaT(first(cols), Base.tail(cols)) 
+    meta_table(first(cols), Base.tail(cols)) 
 end
 
-function collect_MetaT(main, meta::NamedTuple{names, types}) where {names, types}
+function meta_table(main, meta::NamedTuple{names, types}) where {names, types}
     F = MetaT{eltype(main), names, StructArrays.eltypes(types)}
     return StructArray{F}(; main=main, meta...)
 end
