@@ -373,7 +373,21 @@ end
     @test coordinates(m) === points
 
     linestring = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
-    @test decompose(Point{2, Int}, linestring) == Point{2, Int64}[[10, 10], [20, 20], [10, 40]]
+    pts = Point{2, Int}[(10, 10), (20, 20), (10, 40)]
+    linestring = LineString(pts)
+    pts_decomp = decompose(Point{2, Int}, linestring)
+    @test pts === pts_decomp
+
+    pts_ext = Point{2, Int}[(5, 1), (3, 3), (4, 8), (1, 2), (5, 1)]
+    ls_ext = LineString(pts_ext)
+    pts_int1 = Point{2, Int}[(2, 2), (3, 8),(5, 6), (3, 4), (2, 2)]
+    ls_int1 = LineString(pts_int1)
+    pts_int2 = Point{2, Int}[(3, 2), (4, 5),(6, 1), (1, 4), (3, 2)]
+    ls_int2 =  LineString(pts_int2)
+    poly_ext = Polygon(ls_ext)
+    poly_ext_int = Polygon(ls_ext, [ls_int1, ls_int2])
+    @test decompose(Point{2, Int}, poly_ext) == pts_ext
+    @test decompose(Point{2, Int}, poly_ext_int) == [pts_ext..., pts_int1..., pts_int2...]
 end
 
 @testset "convert mesh + meta" begin
