@@ -405,6 +405,10 @@ function max_euclideansq(rect::Rect{N, T}, p::Union{Vec{N, T}, Rect{N, T}}) wher
     return maximum_dist
 end
 
+function min_euclidean(rect::Rect{N, T}, p::Union{Vec{N, T}, Rect{N, T}}) where {N, T}
+    return sqrt(min_euclideansq(rect, p))
+end
+
 function max_euclidean(rect::Rect{N, T}, p::Union{Vec{N, T}, Rect{N, T}}) where {N, T}
     return sqrt(max_euclideansq(rect, p))
 end
