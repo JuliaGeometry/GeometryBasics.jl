@@ -1,8 +1,22 @@
 # Metadata
+The `Meta` method provides metadata handling capabilities in GeometryBasics.
+
+### Syntax
+```julia
+    meta(geometry, meta::NamedTuple)
+    meta(geometry; meta...)
+```    
+To remove the metadata and keep only the geometry, use `metafree`, and for vice versa i.e., remove the geometry and keep the metadata use `meta`.
+### Syntax
+```julia
+    metafree(meta-geometry)
+    meta(meta-geometry)
+```    
+
+#### Example:
 ```julia
 p1 = Point(2.2, 3.6)
 
-# geometries can carry metadata
 poi = meta(p1, city="Abuja", rainfall=1221.2)
 2-element PointMeta{2,Int64,Point{2,Int64},(:city, :rainfall),Tuple{String,Float64}} with indices SOneTo(2):
  3
@@ -16,7 +30,6 @@ meta(poi)
 poi.rainfall
 1221.2
 
-# to remove the metadata and keep only the geometry, use metafree
 metafree(poi)
 2-element Point{2,Int64} with indices SOneTo(2):
  3
@@ -27,7 +40,25 @@ multipoi = MultiPointMeta([p1], city="Abuja", rainfall=1221.2)
 1-element MultiPointMeta{Point{2,Int64},MultiPoint{2,Int64,Point{2,Int64},Array{Point{2,Int64},1}},(:city, :rainfall),Tuple{String,Float64}}:
 [3, 1]
 ```
+In the above example we have also used geometry specific meta methods.
 
+#### Example:
+```julia
+GeometryBasics.MetaType(Polygon)
+PolygonMeta
+
+GeometryBasics.MetaType(Mesh)
+MeshMeta
+```
+The metageometry objects are infact composed of the original geometry types.
+```julia
+GeometryBasics.MetaFree(PolygonMeta)
+Polygon
+
+GeometryBasics.MetaFree(MeshMeta)
+Mesh
+
+```
 ## MetaT
 In GeometryBasics we can a have tabular layout for a collection meta-geometries by putting them into a StructArray that extends the Tables.jl API.
 
