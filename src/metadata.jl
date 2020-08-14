@@ -37,6 +37,7 @@ Returns the Meta Type corresponding to `T`
 E.g:
 ```julia
 MetaType(Point) == PointMeta
+```
 """
 MetaType(::Type{T}) where T = error("No Meta Type for $T")
 
@@ -47,6 +48,7 @@ Returns the original type containing no metadata for `T`
 E.g:
 ```julia
 MetaFree(PointMeta) == Point
+```
 """
 MetaFree(::Type{T}) where T = error("No meta free Type for $T")
 
@@ -190,3 +192,99 @@ Base.size(x::MultiPolygonMeta) = size(metafree(x))
 @meta_type(Mesh, mesh, AbstractMesh, Element <: Polytope)
 Base.getindex(x::MeshMeta, idx::Int) = getindex(metafree(x), idx)
 Base.size(x::MeshMeta) = size(metafree(x))
+
+
+"""
+
+    MetaT(geometry, meta::NamedTuple)
+    MetaT(geometry; meta...)
+    
+Returns a `MetaT` that holds a geometry and its metadata
+
+`MetaT` acts the same as `Meta` method.
+The difference lies in the fact that it is designed to handle
+geometries and metadata of different/heterogeneous types.
+
+eg: While a Point MetaGeometry is a `PointMeta`, the MetaT representation is `MetaT{Point}`
+The downside being it's not subtyped to `AbstractPoint` like a `PointMeta` is.
+
+Example:
+```julia
+julia> MetaT(Point(1, 2), city = "Mumbai")
+MetaT{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
+```
+"""
+struct MetaT{T, Names, Types} 
+    main::T
+    meta::NamedTuple{Names, Types}
+end
+
+MetaT(x; kwargs...) = MetaT(x, values(kwargs))
+
+"""
+
+    metafree(x::MetaT)
+    metafree(x::Array{MetaT})
+
+Free the MetaT from metadata
+i.e. returns the geometry/array of geometries
+"""
+function metafree(x::MetaT)
+    getfield(x, :main)
+end
+metafree(x::AbstractVector{<: MetaT}) = map(metafree, x)
+
+"""
+
+    meta(x::MetaT)
+    meta(x::Array{MetaT})
+    
+Returns the metadata of a `MetaT`
+"""
+function meta(x::MetaT)
+    getfield(x, :meta)
+end
+meta(x::AbstractVector{<: MetaT}) = map(meta, x)
+
+# helper methods
+function Base.getproperty(x::MetaT, field::Symbol)
+    if field == :main 
+        metafree(x)
+    elseif field == :meta
+        meta(x)
+    else
+        getproperty(meta(x), field)
+    end
+end
+
+Base.propertynames(x::MetaT) = (:main, propertynames(meta(x))...)
+getnamestypes(::Type{MetaT{T, Names, Types}}) where {T, Names, Types} = (T, Names, Types) 
+
+# explicitly give the "schema" of the object to StructArrays
+function StructArrays.staticschema(::Type{F}) where {F<:MetaT} 
+    T, names, types = getnamestypes(F)
+    NamedTuple{(:main, names...), Base.tuple_type_cons(T, types)}
+end
+
+# generate an instance of MetaT type
+function StructArrays.createinstance(::Type{F}, x, args...) where {F<:MetaT}  
+     T , names, types = getnamestypes(F)
+     MetaT(x, NamedTuple{names, types}(args))
+end
+
+"""
+Puts an iterable of MetaT's into a StructArray 
+"""
+function meta_table(iter)
+    cols = Tables.columntable(iter)
+    meta_table(first(cols), Base.tail(cols)) 
+end
+
+function meta_table(main, meta::NamedTuple{names, types}) where {names, types}
+    F = MetaT{eltype(main), names, StructArrays.eltypes(types)}
+    return StructArray{F}(; main=main, meta...)
+end
+
+Base.getindex(x::MetaT, idx::Int) = getindex(metafree(x), idx)
+Base.size(x::MetaT) = size(metafree(x))
+
