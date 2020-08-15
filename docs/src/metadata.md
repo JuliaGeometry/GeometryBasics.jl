@@ -13,7 +13,7 @@ meta(meta-geometry)
 ```    
 ### Example
 ```jldoctest
-using GemetryBasics   
+using GeometryBasics   
 p1 = Point(2.2, 3.6)
 
 poi = meta(p1, city="Abuja", rainfall=1221.2)
