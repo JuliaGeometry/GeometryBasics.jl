@@ -1,20 +1,19 @@
 # Metadata
-The `Meta` method provides metadata handling capabilities in GeometryBasics.
+## Meta
+The `Meta` method provides metadata handling capabilities in GeometryBasics. Similarly to remove the metadata and keep only the geometry, use `metafree`, and for vice versa i.e., remove the geometry and keep the metadata use `meta`.
+
 
 ### Syntax
-```julia
-    meta(geometry, meta::NamedTuple)
-    meta(geometry; meta...)
-```    
-To remove the metadata and keep only the geometry, use `metafree`, and for vice versa i.e., remove the geometry and keep the metadata use `meta`.
-### Syntax
-```julia
-    metafree(meta-geometry)
-    meta(meta-geometry)
-```    
+```
+meta(geometry, meta::NamedTuple)
+meta(geometry; meta...)
 
-#### Example:
-```julia
+metafree(meta-geometry)
+meta(meta-geometry)
+```    
+### Example
+```jldoctest
+using GemetryBasics   
 p1 = Point(2.2, 3.6)
 
 poi = meta(p1, city="Abuja", rainfall=1221.2)
@@ -42,8 +41,8 @@ multipoi = MultiPointMeta([p1], city="Abuja", rainfall=1221.2)
 ```
 In the above example we have also used geometry specific meta methods.
 
-#### Example:
-```julia
+### Example
+```@jldoctest
 GeometryBasics.MetaType(Polygon)
 PolygonMeta
 
@@ -51,31 +50,30 @@ GeometryBasics.MetaType(Mesh)
 MeshMeta
 ```
 The metageometry objects are infact composed of the original geometry types.
-```julia
+```@jldoctest
 GeometryBasics.MetaFree(PolygonMeta)
 Polygon
 
 GeometryBasics.MetaFree(MeshMeta)
 Mesh
-
 ```
 ## MetaT
-In GeometryBasics we can a have tabular layout for a collection meta-geometries by putting them into a StructArray that extends the Tables.jl API.
+In GeometryBasics we can a have tabular layout for a collection of meta-geometries by putting them into a StructArray that extends the [Tables.jl](https://github.com/JuliaData/Tables.jl) API.
 
-In practice it's not necessary for the geometry or metadata types to be consistent. Eg: A .geojson format can have heterogeneous geometries.
+In practice it's not necessary for the geometry or metadata types to be consistent. Eg: A geojson format can have heterogeneous geometries.
 Hence, such cases require automatic widening of the geometry data types to the most appropriate type. The MetaT method works around the fact that, a collection of geometries and metadata of different types can be represented tabularly whilst widening to the appropriate type. 
 ### Syntax
-```julia
-    MetaT(geometry, meta::NamedTuple)
-    MetaT(geometry; meta...)
+```
+MetaT(geometry, meta::NamedTuple)
+MetaT(geometry; meta...)
 ```    
 Returns a `MetaT` that holds a geometry and its metadata `MetaT` acts the same as `Meta` method.
 The difference lies in the fact that it is designed to handle geometries and metadata of different/heterogeneous types.
 
 eg: While a Point MetaGeometry is a `PointMeta`, the MetaT representation is `MetaT{Point}`
 
-#### Example:
-```julia
+### Example
+```@jldoctest
 MetaT(Point(1, 2), city = "Mumbai")
 MetaT{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
 ```
@@ -83,11 +81,11 @@ MetaT{Point{2,Int64},(:city,),Tuple{String}}([1, 2], (city = "Mumbai",))
 For a tabular representation, an iterable of `MetaT` types can be passed on to a `metatable` method.
 
 ### Syntax
-```julia
-    meta_table(iter)
+```@jldoctest
+meta_table(iter)
 ```    
-#### Example:
-```julia
+### Example
+```@jldoctest
 using DataFrames
 # Create an array of 2 linestrings 
 ls = [LineString([Point(i, i+1), Point(i-1,i+5)]) for i in 1:2]
@@ -116,7 +114,6 @@ sa.rainfall
 ```
 
 ### Disadvantages:
- * The MetaT is pretty generic in terms of geometry types, it's not subtype to geometries. 
- eg : A `MetaT{Point, NamedTuple{Names, Types}}` is not subtyped to `AbstractPoint` like a `PointMeta` is.
+ * The MetaT is pretty generic in terms of geometry types, it's not subtype to geometries. eg : A `MetaT{Point, NamedTuple{Names, Types}}` is not subtyped to `AbstractPoint` like a `PointMeta` is.
  * This might cause problems on using `MetaT` with other constructors/methods inside or even outside GeometryBasics methods designed to work with the main `Meta` types.
 
