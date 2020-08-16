@@ -1,6 +1,7 @@
 module GeometryBasics
 
     using StaticArrays, Tables, StructArrays, IterTools, LinearAlgebra
+    using EarCut_jll
 
     using Base: @propagate_inbounds
 
@@ -12,15 +13,15 @@ module GeometryBasics
     include("viewtypes.jl")
     include("geometry_primitives.jl")
     include("rectangles.jl")
-    include("triangulation.jl")
     include("meshes.jl")
+    include("triangulation.jl")
     include("lines.jl")
     include("boundingboxes.jl")
 
     export AbstractGeometry, GeometryPrimitive
     export Mat, Point, Vec
     export LineFace, Polytope, Line, NgonFace, convert_simplex
-    export LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon
+    export LineString, AbstractPolygon, Polygon, MultiPoint, MultiLineString, MultiPolygon
     export Simplex, connect, Triangle, NSimplex, Tetrahedron
     export QuadFace, metafree, coordinates, TetrahedronFace
     export TupleView, SimplexFace, Mesh, meta
@@ -36,7 +37,7 @@ module GeometryBasics
     export AbstractMesh, Mesh, TriangleMesh
     export GLNormalMesh2D, PlainTriangleMesh
     export MetaT, meta_table
-    
+
     # all the different predefined mesh types
     # Note: meshes can contain arbitrary meta information,
     export AbstractMesh, TriangleMesh, PlainMesh, GLPlainMesh, GLPlainMesh2D, GLPlainMesh3D

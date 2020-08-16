@@ -92,7 +92,6 @@ function Polytope(::Type{<: NNgon{N}}, P::Type{<: AbstractPoint{NDim, T}}) where
     return Ngon{NDim, T, N, P}
 end
 
-
 const LineP{Dim, T, P <: AbstractPoint{Dim, T}} = Ngon{Dim, T, 2, P}
 const Line{Dim, T} = LineP{Dim, T, Point{Dim, T}}
 
@@ -111,6 +110,17 @@ const Quadrilateral{Dim, T} = Ngon{Dim, T, 4, P} where P <: AbstractPoint{Dim, T
 Base.show(io::IO, x::Quadrilateral) = print(io, "Quad(", join(x, ", "), ")")
 Base.summary(io::IO, x::Type{<: Quadrilateral}) = print(io, "Quad")
 
+function coordinates(lines::AbstractArray{LineP{Dim, T, PointType}}) where {Dim, T, PointType}
+    if lines isa Base.ReinterpretArray
+        return coordinates(lines.parent)
+    else
+        result = PointType[]
+        for line in lines
+            append!(result, coordinates(line))
+        end
+        return result
+    end
+end
 
 """
 A `Simplex` is a generalization of an N-dimensional tetrahedra and can be thought
@@ -181,7 +191,7 @@ struct LineString{
     points::V
 end
 
-coordinates(x::LineString) = x.points
+coordinates(x::LineString) = coordinates(x.points)
 
 Base.copy(x::LineString) = LineString(copy(x.points))
 Base.size(x::LineString) = size(coordinates(x))
@@ -274,6 +284,22 @@ end
 
 function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<: LineFace}) where P <: AbstractPoint{Dim, T} where {Dim, T}
     return Polygon(LineString(exterior, faces))
+end
+
+function Polygon(exterior::AbstractVector{P}, interior::AbstractVector{<:AbstractVector{P}}) where P <: AbstractPoint{Dim, T} where {Dim, T}
+    return Polygon(LineString(exterior), LineString.(interior))
+end
+
+function coordinates(polygon::Polygon{N, T, PointType}) where {N, T, PointType}
+    exterior = coordinates(polygon.exterior)
+    if isempty(polygon.interiors)
+        return exterior
+    else
+        result = PointType[]
+        append!(result, exterior)
+        foreach(x-> append!(result, coordinates(x)), polygon.interiors)
+        return result
+    end
 end
 
 """

@@ -36,6 +36,8 @@ struct TupleView{T, N, Skip, A} <: AbstractVector{T}
     connect::Bool
 end
 
+coordinates(tw::TupleView) = coordinates(tw.data)
+
 function Base.size(x::TupleView{T, N, M}) where {T, N, M}
     nitems = length(x.data) ÷ (N - (N - M))
     nitems = nitems - max(N - M, 0)

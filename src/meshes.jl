@@ -14,7 +14,6 @@ function normals(mesh::AbstractMesh)
     return nothing
 end
 
-
 const GLTriangleElement = Triangle{3, Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
 const PointWithUV{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:uv,), Tuple{Vec{2, T}}}
@@ -144,6 +143,12 @@ Polygon triangluation!
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
               normaltype=nothing) where {P<:AbstractPoint{2}}
 
+    return mesh(Polygon(polygon); pointtype, facetype, normaltype)
+end
+
+function mesh(polygon::AbstractPolygon{Dim, T}; pointtype=Point{Dim, T}, facetype=GLTriangleFace,
+              normaltype=nothing) where {Dim, T}
+
     faces = decompose(facetype, polygon)
     positions = decompose(pointtype, polygon)
 
@@ -151,7 +156,6 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
         n = normals(positions, faces; normaltype=normaltype)
         positions = meta(positions; normals=n)
     end
-
     return Mesh(positions, faces)
 end
 
