@@ -103,17 +103,13 @@ function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
     return collect_with_eltype(P, metafree(coordinates(primitive)))
 end
 
-function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
-    return collect_with_eltype(P, metafree(coordinates(primitive)))
-end
-
 function decompose(::Type{Point}, primitive::Meshable{Dim, T}) where {Dim, T}
     return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
 end
+
 function decompose(::Type{Point}, primitive::LineString{Dim, T}) where {Dim, T}
     return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
 end
-
 
 function decompose(::Type{T}, primitive) where {T}
     return collect_with_eltype(T, primitive)
