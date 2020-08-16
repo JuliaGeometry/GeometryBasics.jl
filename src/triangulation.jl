@@ -227,12 +227,8 @@ best_earcut_eltype(::Type{Int32}) = Int32
 best_earcut_eltype(::Type{<:Integer}) = Int64
 
 function faces(polygon::Polygon{Dim, T}) where {Dim, T}
-    if isempty(polygon.interiors)
-        return decompose(GLTriangleFace, coordinates(polygon))
-    else
-        PT = Point{Dim, best_earcut_eltype(T)}
-        points = [decompose(PT, polygon.exterior)]
-        foreach(x-> push!(points, decompose(PT, x)), polygon.interiors)
-        return earcut_triangulate(points)
-    end
+    PT = Point{Dim, best_earcut_eltype(T)}
+    points = [decompose(PT, polygon.exterior)]
+    foreach(x-> push!(points, decompose(PT, x)), polygon.interiors)
+    return earcut_triangulate(points)
 end
