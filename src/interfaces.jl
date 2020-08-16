@@ -112,6 +112,19 @@ function decompose(::Type{T}, primitive) where {T}
     return collect_with_eltype(T, primitive)
 end
 
+function decompose(::Type{P}, pol::Polygon) where {P<:AbstractPoint}
+    if isempty(pol.interiors)
+        return decompose(P, pol.exterior)
+    else
+        arr = copy(decompose(P, pol.exterior))
+        for i in pol.interiors
+            append!(arr, decompose(P, i))
+        end
+        return arr
+    end
+end
+
+decompose(::Type{P}, ls::LineString) where {P<:AbstractPoint} = ls.points.parent.data
 decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)
