@@ -287,7 +287,12 @@ function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<: LineFace}
 end
 
 function Polygon(exterior::AbstractVector{P}, interior::AbstractVector{<:AbstractVector{P}}) where P <: AbstractPoint{Dim, T} where {Dim, T}
-    return Polygon(LineString(exterior), LineString.(interior))
+    ext = LineString(exterior)
+    # We need to take extra care for empty interiors, since
+    # if we just map over it, it won't infer the element type correctly!
+    int = typeof(ext)[]
+    foreach(x-> push!(int, LineString(x)), interior)
+    return Polygon(LineString(exterior), int)
 end
 
 function coordinates(polygon::Polygon{N, T, PointType}) where {N, T, PointType}
