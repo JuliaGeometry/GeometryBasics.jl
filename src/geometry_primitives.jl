@@ -15,6 +15,7 @@ function convert_simplex(NFT::Type{NgonFace{N, T1}}, f::Union{NgonFace{N, T2}}) 
 end
 
 convert_simplex(NFT::Type{NgonFace{3,T}}, f::NgonFace{3,T2}) where {T, T2} = (convert(NFT, f),)
+convert_simplex(NFT::Type{NgonFace{2,T}}, f::NgonFace{2,T2}) where {T, T2} = (convert(NFT, f),)
 
 """
     convert_simplex(::Type{Face{3}}, f::Face{N})
