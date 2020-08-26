@@ -56,7 +56,7 @@ using GeometryBasics: attributes
         end
 
     end
-   
+
     @testset "polygon with metadata" begin
         polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
         pnames = [randstring(4) for i in 1:10]
@@ -68,7 +68,7 @@ using GeometryBasics: attributes
         multipoly = MultiPolygonMeta(polys, name = pnames, value = numbers, category = bin)
         @test multipoly isa AbstractVector
         @test poly isa GeometryBasics.AbstractPolygon
-        
+
         @test GeometryBasics.getcolumn(poly, :name) == pnames[1]
         @test GeometryBasics.MetaFree(PolygonMeta) == Polygon
 
@@ -92,7 +92,7 @@ using GeometryBasics: attributes
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
     end
-    
+
     @testset "MultiPoint with metadata" begin
         p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
         @test p isa AbstractVector
@@ -144,10 +144,10 @@ end
         multipoly = MetaT(multipol, name = pnames, value = numbers, category = bin)
         @test multipoly isa MetaT
         @test poly isa MetaT
-        
+
         @test GeometryBasics.getcolumn(poly, :name) == pnames[1]
         @test GeometryBasics.getcolumn(multipoly, :name) == pnames
-        
+
         meta_p = MetaT(polys[1], boundingbox=Rect(0, 0, 2, 2))
         @test meta_p.boundingbox === Rect(0, 0, 2, 2)
         @test GeometryBasics.metafree(meta_p) == polys[1]
@@ -155,7 +155,7 @@ end
         @test GeometryBasics.metafree(multipoly) == multipol
         @test GeometryBasics.meta(meta_p) == (boundingbox = GeometryBasics.HyperRectangle{2,Int64}([0, 0], [2, 2]),)
         @test GeometryBasics.meta(poly) == (name = pnames[1], value = 0.0, category = bin[1])
-        @test GeometryBasics.meta(multipoly) == (name = pnames, value = numbers, category = bin)    
+        @test GeometryBasics.meta(multipoly) == (name = pnames, value = numbers, category = bin)
     end
 
     @testset "MetaT{Point}" begin
@@ -171,7 +171,7 @@ end
         @test GeometryBasics.metafree(pm) == p
         @test GeometryBasics.meta(pm) == (a = 1, b = 2)
     end
-    
+
     @testset "MetaT{MultiPoint}" begin
         p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
         @test p isa AbstractVector
@@ -623,7 +623,7 @@ end
 
 @testset "MetaT and heterogeneous data" begin
     ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
-    mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10]) 
+    mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10])
     poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
     geom = [ls..., mls, poly]
     prop = Any[(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:11]
@@ -637,17 +637,14 @@ end
     @test propertynames(sa) === (:main, :country_states, :rainfall)
     @test getproperty(sa, :country_states) isa Array{Any}
     @test getproperty(sa, :main) == geom
-    
-    @test GeometryBasics.getnamestypes(typeof(feat[1])) == 
+
+    @test GeometryBasics.getnamestypes(typeof(feat[1])) ==
     (LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
     (:country_states, :rainfall), Tuple{String,Float64})
-    
-    @test StructArrays.staticschema(typeof(feat[1])) == 
-    NamedTuple{(:main, :country_states, :rainfall),Tuple{LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
-    String,Float64}}
+
 
     @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1, (2)^2/6), Point(1*0.86,6), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
-    
+
     @test Base.getindex(feat[1], 1) isa Line
     @test Base.size(feat[1]) == (2,)
 end

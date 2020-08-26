@@ -75,13 +75,12 @@ faces(tesselation::Tesselation) = faces(tesselation.primitive, nvertices(tessela
 normals(tesselation::Tesselation) = normals(tesselation.primitive, nvertices(tesselation))
 texturecoordinates(tesselation::Tesselation) = texturecoordinates(tesselation.primitive, nvertices(tesselation))
 
-
 ## Decompose methods
 # Dispatch type to make `decompose(UV{Vec2f0}, primitive)` work
 # and to pass through tesselation information
 
 # Types that can be converted to a mesh via the functions below
-const Meshable{Dim, T} = Union{Tesselation{Dim, T}, Mesh{Dim, T},
+const Meshable{Dim, T} = Union{Tesselation{Dim, T}, Mesh{Dim, T}, AbstractPolygon{Dim, T},
                                GeometryPrimitive{Dim, T}, AbstractVector{<: AbstractPoint{Dim, T}}}
 
 struct UV{T} end
@@ -108,23 +107,14 @@ function decompose(::Type{Point}, primitive::Meshable{Dim, T}) where {Dim, T}
     return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
 end
 
+function decompose(::Type{Point}, primitive::LineString{Dim, T}) where {Dim, T}
+    return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
+end
+
 function decompose(::Type{T}, primitive) where {T}
     return collect_with_eltype(T, primitive)
 end
 
-function decompose(::Type{P}, pol::Polygon) where {P<:AbstractPoint}
-    if isempty(pol.interiors)
-        return decompose(P, pol.exterior)
-    else
-        arr = copy(decompose(P, pol.exterior))
-        for i in pol.interiors
-            append!(arr, decompose(P, i))
-        end
-        return arr
-    end
-end
-
-decompose(::Type{P}, ls::LineString) where {P<:AbstractPoint} = ls.points.parent.data
 decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)

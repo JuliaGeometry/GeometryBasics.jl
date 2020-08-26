@@ -169,3 +169,66 @@ function decompose(::Type{FaceType}, points::AbstractArray{P}) where {P<:Abstrac
 
     return result
 end
+
+
+function earcut_triangulate(polygon::Vector{Vector{Point{2, Float64}}})
+    lengths = map(x-> UInt32(length(x)), polygon)
+    len = UInt32(length(lengths))
+    array = ccall(
+        (:u32_triangulate_f64, libearcut),
+        Tuple{Ptr{GLTriangleFace}, Cint},
+        (Ptr{Ptr{Float64}}, Ptr{UInt32}, UInt32),
+        polygon, lengths, len
+    )
+    return unsafe_wrap(Vector{GLTriangleFace}, array[1], array[2])
+end
+
+function earcut_triangulate(polygon::Vector{Vector{Point{2, Float32}}})
+    lengths = map(x-> UInt32(length(x)), polygon)
+    len = UInt32(length(lengths))
+    array = ccall(
+        (:u32_triangulate_f32, libearcut),
+        Tuple{Ptr{GLTriangleFace}, Cint},
+        (Ptr{Ptr{Float32}}, Ptr{UInt32}, UInt32),
+        polygon, lengths, len
+    )
+    return unsafe_wrap(Vector{GLTriangleFace}, array[1], array[2])
+end
+
+function earcut_triangulate(polygon::Vector{Vector{Point{2, Int64}}})
+    lengths = map(x-> UInt32(length(x)), polygon)
+    len = UInt32(length(lengths))
+    array = ccall(
+        (:u32_triangulate_i64, libearcut),
+        Tuple{Ptr{GLTriangleFace}, Cint},
+        (Ptr{Ptr{Int64}}, Ptr{UInt32}, UInt32),
+        polygon, lengths, len
+    )
+    return unsafe_wrap(Vector{GLTriangleFace}, array[1], array[2])
+end
+
+function earcut_triangulate(polygon::Vector{Vector{Point{2, Int32}}})
+    lengths = map(x-> UInt32(length(x)), polygon)
+    len = UInt32(length(lengths))
+    array = ccall(
+        (:u32_triangulate_i32, libearcut),
+        Tuple{Ptr{GLTriangleFace}, Cint},
+        (Ptr{Ptr{Int32}}, Ptr{UInt32}, UInt32),
+        polygon, lengths, len
+    )
+    return unsafe_wrap(Vector{GLTriangleFace}, array[1], array[2])
+end
+
+best_earcut_eltype(x) = Float64
+best_earcut_eltype(::Type{Float64}) = Float64
+best_earcut_eltype(::Type{<:AbstractFloat}) = Float32
+best_earcut_eltype(::Type{Int64}) = Int64
+best_earcut_eltype(::Type{Int32}) = Int32
+best_earcut_eltype(::Type{<:Integer}) = Int64
+
+function faces(polygon::Polygon{Dim, T}) where {Dim, T}
+    PT = Point{Dim, best_earcut_eltype(T)}
+    points = [decompose(PT, polygon.exterior)]
+    foreach(x-> push!(points, decompose(PT, x)), polygon.interiors)
+    return earcut_triangulate(points)
+end
