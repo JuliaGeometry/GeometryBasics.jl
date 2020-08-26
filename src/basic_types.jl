@@ -292,7 +292,7 @@ function Polygon(exterior::AbstractVector{P}, interior::AbstractVector{<:Abstrac
     # if we just map over it, it won't infer the element type correctly!
     int = typeof(ext)[]
     foreach(x-> push!(int, LineString(x)), interior)
-    return Polygon(LineString(exterior), int)
+    return Polygon(ext, int)
 end
 
 function coordinates(polygon::Polygon{N, T, PointType}) where {N, T, PointType}
