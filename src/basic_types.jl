@@ -194,8 +194,8 @@ end
 coordinates(x::LineString) = coordinates(x.points)
 
 Base.copy(x::LineString) = LineString(copy(x.points))
-Base.size(x::LineString) = size(coordinates(x))
-Base.getindex(x::LineString, i) = getindex(coordinates(x), i)
+Base.size(x::LineString) = size(getfield(x, :points))
+Base.getindex(x::LineString, i) = getindex(getfield(x, :points), i)
 
 function LineString(points::AbstractVector{LineP{Dim, T, P}}) where {Dim, T, P}
     return LineString{Dim, T, P, typeof(points)}(points)
