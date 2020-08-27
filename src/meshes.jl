@@ -143,7 +143,7 @@ Polygon triangluation!
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
               normaltype=nothing) where {P<:AbstractPoint{2}}
 
-    return mesh(Polygon(polygon); pointtype, facetype, normaltype)
+    return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype, normaltype=normaltype)
 end
 
 function mesh(polygon::AbstractPolygon{Dim, T}; pointtype=Point{Dim, T}, facetype=GLTriangleFace,
