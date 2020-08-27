@@ -2,8 +2,16 @@
 language: julia
 os:
   - linux
+  - osx
+  - windows
 julia:
+  - 1.3
+  - 1.4
   - 1
+  - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
 if: branch = master OR tag IS present OR type = pull_request
 notifications:
   email: false
