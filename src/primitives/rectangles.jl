@@ -578,3 +578,14 @@ function faces(rect::Rect3D)
         (21,22,23,24),
     ]
 end
+
+"""
+    Quad{T}
+
+A rectangle in 3D space.
+"""
+struct Quad{T} <: GeometryPrimitive{3, T}
+    downleft::Vec{3, T}
+    width   ::Vec{3, T}
+    height  ::Vec{3, T}
+end
