@@ -5,9 +5,10 @@
 Intersection of 2 line segmens `a` and `b`.
 Returns intersection_found::Bool, intersection_point
 """
-function intersects(a::Line{2, T1}, b::Line{2, T2}) where {T1, T2}
+function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
     T = promote_type(T1, T2)
-    v1, v2 = a; v3, v4 = b;
+    v1, v2 = a
+    v3, v4 = b
     MT = Mat{2,2,T,4}
     p0 = zero(Point2{T})
 
@@ -36,20 +37,23 @@ function intersects(a::Line{2, T1}, b::Line{2, T2}) where {T1, T2}
         v4 = rotation * v4
     end
 
-    a = det(MT(v1[1] - v2[1], v1[2] - v2[2],
-               v3[1] - v4[1], v3[2] - v4[2]))
+    a = det(MT(v1[1] - v2[1], v1[2] - v2[2], v3[1] - v4[1], v3[2] - v4[2]))
 
     (abs(a) < eps(T)) && return false, p0 # Lines are parallel
 
     d1 = det(MT(v1[1], v1[2], v2[1], v2[2]))
     d2 = det(MT(v3[1], v3[2], v4[1], v4[2]))
-    x = det(MT(d1, v1[1] - v2[1], d2, v3[1] - v4[1])) / a;
-    y = det(MT(d1, v1[2] - v2[2], d2, v3[2] - v4[2])) / a;
+    x = det(MT(d1, v1[1] - v2[1], d2, v3[1] - v4[1])) / a
+    y = det(MT(d1, v1[2] - v2[2], d2, v3[2] - v4[2])) / a
 
-    (x < prevfloat(min(v1[1], v2[1])) || x > nextfloat(max(v1[1], v2[1]))) && return false, p0
-    (y < prevfloat(min(v1[2], v2[2])) || y > nextfloat(max(v1[2], v2[2]))) && return false, p0
-    (x < prevfloat(min(v3[1], v4[1])) || x > nextfloat(max(v3[1], v4[1]))) && return false, p0
-    (y < prevfloat(min(v3[2], v4[2])) || y > nextfloat(max(v3[2], v4[2]))) && return false, p0
+    (x < prevfloat(min(v1[1], v2[1])) || x > nextfloat(max(v1[1], v2[1]))) &&
+        return false, p0
+    (y < prevfloat(min(v1[2], v2[2])) || y > nextfloat(max(v1[2], v2[2]))) &&
+        return false, p0
+    (x < prevfloat(min(v3[1], v4[1])) || x > nextfloat(max(v3[1], v4[1]))) &&
+        return false, p0
+    (y < prevfloat(min(v3[2], v4[2])) || y > nextfloat(max(v3[2], v4[2]))) &&
+        return false, p0
 
     point = Point2{T}(x, y)
     # don't forget to rotate the answer back
@@ -60,7 +64,7 @@ function intersects(a::Line{2, T1}, b::Line{2, T2}) where {T1, T2}
     return true, point
 end
 
-function simple_concat(vec::AbstractVector, range, endpoint::P) where P
+function simple_concat(vec::AbstractVector, range, endpoint::P) where {P}
     result = Vector{P}(undef, length(range) + 1)
     for (i, j) in enumerate(range)
         result[i] = vec[mod1(j, length(vec))]
@@ -71,7 +75,7 @@ end
 
 function consecutive_pairs(arr)
     n = length(arr)
-    zip(view(arr, 1:n-1), view(arr, 2:n))
+    return zip(view(arr, 1:(n - 1)), view(arr, 2:n))
 end
 
 """
@@ -85,11 +89,15 @@ function self_intersections(points::AbstractVector{<:AbstractPoint})
 
     wraparound(i) = mod1(i, length(points) - 1)
 
-    for (i, (a,b)) in enumerate(consecutive_pairs(points))
+    for (i, (a, b)) in enumerate(consecutive_pairs(points))
         for (j, (a2, b2)) in enumerate(consecutive_pairs(points))
-            is1, is2 = wraparound(i+1), wraparound(i-1)
-            if i != j && is1 != j && is2 != j && !(i in intersections) && !(j in intersections)
-                intersected, p = intersects(Line(a,b), Line(a2, b2))
+            is1, is2 = wraparound(i + 1), wraparound(i - 1)
+            if i != j &&
+               is1 != j &&
+               is2 != j &&
+               !(i in intersections) &&
+               !(j in intersections)
+                intersected, p = intersects(Line(a, b), Line(a2, b2))
                 if intersected
                     push!(intersections, i, j)
                     push!(sections, p)
@@ -108,14 +116,14 @@ is handled right now.
 """
 function split_intersections(points::AbstractVector{<:AbstractPoint})
     intersections, sections = self_intersections(points)
-    if isempty(intersections)
+    return if isempty(intersections)
         return [points]
     elseif length(intersections) == 2 && length(sections) == 1
         a, b = intersections
         p = sections[1]
-        a,b = min(a,b), max(a,b)
-        poly1 = simple_concat(points, (a+1):(b-1), p)
-        poly2 = simple_concat(points, (b+1):(length(points)+a), p)
+        a, b = min(a, b), max(a, b)
+        poly1 = simple_concat(points, (a + 1):(b - 1), p)
+        poly2 = simple_concat(points, (b + 1):(length(points) + a), p)
         return [poly1, poly2]
     else
         error("More than 1 intersections can't be handled currently. Found: $intersections, $sections")
