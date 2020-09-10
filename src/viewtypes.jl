@@ -31,31 +31,35 @@ y = reinterpret(Point{2, Int}, TupleView{2, 1}(x))
 ```
 
 """
-struct TupleView{T, N, Skip, A} <: AbstractVector{T}
+struct TupleView{T,N,Skip,A} <: AbstractVector{T}
     data::A
     connect::Bool
 end
 
 coordinates(tw::TupleView) = coordinates(tw.data)
 
-function Base.size(x::TupleView{T, N, M}) where {T, N, M}
+function Base.size(x::TupleView{T,N,M}) where {T,N,M}
     nitems = length(x.data) ÷ (N - (N - M))
     nitems = nitems - max(N - M, 0)
-    (nitems + x.connect,) # plus one item if we connect
+    return (nitems + x.connect,) # plus one item if we connect
 end
 
-function Base.getindex(x::TupleView{T, N, M}, index::Integer) where {T, N, M}
-    return ntuple(i-> x.data[mod1(((index - 1) * M) + i, length(x.data))], N)
+function Base.getindex(x::TupleView{T,N,M}, index::Integer) where {T,N,M}
+    return ntuple(i -> x.data[mod1(((index - 1) * M) + i, length(x.data))], N)
 end
 
-TupleView{N}(x::AbstractVector; connect = false) where N = TupleView{N, N}(x, connect = connect)
-
-function TupleView{N, M}(x::AbstractVector{T}; connect = false) where {T, N, M}
-    TupleView{NTuple{N, T}, N, M, typeof(x)}(x, connect)
+function TupleView{N}(x::AbstractVector; connect=false) where {N}
+    return TupleView{N,N}(x, connect=connect)
 end
 
+function TupleView{N,M}(x::AbstractVector{T}; connect=false) where {T,N,M}
+    return TupleView{NTuple{N,T},N,M,typeof(x)}(x, connect)
+end
 
-@inline connected_line(points::AbstractVector{<: AbstractPoint{N}}, skip = N) where N = connect(points, Line, skip)
+@inline function connected_line(points::AbstractVector{<:AbstractPoint{N}},
+                                skip=N) where {N}
+    return connect(points, Line, skip)
+end
 
 """
     connect(points::AbstractVector{<: AbstractPoint}, P::Type{<: Polytype{N}}, skip::Int = N)
@@ -67,28 +71,32 @@ Example:
 x = connect(Point[(1, 2), (3, 4), (5, 6), (7, 8)], Line, 2)
 x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
 """
-@inline function connect(points::AbstractVector{Point}, P::Type{<: Polytope{N, T} where {N, T}}, skip::Int = length(P)) where Point <: AbstractPoint
-    reinterpret(Polytope(P, Point), TupleView{length(P), skip}(points))
+@inline function connect(points::AbstractVector{Point},
+                         P::Type{<:Polytope{N,T} where {N,T}},
+                         skip::Int=length(P)) where {Point<:AbstractPoint}
+    return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<: Point{N}}, skip::Int = N) where {T <: Real, N}
-    reinterpret(Point{N, T}, TupleView{N, skip}(points))
+@inline function connect(points::AbstractVector{T}, P::Type{<:Point{N}},
+                         skip::Int=N) where {T<:Real,N}
+    return reinterpret(Point{N,T}, TupleView{N,skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<: AbstractFace{N}}, skip::Int = N) where {T <: Real, N}
-    reinterpret(Face(P, T), TupleView{N, skip}(points))
+@inline function connect(points::AbstractVector{T}, P::Type{<:AbstractFace{N}},
+                         skip::Int=N) where {T<:Real,N}
+    return reinterpret(Face(P, T), TupleView{N,skip}(points))
 end
 
-
-@inline function connect(points::AbstractMatrix{T}, P::Type{<: AbstractPoint{N}}) where {T <: Real, N}
-    if size(points, 1) === N
-        return reinterpret(Point{N, T}, points)
+@inline function connect(points::AbstractMatrix{T},
+                         P::Type{<:AbstractPoint{N}}) where {T<:Real,N}
+    return if size(points, 1) === N
+        return reinterpret(Point{N,T}, points)
     elseif size(points, 2) === N
         seglen = size(points, 1)
         columns = ntuple(N) do i
-            view(points, ((i-1) * seglen + 1):(i * seglen))
+            return view(points, ((i - 1) * seglen + 1):(i * seglen))
         end
-        return StructArray{Point{N, T}}((StructArray{NTuple{N, T}}(columns),))
+        return StructArray{Point{N,T}}((StructArray{NTuple{N,T}}(columns),))
     else
         error("Dim 1 or 2 must be equal to the point dimension!")
     end
@@ -112,20 +120,15 @@ linestring = FaceView(points, LineFace[...])
 Polygon(linestring)
 ```
 """
-struct FaceView{
-        Element,
-        Point <: AbstractPoint,
-        Face <: AbstractFace,
-        P <: AbstractVector{Point},
-        F <: AbstractVector{Face}
-    } <: AbstractVector{Element}
+struct FaceView{Element,Point<:AbstractPoint,Face<:AbstractFace,P<:AbstractVector{Point},
+                F<:AbstractVector{Face}} <: AbstractVector{Element}
 
     elements::P
     faces::F
 end
 
-const SimpleFaceView{Dim, T, NFace, IndexType, PointType<:AbstractPoint{Dim, T}, FaceType<:AbstractFace{NFace, IndexType}} = FaceView{
-    Ngon{Dim, T, NFace, PointType}, PointType, FaceType, Vector{PointType}, Vector{FaceType}}
+const SimpleFaceView{Dim,T,NFace,IndexType,PointType<:AbstractPoint{Dim,T},
+        FaceType<:AbstractFace{NFace,IndexType}} = FaceView{Ngon{Dim,T,NFace,PointType},PointType,FaceType,Vector{PointType},Vector{FaceType}}
 
 function Base.getproperty(faceview::FaceView, name::Symbol)
     return getproperty(getfield(faceview, :elements), name)
@@ -139,19 +142,20 @@ Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
 
 Base.size(faceview::FaceView) = size(getfield(faceview, :faces))
 
-function Base.show(io::IO, ::Type{<: FaceView{Element}}) where Element
-    if @isdefined Element
+function Base.show(io::IO, ::Type{<:FaceView{Element}}) where {Element}
+    return if @isdefined Element
         print(io, "FaceView{", Element, "}")
     else
         print(io, "FaceView{T}")
     end
 end
 
-@propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where Element
-    return Element(map(idx-> coordinates(x)[idx], faces(x)[i]))
+@propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where {Element}
+    return Element(map(idx -> coordinates(x)[idx], faces(x)[i]))
 end
 
-@propagate_inbounds function Base.setindex!(x::FaceView{Element}, element::Element, i) where Element
+@propagate_inbounds function Base.setindex!(x::FaceView{Element}, element::Element,
+                                            i) where {Element}
     face = faces(x)[i]
     for (i, f) in enumerate(face) # TODO unroll!?
         coordinates(x)[face[i]] = element[i]
@@ -159,8 +163,9 @@ end
     return element
 end
 
-function connect(points::AbstractVector{P}, faces::AbstractVector{F}) where {P <: AbstractPoint, F <: AbstractFace}
-    FaceView{Polytope(P, F), P, F, typeof(points), typeof(faces)}(points, faces)
+function connect(points::AbstractVector{P},
+                 faces::AbstractVector{F}) where {P<:AbstractPoint,F<:AbstractFace}
+    return FaceView{Polytope(P, F),P,F,typeof(points),typeof(faces)}(points, faces)
 end
 
 coordinates(mesh::FaceView) = getfield(mesh, :elements)

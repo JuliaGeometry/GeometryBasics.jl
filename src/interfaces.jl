@@ -53,13 +53,14 @@ For grid based tesselation, you can also use a tuple:
 rect = Rect2D(0, 0, 1, 1)
 Tesselation(rect, (5, 5))
 """
-struct Tesselation{Dim, T, Primitive, NGrid}
+struct Tesselation{Dim,T,Primitive,NGrid}
     primitive::Primitive
-    nvertices::NTuple{NGrid, Int}
+    nvertices::NTuple{NGrid,Int}
 end
 
-function Tesselation(primitive::GeometryPrimitive{Dim, T}, nvertices::NTuple{N, <:Integer}) where {Dim, T, N}
-    return Tesselation{Dim, T, typeof(primitive), N}(primitive, Int.(nvertices))
+function Tesselation(primitive::GeometryPrimitive{Dim,T},
+                     nvertices::NTuple{N,<:Integer}) where {Dim,T,N}
+    return Tesselation{Dim,T,typeof(primitive),N}(primitive, Int.(nvertices))
 end
 
 Tesselation(primitive, nvertices::Integer) = Tesselation(primitive, (nvertices,))
@@ -68,29 +69,34 @@ Tesselation(primitive, nvertices::Integer) = Tesselation(primitive, (nvertices,)
 # to directly work on Tesselation - but this way it's backward compatible and less
 # refactor work :D
 nvertices(tesselation::Tesselation) = tesselation.nvertices
-nvertices(tesselation::Tesselation{T, N, P, 1}) where {T, N, P} = tesselation.nvertices[1]
+nvertices(tesselation::Tesselation{T,N,P,1}) where {T,N,P} = tesselation.nvertices[1]
 
-coordinates(tesselation::Tesselation) = coordinates(tesselation.primitive, nvertices(tesselation))
+function coordinates(tesselation::Tesselation)
+    return coordinates(tesselation.primitive, nvertices(tesselation))
+end
 faces(tesselation::Tesselation) = faces(tesselation.primitive, nvertices(tesselation))
 normals(tesselation::Tesselation) = normals(tesselation.primitive, nvertices(tesselation))
-texturecoordinates(tesselation::Tesselation) = texturecoordinates(tesselation.primitive, nvertices(tesselation))
+function texturecoordinates(tesselation::Tesselation)
+    return texturecoordinates(tesselation.primitive, nvertices(tesselation))
+end
 
 ## Decompose methods
 # Dispatch type to make `decompose(UV{Vec2f0}, primitive)` work
 # and to pass through tesselation information
 
 # Types that can be converted to a mesh via the functions below
-const Meshable{Dim, T} = Union{Tesselation{Dim, T}, Mesh{Dim, T}, AbstractPolygon{Dim, T},
-                               GeometryPrimitive{Dim, T}, AbstractVector{<: AbstractPoint{Dim, T}}}
+const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim,T},
+                              GeometryPrimitive{Dim,T},
+                              AbstractVector{<:AbstractPoint{Dim,T}}}
 
 struct UV{T} end
-UV(::Type{T}) where T = UV{T}()
+UV(::Type{T}) where {T} = UV{T}()
 UV() = UV(Vec2f0)
 struct UVW{T} end
-UVW(::Type{T}) where T = UVW{T}()
+UVW(::Type{T}) where {T} = UVW{T}()
 UVW() = UVW(Vec3f0)
 struct Normal{T} end
-Normal(::Type{T}) where T = Normal{T}()
+Normal(::Type{T}) where {T} = Normal{T}()
 Normal() = Normal(Vec3f0)
 
 function decompose(::Type{F}, primitive) where {F<:AbstractFace}
@@ -103,12 +109,12 @@ function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
     return collect_with_eltype(P, metafree(coordinates(primitive)))
 end
 
-function decompose(::Type{Point}, primitive::Meshable{Dim, T}) where {Dim, T}
-    return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
+function decompose(::Type{Point}, primitive::Meshable{Dim,T}) where {Dim,T}
+    return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
 end
 
-function decompose(::Type{Point}, primitive::LineString{Dim, T}) where {Dim, T}
-    return collect_with_eltype(Point{Dim, T}, metafree(coordinates(primitive)))
+function decompose(::Type{Point}, primitive::LineString{Dim,T}) where {Dim,T}
+    return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
 end
 
 function decompose(::Type{T}, primitive) where {T}
@@ -119,7 +125,7 @@ decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)
 
-function decompose(NT::Normal{T}, primitive) where T
+function decompose(NT::Normal{T}, primitive) where {T}
     n = normals(primitive)
     if n === nothing
         return collect_with_eltype(T, normals(coordinates(primitive), faces(primitive)))
@@ -127,7 +133,7 @@ function decompose(NT::Normal{T}, primitive) where T
     return collect_with_eltype(T, n)
 end
 
-function decompose(UVT::Union{UV{T}, UVW{T}}, primitive) where T
+function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
     # This is the fallback for texture coordinates if a primitive doesn't overload them
     # We just take the positions and normalize them
     uv = texturecoordinates(primitive)
@@ -142,9 +148,10 @@ function decompose(UVT::Union{UV{T}, UVW{T}}, primitive) where T
     return collect_with_eltype(T, uv)
 end
 
-function decompose(UVT::Union{UV{T}, UVW{T}}, positions::AbstractVector{<:VecTypes}) where T
+function decompose(UVT::Union{UV{T},UVW{T}},
+                   positions::AbstractVector{<:VecTypes}) where {T}
     N = length(T)
-    positions_nd = decompose(Point{N, eltype(T)}, positions)
+    positions_nd = decompose(Point{N,eltype(T)}, positions)
     bb = Rect(positions_nd) # Make sure we get this as points
     return map(positions_nd) do p
         return (p .- minimum(bb)) ./ widths(bb)
@@ -153,4 +160,6 @@ end
 
 # Stay backward compatible:
 
-decompose(::Type{T}, primitive::Meshable, nvertices) where T = decompose(T, Tesselation(primitive, nvertices))
+function decompose(::Type{T}, primitive::Meshable, nvertices) where {T}
+    return decompose(T, Tesselation(primitive, nvertices))
+end

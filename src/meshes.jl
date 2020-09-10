@@ -1,4 +1,4 @@
-const FaceMesh{Dim, T, Element} = Mesh{Dim, T, Element, <: FaceView{Element}}
+const FaceMesh{Dim,T,Element} = Mesh{Dim,T,Element,<:FaceView{Element}}
 
 coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
 faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
@@ -14,27 +14,29 @@ function normals(mesh::AbstractMesh)
     return nothing
 end
 
-const GLTriangleElement = Triangle{3, Float32}
+const GLTriangleElement = Triangle{3,Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
-const PointWithUV{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:uv,), Tuple{Vec{2, T}}}
-const PointWithNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals,), Tuple{Vec{3, T}}}
-const PointWithUVNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :uv), Tuple{Vec{3, T}, Vec{2, T}}}
-const PointWithUVWNormal{Dim, T} = PointMeta{Dim, T, Point{Dim, T}, (:normals, :uvw), Tuple{Vec{3, T}, Vec{3, T}}}
+const PointWithUV{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:uv,),Tuple{Vec{2,T}}}
+const PointWithNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals,),Tuple{Vec{3,T}}}
+const PointWithUVNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uv),
+                                           Tuple{Vec{3,T},Vec{2,T}}}
+const PointWithUVWNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uvw),
+                                            Tuple{Vec{3,T},Vec{3,T}}}
 
 """
     TriangleMesh{Dim, T, PointType}
 
 Abstract Mesh with triangle elements of eltype `T`.
 """
-const TriangleMesh{Dim, T, PointType} = AbstractMesh{TriangleP{Dim, T, PointType}}
+const TriangleMesh{Dim,T,PointType} = AbstractMesh{TriangleP{Dim,T,PointType}}
 
 """
     PlainMesh{Dim, T}
 
 Triangle mesh with no meta information (just points + triangle faces)
 """
-const PlainMesh{Dim, T} = TriangleMesh{Dim, T, Point{Dim, T}}
-const GLPlainMesh{Dim} = PlainMesh{Dim, Float32}
+const PlainMesh{Dim,T} = TriangleMesh{Dim,T,Point{Dim,T}}
+const GLPlainMesh{Dim} = PlainMesh{Dim,Float32}
 const GLPlainMesh2D = GLPlainMesh{2}
 const GLPlainMesh3D = GLPlainMesh{3}
 
@@ -44,8 +46,8 @@ const GLPlainMesh3D = GLPlainMesh{3}
 PlainMesh with texture coordinates meta at each point.
 `uvmesh.uv isa AbstractVector{Vec2f0}`
 """
-const UVMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUV{Dim, T}}
-const GLUVMesh{Dim} = UVMesh{Dim, Float32}
+const UVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUV{Dim,T}}
+const GLUVMesh{Dim} = UVMesh{Dim,Float32}
 const GLUVMesh2D = UVMesh{2}
 const GLUVMesh3D = UVMesh{3}
 
@@ -55,8 +57,8 @@ const GLUVMesh3D = UVMesh{3}
 PlainMesh with normals meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 """
-const NormalMesh{Dim, T} = TriangleMesh{Dim, T, PointWithNormal{Dim, T}}
-const GLNormalMesh{Dim} = NormalMesh{Dim, Float32}
+const NormalMesh{Dim,T} = TriangleMesh{Dim,T,PointWithNormal{Dim,T}}
+const GLNormalMesh{Dim} = NormalMesh{Dim,Float32}
 const GLNormalMesh2D = GLNormalMesh{2}
 const GLNormalMesh3D = GLNormalMesh{3}
 
@@ -67,8 +69,8 @@ PlainMesh with normals and uv meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 `normalmesh.uv isa AbstractVector{Vec2f0}`
 """
-const NormalUVMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUVNormal{Dim, T}}
-const GLNormalUVMesh{Dim} = NormalUVMesh{Dim, Float32}
+const NormalUVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVNormal{Dim,T}}
+const GLNormalUVMesh{Dim} = NormalUVMesh{Dim,Float32}
 const GLNormalUVMesh2D = GLNormalUVMesh{2}
 const GLNormalUVMesh3D = GLNormalUVMesh{3}
 
@@ -79,8 +81,8 @@ PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
 `normalmesh.normals isa AbstractVector{Vec3f0}`
 `normalmesh.uvw isa AbstractVector{Vec3f0}`
 """
-const NormalUVWMesh{Dim, T} = TriangleMesh{Dim, T, PointWithUVWNormal{Dim, T}}
-const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim, Float32}
+const NormalUVWMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVWNormal{Dim,T}}
+const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim,Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
@@ -96,9 +98,8 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable;
-              pointtype=Point, facetype=GLTriangleFace,
-              uv=nothing, normaltype=nothing)
+function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
+              normaltype=nothing)
 
     positions = decompose(pointtype, primitive)
     faces = decompose(facetype, primitive)
@@ -143,11 +144,12 @@ Polygon triangluation!
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
               normaltype=nothing) where {P<:AbstractPoint{2}}
 
-    return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype, normaltype=normaltype)
+    return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype,
+                normaltype=normaltype)
 end
 
-function mesh(polygon::AbstractPolygon{Dim, T}; pointtype=Point{Dim, T}, facetype=GLTriangleFace,
-              normaltype=nothing) where {Dim, T}
+function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
+              facetype=GLTriangleFace, normaltype=nothing) where {Dim,T}
 
     faces = decompose(facetype, polygon)
     positions = decompose(pointtype, polygon)
@@ -164,17 +166,15 @@ function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N, Float32}, facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
-
-function uv_mesh(primitive::Meshable{N, T}) where {N, T}
-    return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0,
-                facetype=GLTriangleFace)
+function uv_mesh(primitive::Meshable{N,T}) where {N,T}
+    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f0, facetype=GLTriangleFace)
 end
 
 function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N, Float32}, uv=Vec2f0, normaltype=Vec3f0,
+    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f0, normaltype=Vec3f0,
                 facetype=GLTriangleFace)
 end
 
@@ -190,7 +190,7 @@ function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N, Float32}, normaltype=Vec3f0,
+    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f0,
                 facetype=GLTriangleFace)
 end
 
@@ -203,7 +203,7 @@ surface is right.
 function volume(triangle::Triangle) where {VT,FT}
     v1, v2, v3 = triangle
     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
-    return sig * abs(v1 ⋅ ( v2 × v3 )) / 6
+    return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end
 
 """
@@ -212,12 +212,12 @@ end
 Calculate the signed volume of all tetrahedra. Be sure the orientation of your
 surface is right.
 """
-function volume(mesh::Mesh) where {VT, FT}
+function volume(mesh::Mesh) where {VT,FT}
     return sum(volume, mesh)
 end
 
-function Base.merge(meshes::AbstractVector{<: Mesh})
-    if isempty(meshes)
+function Base.merge(meshes::AbstractVector{<:Mesh})
+    return if isempty(meshes)
         error("No meshes to merge")
     elseif length(meshes) == 1
         return meshes[1]
@@ -226,7 +226,7 @@ function Base.merge(meshes::AbstractVector{<: Mesh})
         ps = copy(coordinates(m1))
         fs = copy(faces(m1))
         for mesh in Iterators.drop(meshes, 1)
-            append!(fs, map(f-> f .+ length(ps), faces(mesh)))
+            append!(fs, map(f -> f .+ length(ps), faces(mesh)))
             append!(ps, coordinates(mesh))
         end
         return Mesh(ps, fs)
@@ -243,7 +243,7 @@ function pointmeta(mesh::Mesh; meta_data...)
     attr = attributes(points)
     delete!(attr, :position) # position == metafree(points)
     # delete overlapping attributes so we can replace with `meta_data`
-    foreach(k-> delete!(attr, k), keys(meta_data))
+    foreach(k -> delete!(attr, k), keys(meta_data))
     return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
 end
 
@@ -279,5 +279,6 @@ function facemeta(mesh::Mesh; meta_data...)
 end
 
 function attributes(hasmeta::Mesh)
-    return Dict{Symbol, Any}((name => getproperty(hasmeta, name) for name in propertynames(hasmeta)))
+    return Dict{Symbol,Any}((name => getproperty(hasmeta, name)
+                             for name in propertynames(hasmeta)))
 end
