@@ -4,7 +4,7 @@ struct Pyramid{T} <: GeometryPrimitive{3,T}
     width::T
 end
 
-function coordinates(p::Pyramid{T}, nvertices=nothing) where {T}
+function coordinates(p::Pyramid{T}) where {T}
     leftup = Point{3,T}(-p.width, p.width, 0) / 2
     leftdown = Point(-p.width, -p.width, 0) / 2
     tip = Point{3,T}(p.middle + Point{3,T}(0, 0, p.length))
@@ -16,6 +16,6 @@ function coordinates(p::Pyramid{T}, nvertices=nothing) where {T}
                       ld, rd]
 end
 
-function faces(r::Pyramid, nvertices=nothing) where {FT}
+function faces(::Pyramid)
     return (TriangleFace(triangle) for triangle in TupleView{3}(1:18))
 end

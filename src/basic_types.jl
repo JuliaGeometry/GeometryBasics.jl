@@ -209,7 +209,8 @@ function LineString(points::AbstractVector{<:AbstractPoint}, skip=1)
     return LineString(connect(points, LineP, skip))
 end
 
-function LineString(points::AbstractVector{<:Pair{P,P}}) where {P<:AbstractPoint{N,T}} where {N, T}
+function LineString(points::AbstractVector{<:Pair{P,P}}) where {P<:AbstractPoint{N,T}} where {N,
+                                                                                              T}
     return LineString(reinterpret(LineP{N,T,P}, points))
 end
 
@@ -261,8 +262,9 @@ function Base.:(==)(a::Polygon, b::Polygon)
 end
 
 function Polygon(exterior::E,
-                 interiors::AbstractVector{E}) where
-                    {E<:AbstractVector{LineP{Dim,T,P}}} where {Dim, T, P}
+                 interiors::AbstractVector{E}) where {E<:AbstractVector{LineP{Dim,T,P}}} where {Dim,
+                                                                                                T,
+                                                                                                P}
     return Polygon{Dim,T,P,typeof(exterior),typeof(interiors)}(exterior, interiors)
 end
 
@@ -279,12 +281,15 @@ function Polygon(exterior::AbstractVector{P}, faces::AbstractVector{<:Integer},
 end
 
 function Polygon(exterior::AbstractVector{P},
-                 faces::AbstractVector{<:LineFace}) where {P<:AbstractPoint{Dim,T}} where {Dim, T}
+                 faces::AbstractVector{<:LineFace}) where {P<:AbstractPoint{Dim,T}} where {Dim,
+                                                                                           T}
     return Polygon(LineString(exterior, faces))
 end
 
 function Polygon(exterior::AbstractVector{P},
-                 interior::AbstractVector{<:AbstractVector{P}}) where {P<:AbstractPoint{Dim, T}} where {Dim, T}
+                 interior::AbstractVector{<:AbstractVector{P}}) where {P<:AbstractPoint{Dim,
+                                                                                        T}} where {Dim,
+                                                                                                   T}
     ext = LineString(exterior)
     # We need to take extra care for empty interiors, since
     # if we just map over it, it won't infer the element type correctly!
@@ -295,7 +300,7 @@ end
 
 function coordinates(polygon::Polygon{N,T,PointType}) where {N,T,PointType}
     exterior = coordinates(polygon.exterior)
-    return if isempty(polygon.interiors)
+    if isempty(polygon.interiors)
         return exterior
     else
         result = PointType[]
@@ -310,7 +315,6 @@ end
 """
 struct MultiPolygon{Dim,T<:Real,Element<:AbstractPolygon{Dim,T},
                     A<:AbstractVector{Element}} <: AbstractVector{Element}
-
     polygons::A
 end
 
@@ -376,7 +380,7 @@ end
 Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
 
 function Base.getproperty(mesh::Mesh, name::Symbol)
-    return if name === :position
+    if name === :position
         # a mesh always has position defined by coordinates...
         return metafree(coordinates(mesh))
     else
@@ -386,7 +390,7 @@ end
 
 function Base.propertynames(mesh::Mesh)
     names = propertynames(getfield(mesh, :simplices))
-    return if :position in names
+    if :position in names
         return names
     else
         # a mesh always has positions!

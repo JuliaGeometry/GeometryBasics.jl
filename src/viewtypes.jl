@@ -73,22 +73,22 @@ x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
 """
 @inline function connect(points::AbstractVector{Point},
                          P::Type{<:Polytope{N,T} where {N,T}},
-                         skip::Int=length(P)) where {Point<:AbstractPoint}
+                         skip::Int=length(P)) where {Point <: AbstractPoint}
     return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
 @inline function connect(points::AbstractVector{T}, P::Type{<:Point{N}},
-                         skip::Int=N) where {T<:Real,N}
+                         skip::Int=N) where {T <: Real,N}
     return reinterpret(Point{N,T}, TupleView{N,skip}(points))
 end
 
 @inline function connect(points::AbstractVector{T}, P::Type{<:AbstractFace{N}},
-                         skip::Int=N) where {T<:Real,N}
+                         skip::Int=N) where {T <: Real,N}
     return reinterpret(Face(P, T), TupleView{N,skip}(points))
 end
 
 @inline function connect(points::AbstractMatrix{T},
-                         P::Type{<:AbstractPoint{N}}) where {T<:Real,N}
+                         P::Type{<:AbstractPoint{N}}) where {T <: Real,N}
     return if size(points, 1) === N
         return reinterpret(Point{N,T}, points)
     elseif size(points, 2) === N
@@ -120,15 +120,13 @@ linestring = FaceView(points, LineFace[...])
 Polygon(linestring)
 ```
 """
-struct FaceView{Element,Point<:AbstractPoint,Face<:AbstractFace,P<:AbstractVector{Point},
-                F<:AbstractVector{Face}} <: AbstractVector{Element}
+struct FaceView{Element,Point <: AbstractPoint,Face <: AbstractFace,P <: AbstractVector{Point},F <: AbstractVector{Face}} <: AbstractVector{Element}
 
     elements::P
     faces::F
 end
 
-const SimpleFaceView{Dim,T,NFace,IndexType,PointType<:AbstractPoint{Dim,T},
-        FaceType<:AbstractFace{NFace,IndexType}} = FaceView{Ngon{Dim,T,NFace,PointType},PointType,FaceType,Vector{PointType},Vector{FaceType}}
+const SimpleFaceView{Dim,T,NFace,IndexType,PointType <: AbstractPoint{Dim,T},FaceType <: AbstractFace{NFace,IndexType}} = FaceView{Ngon{Dim,T,NFace,PointType},PointType,FaceType,Vector{PointType},Vector{FaceType}}
 
 function Base.getproperty(faceview::FaceView, name::Symbol)
     return getproperty(getfield(faceview, :elements), name)
@@ -143,11 +141,12 @@ Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
 Base.size(faceview::FaceView) = size(getfield(faceview, :faces))
 
 function Base.show(io::IO, ::Type{<:FaceView{Element}}) where {Element}
-    return if @isdefined Element
+    if @isdefined Element
         print(io, "FaceView{", Element, "}")
     else
         print(io, "FaceView{T}")
     end
+    return
 end
 
 @propagate_inbounds function Base.getindex(x::FaceView{Element}, i) where {Element}
@@ -164,7 +163,7 @@ end
 end
 
 function connect(points::AbstractVector{P},
-                 faces::AbstractVector{F}) where {P<:AbstractPoint,F<:AbstractFace}
+                 faces::AbstractVector{F}) where {P <: AbstractPoint,F <: AbstractFace}
     return FaceView{Polytope(P, F),P,F,typeof(points),typeof(faces)}(points, faces)
 end
 
