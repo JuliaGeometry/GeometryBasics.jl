@@ -550,14 +550,3 @@ function faces(rect::Rect3D)
     return QuadFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (13, 14, 15, 16),
                          (17, 18, 19, 20), (21, 22, 23, 24),]
 end
-
-"""
-    Quad{T}
-
-A rectangle in 3D space.
-"""
-struct Quad{T} <: GeometryPrimitive{3,T}
-    downleft::Vec{3,T}
-    width::Vec{3,T}
-    height::Vec{3,T}
-end
