@@ -123,7 +123,7 @@ const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf0{N} = Vec{N,Float32}
 const Pointf0{N} = Point{N,Float32}
-Base.isnan(p::StaticVector) = any(x -> isnan(x), p)
+Base.isnan(p::Union{AbstractPoint, Vec}) = any(x -> isnan(x), p)
 
 #Create constes like Mat4f0, Point2, Point2f0
 for i in 1:4
