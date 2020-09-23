@@ -20,7 +20,7 @@ raw(x::Integer) = x
 value(x::OffsetInteger{O,T}) where {O,T} = raw(x) - O
 value(x::Integer) = x
 
-function show(io::IO, oi::OffsetInteger{O,T}) where {O,T}
+function show(io::IO, oi::OffsetInteger)
     return print(io, "|$(raw(oi)) (indexes as $(value(oi))|")
 end
 
@@ -29,23 +29,27 @@ Base.eltype(oi::OffsetInteger) = eltype(typeof(oi))
 
 # constructors and conversion
 function OffsetInteger{O1,T1}(x::OffsetInteger{O2,T2}) where {O1,O2,T1<:Integer,T2<:Integer}
-    return OffsetInteger{O1,T1}(T2(x))
+    return OffsetInteger{O1,T1}(convert(T2, x))
 end
 
 OffsetInteger{O}(x::Integer) where {O} = OffsetInteger{O,eltype(x)}(x)
 OffsetInteger{O}(x::OffsetInteger) where {O} = OffsetInteger{O,eltype(x)}(x)
 # This constructor has a massive method invalidation as a consequence,
 # and doesn't seem to be needed, so let's remove it!
-(::Type{IT})(x::OffsetInteger) where {IT<:Integer} = IT(value(x))
 
-Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
-Base.promote_rule(::Type{T1}, ::Type{OffsetInteger{O,T2}}) where {T1<:Integer,O,T2} = T1
+Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:Integer} = IT(value(x))
+
+Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
+
 function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
-                           ::Type{OffsetInteger{O2,T2}}) where {O1,O2,T1,T2}
+                           ::Type{OffsetInteger{O2,T2}}) where {O1,O2,T1<:Integer,
+                                                                T2<:Integer}
     return OffsetInteger{pure_max(O1, O2),promote_type(T1, T2)}
 end
 
-#Need to convert to Int here because of: https://github.com/JuliaLang/julia/issues/35038
+Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
+
+# Need to convert to Int here because of: https://github.com/JuliaLang/julia/issues/35038
 Base.to_index(I::OffsetInteger) = convert(Int, raw(OneIndex(I)))
 Base.to_index(I::OffsetInteger{0}) = convert(Int, raw(I))
 
