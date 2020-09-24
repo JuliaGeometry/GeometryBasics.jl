@@ -465,7 +465,7 @@ end
     r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
-    @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
+    @test boundbox(Point.(uv)) == Rect(0, 0, 1, 1)
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     m = GeometryBasics.mesh(points)

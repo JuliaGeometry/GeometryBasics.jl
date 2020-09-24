@@ -22,7 +22,7 @@ include("geometry_primitives.jl")
 include("meshes.jl")
 include("triangulation.jl")
 include("lines.jl")
-include("boundingboxes.jl")
+include("boundbox.jl")
 
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
@@ -67,6 +67,7 @@ export centered, direction, area, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
+export boundbox
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

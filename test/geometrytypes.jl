@@ -86,7 +86,7 @@ end
         @test m isa GLNormalMesh
 
         muv = uv_mesh(s)
-        @test Rect(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
+        @test boundbox(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
     end
 end
 
