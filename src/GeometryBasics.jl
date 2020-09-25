@@ -22,7 +22,7 @@ include("geometry_primitives.jl")
 include("meshes.jl")
 include("triangulation.jl")
 include("lines.jl")
-include("boundboxes.jl")
+include("boundingboxes.jl")
 
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
