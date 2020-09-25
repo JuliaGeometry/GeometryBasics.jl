@@ -1,46 +1,35 @@
-function Rect(geometry::AbstractArray{<:Point{N,T}}) where {N,T}
-    return Rect{N,T}(geometry)
-end
+"""
+    boundbox(geometry)
 
+Axis-aligned bounding box of the `geometry`.
 """
-Construct a HyperRectangle enclosing all points.
-"""
-function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:AbstractPoint}
-    N2, T2 = length(PT), eltype(PT)
-    @assert N1 >= N2
-    vmin = Point{N2,T2}(typemax(T2))
-    vmax = Point{N2,T2}(typemin(T2))
+boundbox(geom) = boundbox(coordinates(geom))
+
+# fallback implementation treats geometry as
+# a set of points (i.e. coordinates)
+function boundbox(geometry::AbstractArray{<:AbstractPoint{N,T}}) where {N,T}
+    vmin = Point{N,T}(typemax(T))
+    vmax = Point{N,T}(typemin(T))
     for p in geometry
         vmin, vmax = minmax(p, vmin, vmax)
     end
-    o = vmin
-    w = vmax - vmin
-    return if N1 > N2
-        z = zero(Vec{N1 - N2,T1})
-        Rect{N1,T1}(vcat(o, z), vcat(w, z))
-    else
-        Rect{N1,T1}(o, w)
-    end
+    Rect{N,T}(vmin, vmax - vmin)
 end
 
-function Rect(primitive::GeometryPrimitive{N,T}) where {N,T}
-    return Rect{N,T}(primitive)
+# --------------
+# SPECIAL CASES
+# --------------
+
+boundbox(a::Rect) = a
+
+function boundbox(a::Pyramid{T}) where {T}
+    w = a.width / 2
+    h = a.length
+    m = a.middle
+    Rect{3,T}(m - Point{3,T}(w, w, 0), m + Point{3,T}(w, w, h))
 end
 
-function Rect{T}(primitive::GeometryPrimitive{N,T}) where {N,T}
-    return Rect{N,T}(primitive)
-end
-
-function Rect{T}(a::Pyramid) where {T}
-    w, h = a.width / T(2), a.length
-    m = Vec{3,T}(a.middle)
-    return Rect{T}(m .- Vec{3,T}(w, w, 0), m .+ Vec{3,T}(w, w, h))
-end
-
-function Rect{T}(a::Sphere) where {T}
+function boundbox(a::Sphere{T}) where {T}
     mini, maxi = extrema(a)
-    return Rect{T}(mini, maxi .- mini)
+    Rect{3,T}(mini, maxi .- mini)
 end
-
-Rect{T}(a) where {T} = Rect{T}(coordinates(a))
-Rect{N,T}(a) where {N,T} = Rect{N,T}(coordinates(a))
