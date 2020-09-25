@@ -24,8 +24,8 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
+export AbstractPoint, Point
 export AbstractGeometry, GeometryPrimitive
-export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
 export LineString, AbstractPolygon, Polygon, MultiPoint, MultiLineString, MultiPolygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
@@ -68,6 +68,9 @@ export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
 export boundbox
+
+# helper types
+export Vec, Mat
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

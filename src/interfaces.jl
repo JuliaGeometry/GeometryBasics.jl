@@ -149,7 +149,7 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
 end
 
 function decompose(UVT::Union{UV{T},UVW{T}},
-                   positions::AbstractVector{<:VecTypes}) where {T}
+                   positions::AbstractVector{<:Vec}) where {T}
     N = length(T)
     positions_nd = decompose(Point{N,eltype(T)}, positions)
     bb = boundbox(positions_nd) # Make sure we get this as points
