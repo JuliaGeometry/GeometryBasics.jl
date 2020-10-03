@@ -149,11 +149,10 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
 end
 
 function decompose(UVT::Union{UV{T},UVW{T}},
-                   positions::AbstractVector{<:Vec}) where {T}
+                   positions::AbstractVector{<:Point}) where {T}
     N = length(T)
-    positions_nd = decompose(Point{N,eltype(T)}, positions)
-    bb = boundbox(positions_nd) # Make sure we get this as points
-    return map(positions_nd) do p
+    bb = boundbox(positions) # Make sure we get this as points
+    return map(positions) do p
         return (p .- minimum(bb)) ./ widths(bb)
     end
 end

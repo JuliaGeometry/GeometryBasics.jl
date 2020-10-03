@@ -85,8 +85,8 @@ end
         m = normal_mesh(s)# just test that it works without explicit resolution parameter
         @test m isa GLNormalMesh
 
-        # muv = uv_mesh(s)
-        # @test boundbox(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
+        muv = uv_mesh(s)
+        @test boundbox(Point.(texturecoordinates(muv))) == Rect(0.0f0, 0.0f0, 0.0f0, 1.0f0, 1.0f0, 1.0f0)
     end
 end
 
