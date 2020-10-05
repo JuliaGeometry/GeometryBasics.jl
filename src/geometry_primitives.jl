@@ -112,7 +112,7 @@ end
 
 function normals(vertices::AbstractVector{<:AbstractPoint{3,T}}, faces::AbstractVector{F},
                  ::Type{N}) where {T,F<:NgonFace,N}
-    normals_result = zeros(N, length(vertices)) # initilize with same type as verts but with 0
+    normals_result = zeros(N, length(vertices))
     for face in faces
         v = metafree.(vertices[face])
         # we can get away with two edges since faces are planar.
