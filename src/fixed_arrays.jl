@@ -1,5 +1,5 @@
 
-function unit(::Type{T}, i::Integer) where {T<:StaticVector}
+function unit(::Type{T}, i::Integer) where {T <: StaticVector}
     tup = ntuple(Val(length(T))) do j
         return ifelse(i == j, 1, 0)
     end
@@ -38,21 +38,21 @@ macro fixed_vector(name, parent)
 
         function $(name){S,T1}(x::AbstractVector{T2}) where {S,T1,T2}
             @assert S <= length(x)
-            return $(name){S,T1}(ntuple(i -> T1(x[i]), Val(S)))
+            return $(name){S,T1}(ntuple(i -> convert(T1, x[i]), Val(S)))
         end
 
         function $(name){S,T}(x) where {S,T}
-            return $(name){S,T}(ntuple(i -> T(x), Val(S)))
+            return $(name){S,T}(ntuple(i -> convert(T, x), Val(S)))
         end
 
         $(name){S}(x::T) where {S,T} = $(name){S,T}(ntuple(i -> x, Val(S)))
         $(name){1,T}(x::T) where {T} = $(name){1,T}((x,))
         $(name)(x::NTuple{S}) where {S} = $(name){S}(x)
-        function $(name)(x::T) where {S,T<:Tuple{Vararg{Any,S}}}
+        function $(name)(x::T) where {S,T <: Tuple{Vararg{Any,S}}}
             return $(name){S,StaticArrays.promote_tuple_eltype(T)}(x)
         end
 
-        function $(name){S}(x::T) where {S,T<:Tuple}
+        function $(name){S}(x::T) where {S,T <: Tuple}
             return $(name){S,StaticArrays.promote_tuple_eltype(T)}(x)
         end
         $(name){S,T}(x::StaticVector) where {S,T} = $(name){S,T}(Tuple(x))
@@ -71,7 +71,7 @@ macro fixed_vector(name, parent)
             end
         end
 
-        @generated function (::Type{SV})(x::StaticVector) where {SV<:$(name)}
+        @generated function (::Type{SV})(x::StaticVector) where {SV <: $(name)}
             len = size_or(SV, size(x))[1]
             return if length(x) == len
                 :(SV(Tuple(x)))
@@ -99,7 +99,7 @@ macro fixed_vector(name, parent)
         end
 
         @generated function StaticArrays.similar_type(::Type{SV}, ::Type{T},
-                                                      s::Size{S}) where {SV<:$(name),T,S}
+                                                      s::Size{S}) where {SV <: $(name),T,S}
             return if length(S) === 1
                 $(name){S[1],T}
             else
@@ -108,7 +108,7 @@ macro fixed_vector(name, parent)
         end
 
         Base.:(*)(a::$name, b::$name) = a .* b
-        function Base.broadcasted(f, a::AbstractArray{T}, b::$name) where {T<:$name}
+        function Base.broadcasted(f, a::AbstractArray{T}, b::$name) where {T <: $name}
             return Base.broadcasted(f, a, (b,))
         end
     end
@@ -123,9 +123,9 @@ const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf0{N} = Vec{N,Float32}
 const Pointf0{N} = Point{N,Float32}
-Base.isnan(p::Union{AbstractPoint, Vec}) = any(x -> isnan(x), p)
+Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
 
-#Create constes like Mat4f0, Point2, Point2f0
+# Create constes like Mat4f0, Point2, Point2f0
 for i in 1:4
     for T in [:Point, :Vec]
         name = Symbol("$T$i")
