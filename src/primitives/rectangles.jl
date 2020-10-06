@@ -48,7 +48,7 @@ function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
-function TRect{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
+function TRect{T}(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T,T1,T2}
     return if T <: Integer
         Rect{N,T}(round.(T, v1), round.(T, v2))
     else
@@ -56,7 +56,7 @@ function TRect{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
     end
 end
 
-function Rect{N}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
+function Rect{N}(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
     T = promote_type(T1, T2)
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
@@ -125,19 +125,19 @@ function Rect{N,T}(a::GeometryPrimitive) where {N,T}
     return Rect{N,T}(Vec{N,T}(minimum(a)), Vec{N,T}(widths(a)))
 end
 
-function Rect2D(xy::VecTypes{2}, w::Number, h::Number)
+function Rect2D(xy::Vec{2}, w::Number, h::Number)
     return Rect2D(xy..., w, h)
 end
 
-function Rect2D(x::Number, y::Number, wh::VecTypes{2})
+function Rect2D(x::Number, y::Number, wh::Vec{2})
     return Rect2D(x, y, wh...)
 end
 
-function TRect{T}(xy::VecTypes{2}, w::Number, h::Number) where {T}
+function TRect{T}(xy::Vec{2}, w::Number, h::Number) where {T}
     return Rect2D{T}(xy..., w, h)
 end
 
-function TRect{T}(x::Number, y::Number, wh::VecTypes{2}) where {T}
+function TRect{T}(x::Number, y::Number, wh::Vec{2}) where {T}
     return Rect2D{T}(x, y, wh...)
 end
 
@@ -260,8 +260,8 @@ function Base.:(*)(m::Mat{4,4,T}, h::Rect{3,T}) where {T}
     return Rect{3,T}(_vmin, _vmax - _vmin)
 end
 
-Base.:(-)(h::Rect{N,T}, move::Number) where {N,T} = h - Vec{N,T}(move)
-Base.:(+)(h::Rect{N,T}, move::Number) where {N,T} = h + Vec{N,T}(move)
+Base.:(-)(h::Rect{N,T}, move::Number) where {N,T} = h - Vec{N,T}(ntuple(i->move,N))
+Base.:(+)(h::Rect{N,T}, move::Number) where {N,T} = h + Vec{N,T}(ntuple(i->move,N))
 
 function Base.:(-)(h::Rect{N,T}, move::StaticVector{N}) where {N,T}
     return Rect{N,T}(minimum(h) .- move, widths(h))
@@ -481,12 +481,12 @@ function Base.in(b1::Rect{N}, b2::Rect{N}) where {N}
 end
 
 """
-    in(pt::VecTypes, b1::Rect{N, T})
+    in(pt::Point, b1::Rect{N, T})
 
 Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
-function Base.in(pt::VecTypes, b1::Rect{N,T}) where {T,N}
+function Base.in(pt::Point, b1::Rect{N,T}) where {T,N}
     for i in 1:N
         pt[i] <= maximum(b1)[i] && pt[i] >= minimum(b1)[i] || return false
     end
@@ -500,9 +500,9 @@ Base.:(==)(b1::Rect, b2::Rect) = minimum(b1) == minimum(b2) && widths(b1) == wid
 
 Base.isequal(b1::Rect, b2::Rect) = b1 == b2
 
-centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
-centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
-centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
+centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(ntuple(i->-0.5,N)), Vec{N,T}(ntuple(i->1,N)))
+centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(ntuple(i->-0.5,N)), Vec{N,Float32}(ntuple(i->1,N)))
+centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(ntuple(i->-0.5,N)), Vec{2,Float32}(ntuple(i->1,N)))
 
 ##
 # Rect2D decomposition

@@ -465,7 +465,7 @@ end
     r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
-    @test boundbox(Point.(uv)) == Rect(0, 0, 1, 1)
+    @test boundbox(Point.(uv)) == Rect(0, 0, 0, 1, 1, 1)
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     m = GeometryBasics.mesh(points)
@@ -496,7 +496,7 @@ end
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))
+    m = uv_normal_mesh(FRect3D(Vec3f0(-1,-1,-1), Vec3f0(1, 2, 3)))
     m_normal = normal_mesh(m)
     # make sure we don't loose the uv
     @test hasproperty(m_normal, :uv)
@@ -506,7 +506,7 @@ end
     @test m.normals === m_normal.normals
     @test m.uv === m_normal.uv
 
-    m = GeometryBasics.mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3));
+    m = GeometryBasics.mesh(FRect3D(Vec3f0(-1,-1,-1), Vec3f0(1, 2, 3));
                             uv=Vec2{Float64}, normaltype=Vec3{Float64}, pointtype=Point3{Float64})
     m_normal = normal_mesh(m)
     @test hasproperty(m_normal, :uv)
@@ -651,10 +651,6 @@ end
 
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
-end
-
-@testset "Point & Vec type" begin
-    include("fixed_arrays.jl")
 end
 
 end  # testset "GeometryBasics"

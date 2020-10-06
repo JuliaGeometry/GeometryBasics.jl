@@ -13,7 +13,6 @@ include("primitives/rectangles.jl")
 include("primitives/spheres.jl")
 include("primitives/cylinders.jl")
 include("primitives/pyramids.jl")
-include("primitives/particles.jl")
 
 include("interfaces.jl")
 include("metadata.jl")
@@ -24,8 +23,11 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
+# points
+export AbstractPoint, Point, PointMeta, PointWithUV
+
+# geometries
 export AbstractGeometry, GeometryPrimitive
-export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
 export LineString, AbstractPolygon, Polygon, MultiPoint, MultiLineString, MultiPolygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
@@ -35,7 +37,6 @@ export Triangle, TriangleP
 export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
 export OffsetInteger, ZeroIndex, OneIndex, GLIndex
 export FaceView, SimpleFaceView
-export AbstractPoint, PointMeta, PointWithUV
 export PolygonMeta, MultiPointMeta, MultiLineStringMeta, MeshMeta, LineStringMeta,
        MultiPolygonMeta
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
@@ -46,18 +47,18 @@ export AbstractMesh, Mesh, TriangleMesh
 export GLNormalMesh2D, PlainTriangleMesh
 export MetaT, meta_table
 
-# all the different predefined mesh types
-# Note: meshes can contain arbitrary meta information,
+# meshes
 export AbstractMesh, TriangleMesh, PlainMesh, GLPlainMesh, GLPlainMesh2D, GLPlainMesh3D
 export UVMesh, GLUVMesh, GLUVMesh2D, GLUVMesh3D
 export NormalMesh, GLNormalMesh, GLNormalMesh2D, GLNormalMesh3D
 export NormalUVMesh, GLNormalUVMesh, GLNormalUVMesh2D, GLNormalUVMesh3D
 export NormalUVWMesh, GLNormalUVWMesh, GLNormalUVWMesh2D, GLNormalUVWMesh3D
 
-# mesh creation functions
+# mesh creation
 export triangle_mesh, triangle_mesh, uv_mesh
 export uv_mesh, normal_mesh, uv_normal_mesh
 
+# primitives
 export height, origin, radius, width, widths, xwidth, yheight
 export HyperSphere, Circle, Sphere
 export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
@@ -67,7 +68,12 @@ export centered, direction, area, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
+
+# bounding boxes
 export boundbox
+
+# helper types
+export Vec, Mat
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

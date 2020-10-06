@@ -1,7 +1,7 @@
 using Test, GeometryBasics
 
 @testset "algorithms.jl" begin
-    cube = Rect(Vec3f0(-0.5), Vec3f0(1))
+    cube = Rect(Vec3f0(-0.5,-0.5,-0.5), Vec3f0(1,1,1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
     cube_vertices = decompose(Point{3,Float32}, cube)
     @test area(cube_vertices, cube_faces) == 6
@@ -86,7 +86,7 @@ end
         @test m isa GLNormalMesh
 
         muv = uv_mesh(s)
-        @test boundbox(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
+        @test boundbox(Point.(texturecoordinates(muv))) == Rect(0.0f0, 0.0f0, 0.0f0, 1.0f0, 1.0f0, 1.0f0)
     end
 end
 

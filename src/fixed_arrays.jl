@@ -117,13 +117,12 @@ end
 
 abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 @fixed_vector Point AbstractPoint
-@fixed_vector Vec StaticVector
 
+const Vec = SVector
 const Mat = SMatrix
-const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf0{N} = Vec{N,Float32}
 const Pointf0{N} = Point{N,Float32}
-Base.isnan(p::Union{AbstractPoint, Vec}) = any(x -> isnan(x), p)
+Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
 
 #Create constes like Mat4f0, Point2, Point2f0
 for i in 1:4
@@ -147,5 +146,4 @@ for i in 1:4
     end
 end
 
-export Mat, Vec, Point, unit
 export Vecf0, Pointf0
