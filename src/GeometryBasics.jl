@@ -30,7 +30,7 @@ export AbstractPoint, Point, PointMeta, PointWithUV
 
 # vectors
 export Vec, Vec2, Vec3, Vec2f, Vec3f
-export euclidbasis, constant
+export vunit, vfill
 
 # geometries
 export AbstractGeometry, GeometryPrimitive

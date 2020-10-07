@@ -27,7 +27,7 @@ const Vec2f = Vec{2,Float32}
 const Vec3f = Vec{3,Float32}
 
 """
-    euclidbasis(VecType, i)
+    vunit(VecType, i)
 
 Return the `i`-th vector in the Euclidean basis
 as a vector with type `VecType`.
@@ -35,19 +35,19 @@ as a vector with type `VecType`.
 ## Example
 
 ```julia
-euclidbasis(Vec3, 1) == [1.0, 0.0, 0.0]
-euclidbasis(Vec3, 2) == [0.0, 1.0, 0.0]
-euclidbasis(Vec3, 3) == [0.0, 0.0, 1.0]
+vunit(Vec3, 1) == [1.0, 0.0, 0.0]
+vunit(Vec3, 2) == [0.0, 1.0, 0.0]
+vunit(Vec3, 3) == [0.0, 0.0, 1.0]
 ```
 """
-function euclidbasis(VecType::Type, i::Integer)
+function vunit(VecType::Type, i::Integer)
     N = length(VecType)
     T = eltype(VecType)
     VecType(ntuple(j->ifelse(i==j, one(T), zero(T)), N))
 end
 
 """
-    constant(VecType, v)
+    vfill(VecType, v)
 
 Return the vector of type `VecType` with all
 coordinates equal to `v`.
@@ -55,10 +55,10 @@ coordinates equal to `v`.
 ## Example
 
 ```julia
-constant(Vec2, 3) == [3.0, 3.0]
-constant(Vec2f, 0) == [0.0f0, 0.0f0]
+vfill(Vec2, 3) == [3.0, 3.0]
+vfill(Vec2f, 0) == [0.0f0, 0.0f0]
 ```
 """
-function constant(VecType::Type, v::Number)
+function vfill(VecType::Type, v::Number)
     VecType(ntuple(j->v, length(VecType)))
 end
