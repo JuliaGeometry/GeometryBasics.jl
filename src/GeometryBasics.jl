@@ -76,7 +76,7 @@ export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
 
 # bounding boxes
-export boundbox
+export boundingbox
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

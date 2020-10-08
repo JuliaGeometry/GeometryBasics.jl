@@ -151,7 +151,7 @@ end
 function decompose(UVT::Union{UV{T},UVW{T}},
                    positions::AbstractVector{<:Point}) where {T}
     N = length(T)
-    bb = boundbox(positions) # Make sure we get this as points
+    bb = boundingbox(positions) # Make sure we get this as points
     return map(positions) do p
         return (p .- minimum(bb)) ./ widths(bb)
     end
