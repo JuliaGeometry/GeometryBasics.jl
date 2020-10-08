@@ -81,7 +81,7 @@ function texturecoordinates(tesselation::Tesselation)
 end
 
 ## Decompose methods
-# Dispatch type to make `decompose(UV{Vec2f0}, primitive)` work
+# Dispatch type to make `decompose(UV{Vec2f}, primitive)` work
 # and to pass through tesselation information
 
 # Types that can be converted to a mesh via the functions below
@@ -91,13 +91,13 @@ const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim
 
 struct UV{T} end
 UV(::Type{T}) where {T} = UV{T}()
-UV() = UV(Vec2f0)
+UV() = UV(Vec2f)
 struct UVW{T} end
 UVW(::Type{T}) where {T} = UVW{T}()
-UVW() = UVW(Vec3f0)
+UVW() = UVW(Vec3f)
 struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
-Normal() = Normal(Vec3f0)
+Normal() = Normal(Vec3f)
 
 function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     f = faces(primitive)

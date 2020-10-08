@@ -11,7 +11,7 @@ using GeometryBasics: attributes
         @testset "per vertex attributes" begin
             points = rand(Point{3, Float64}, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
-            normals = rand(SVector{3, Float64}, 8)
+            normals = rand(Vec3, 8)
             stress = LinRange(0, 1, 8)
             mesh = Mesh(meta(points, normals = normals, stress = stress), tfaces)
 
@@ -215,7 +215,7 @@ end
         @testset "per vertex attributes" begin
             points = rand(Point{3, Float64}, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
-            normals = rand(SVector{3, Float64}, 8)
+            normals = rand(Vec3, 8)
             stress = LinRange(0, 1, 8)
             mesh_nometa = Mesh(points, tfaces)
             mesh = MetaT(mesh_nometa, normals = normals, stress = stress)
@@ -374,8 +374,8 @@ end
 
         points = rand(Point3f0, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
-        normals = rand(Vec3f0, 8)
-        uv = rand(Vec2f0, 8)
+        normals = rand(Vec3f, 8)
+        uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
         meshuv = Mesh(meta(points; uv=uv), tfaces)
         meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
@@ -442,13 +442,13 @@ end
 
     primitive = Sphere(Point3f0(0), 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
+    @test normals(m_normal) isa Vector{Vec3f}
     primitive = Rect2D(0, 0, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
+    @test normals(m_normal) isa Vector{Vec3f}
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
+    @test normals(m_normal) isa Vector{Vec3f}
 
     points = decompose(Point2f0, Circle(Point2f0(0), 1))
     tmesh = triangle_mesh(points)
@@ -457,7 +457,7 @@ end
     m = GeometryBasics.mesh(Sphere(Point3f0(0), 1))
     @test normals(m) == nothing
     m_normals = pointmeta(m, Normal())
-    @test normals(m_normals) isa Vector{Vec3f0}
+    @test normals(m_normals) isa Vector{Vec3f}
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
@@ -496,7 +496,7 @@ end
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(FRect3D(Vec3f0(-1,-1,-1), Vec3f0(1, 2, 3)))
+    m = uv_normal_mesh(FRect3D(Vec(-1,-1,-1), Vec(1, 2, 3)))
     m_normal = normal_mesh(m)
     # make sure we don't loose the uv
     @test hasproperty(m_normal, :uv)
@@ -506,8 +506,8 @@ end
     @test m.normals === m_normal.normals
     @test m.uv === m_normal.uv
 
-    m = GeometryBasics.mesh(FRect3D(Vec3f0(-1,-1,-1), Vec3f0(1, 2, 3));
-                            uv=Vec2{Float64}, normaltype=Vec3{Float64}, pointtype=Point3{Float64})
+    m = GeometryBasics.mesh(FRect3D(Vec(-1,-1,-1), Vec(1, 2, 3));
+                            uv=Vec2, normaltype=Vec3, pointtype=Point3{Float64})
     m_normal = normal_mesh(m)
     @test hasproperty(m_normal, :uv)
     @test m.position !== m_normal.position
@@ -546,7 +546,7 @@ end
         @test meta(x, value=[1]).position === x
     end
     pos = Point2f0[(10, 2)]
-    m = Mesh(meta(pos, uv=[Vec2f0(1, 1)]), [GLTriangleFace(1, 1, 1)])
+    m = Mesh(meta(pos, uv=[Vec2f(1, 1)]), [GLTriangleFace(1, 1, 1)])
     @test m.position === pos
 end
 

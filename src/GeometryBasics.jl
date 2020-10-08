@@ -6,6 +6,8 @@ using EarCut_jll
 using Base: @propagate_inbounds
 
 include("fixed_arrays.jl")
+include("vectors.jl")
+include("matrices.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")
 
@@ -25,6 +27,10 @@ include("boundingboxes.jl")
 
 # points
 export AbstractPoint, Point, PointMeta, PointWithUV
+
+# vectors
+export Vec, Vec2, Vec3, Vec2f, Vec3f
+export vunit, vfill
 
 # geometries
 export AbstractGeometry, GeometryPrimitive
@@ -71,9 +77,6 @@ export self_intersections, split_intersections
 
 # bounding boxes
 export boundbox
-
-# helper types
-export Vec, Mat
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

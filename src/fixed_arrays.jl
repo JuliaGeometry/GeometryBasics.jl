@@ -1,11 +1,3 @@
-
-function unit(::Type{T}, i::Integer) where {T<:StaticVector}
-    tup = ntuple(Val(length(T))) do j
-        return ifelse(i == j, 1, 0)
-    end
-    return T(tup)
-end
-
 macro fixed_vector(name, parent)
     expr = quote
         struct $(name){S,T} <: $(parent){S,T}
@@ -118,15 +110,10 @@ end
 abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 @fixed_vector Point AbstractPoint
 
-const Vec = SVector
-const Mat = SMatrix
-const Vecf0{N} = Vec{N,Float32}
 const Pointf0{N} = Point{N,Float32}
-Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
 
-#Create constes like Mat4f0, Point2, Point2f0
 for i in 1:4
-    for T in [:Point, :Vec]
+    for T in [:Point]
         name = Symbol("$T$i")
         namef0 = Symbol("$T$(i)f0")
         @eval begin
@@ -136,14 +123,6 @@ for i in 1:4
             export $namef0
         end
     end
-    name = Symbol("Mat$i")
-    namef0 = Symbol("Mat$(i)f0")
-    @eval begin
-        const $name{T} = $Mat{$i,$i,T,$(i * i)}
-        const $namef0 = $name{Float32}
-        export $name
-        export $namef0
-    end
 end
 
-export Vecf0, Pointf0
+export Pointf0

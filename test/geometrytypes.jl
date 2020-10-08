@@ -1,7 +1,7 @@
 using Test, GeometryBasics
 
 @testset "algorithms.jl" begin
-    cube = Rect(Vec3f0(-0.5,-0.5,-0.5), Vec3f0(1,1,1))
+    cube = FRect(Vec(-0.5,-0.5,-0.5), Vec(1,1,1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
     cube_vertices = decompose(Point{3,Float32}, cube)
     @test area(cube_vertices, cube_faces) == 6
@@ -132,15 +132,15 @@ NFace = NgonFace
 end
 
 @testset "Normals" begin
-    n64 = Vec{3,Float64}[(0.0, 0.0, -1.0), (0.0, 0.0, -1.0), (0.0, 0.0, -1.0),
-                         (0.0, 0.0, -1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0),
-                         (0.0, 0.0, 1.0), (0.0, 0.0, 1.0), (-1.0, 0.0, 0.0),
-                         (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0),
-                         (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                         (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0),
-                         (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
-                         (0.0, -1.0, 0.0),]
-    n32 = map(Vec{3,Float32}, n64)
+    n64 = Vec3[(0.0, 0.0, -1.0), (0.0, 0.0, -1.0), (0.0, 0.0, -1.0),
+               (0.0, 0.0, -1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0),
+               (0.0, 0.0, 1.0), (0.0, 0.0, 1.0), (-1.0, 0.0, 0.0),
+               (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0),
+               (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+               (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+               (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
+               (0.0, -1.0, 0.0),]
+    n32 = map(Vec3f, n64)
     r = triangle_mesh(centered(Rect3D))
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n32
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n64
@@ -178,8 +178,8 @@ end
     @test (rect - 4) == FRect2D(-4, 3, 20, 3)
     @test (rect - Vec(2, -2)) == FRect2D(-2, 9, 20, 3)
 
-    base = Vec3f0(1, 2, 3)
-    wxyz = Vec3f0(-2, 4, 2)
+    base = Vec3f(1, 2, 3)
+    wxyz = Vec3f(-2, 4, 2)
     rect = FRect3D(base, wxyz)
     @test (rect + 4) == FRect3D(base .+ 4, wxyz)
     @test (rect + Vec(2, -2, 3)) == FRect3D(base .+ Vec(2, -2, 3), wxyz)
@@ -191,8 +191,8 @@ end
     @test (rect * 4) == FRect2D(0, 7 * 4, 20 * 4, 3 * 4)
     @test (rect * Vec(2, -2)) == FRect2D(0, -7 * 2, 20 * 2, -3 * 2)
 
-    base = Vec3f0(1, 2, 3)
-    wxyz = Vec3f0(-2, 4, 2)
+    base = Vec3f(1, 2, 3)
+    wxyz = Vec3f(-2, 4, 2)
     rect = FRect3D(base, wxyz)
     @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
     @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
