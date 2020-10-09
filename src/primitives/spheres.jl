@@ -2,12 +2,13 @@
     HyperSphere{N, T}
 
 A `HyperSphere` is a generalization of a sphere into N-dimensions.
-A `center` and radius, `r`, must be specified.
+A `center` and `radius` must be specified.
 """
 struct HyperSphere{N,T} <: GeometryPrimitive{N,T}
     center::Point{N,T}
-    r::T
+    radius::T
 end
+
 """
     Circle{T}
 
@@ -22,10 +23,8 @@ An alias for a HyperSphere of dimension 3. (i.e. `HyperSphere{3, T}`)
 """
 const Sphere{T} = HyperSphere{3,T}
 
-HyperSphere{N}(p::Point{N,T}, number) where {N,T} = HyperSphere{N,T}(p, convert(T, number))
-
 widths(c::HyperSphere{N,T}) where {N,T} = Vec{N,T}(radius(c) * 2)
-radius(c::HyperSphere) = c.r
+radius(c::HyperSphere) = c.radius
 origin(c::HyperSphere) = c.center
 
 Base.minimum(c::HyperSphere{N,T}) where {N,T} = Vec{N,T}(origin(c)) - Vec{N,T}(radius(c))
@@ -35,7 +34,7 @@ function Base.in(x::AbstractPoint{2}, c::Circle)
     @inbounds ox, oy = origin(c)
     xD = abs(ox - x)
     yD = abs(oy - y)
-    return xD <= c.r && yD <= c.r
+    return xD <= c.radius && yD <= c.radius
 end
 
 centered(S::Type{HyperSphere{N,T}}) where {N,T} = S(Vec{N,T}(0), T(0.5))
@@ -56,7 +55,7 @@ end
 function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices)
     φ = LinRange(0, 2pi, nvertices)
-    inner(θ, φ) = Point(cos(φ) * sin(θ), sin(φ) * sin(θ), cos(θ)) .* s.r .+ s.center
+    inner(θ, φ) = Vec(cos(φ) * sin(θ), sin(φ) * sin(θ), cos(θ)) .* s.radius .+ s.center
     return ivec((inner(θ, φ) for θ in θ, φ in φ))
 end
 

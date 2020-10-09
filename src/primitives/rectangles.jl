@@ -487,8 +487,9 @@ Check if a point is contained in a Rect. This will return true if
 the point is on a face of the Rect.
 """
 function Base.in(pt::Point, b1::Rect{N,T}) where {T,N}
+    cs = coordinates(pt)
     for i in 1:N
-        pt[i] <= maximum(b1)[i] && pt[i] >= minimum(b1)[i] || return false
+        cs[i] <= maximum(b1)[i] && cs[i] >= minimum(b1)[i] || return false
     end
     return true
 end
