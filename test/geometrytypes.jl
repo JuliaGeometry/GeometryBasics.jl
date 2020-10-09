@@ -96,7 +96,7 @@ end
     pt_expa = Point{2,Int}[(0, 0), (1, 0), (0, 1), (1, 1)]
     @test decompose(Point{2,Int}, a) == pt_expa
     mesh = normal_mesh(a)
-    @test decompose(Point2f, mesh) == pt_expa
+    @test decompose(Point2f, mesh) == convert.(Point2f, pt_expa)
 
     b = Rect(Vec(1, 1, 1), Vec(1, 1, 1))
     pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 2], [1, 2, 1], [1, 1, 1],
@@ -137,10 +137,10 @@ end
                (0.0, 0.0, -1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0),
                (0.0, 0.0, 1.0), (0.0, 0.0, 1.0), (-1.0, 0.0, 0.0),
                (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0),
-               (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-               (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0),
-               (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
-               (0.0, -1.0, 0.0),]
+               (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+               (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+               (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, -1.0, 0.0),
+               (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0)]
     n32 = map(Vec3f, n64)
     r = triangle_mesh(centered(Rect3D))
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n32
@@ -210,8 +210,8 @@ end
 
     split1, split2 = GeometryBasics.split(rect1, 2, 1)
     @test widths(split1) == widths(split2)
-    @test origin(split1) == Vec(0, 0)
-    @test origin(split2) == Vec(0, 1)
+    @test origin(split1) == Point(0.0, 0.0)
+    @test origin(split2) == Point(0.0, 1.0)
     @test in(split1, rect1)
     @test !in(rect1, split1)
 
