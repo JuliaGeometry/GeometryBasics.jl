@@ -75,13 +75,15 @@ function coordinates(c::Cylinder{3,T}, nvertices=30) where {T}
     range = 1:(2 * nbv + 2)
     function inner(i)
         return if i == length(range)
-            c.extremity
+            coordinates(c.extremity)
         elseif i == length(range) - 1
-            origin(c)
+            coordinates(c.origin)
         else
             phi = T((2π * (((i + 1) ÷ 2) - 1)) / nbv)
-            up = ifelse(isodd(i), 0, h)
-            (M * Point(c.radius * cos(phi), c.radius * sin(phi), up)) .+ c.origin
+            up = ifelse(isodd(i), T(0), h)
+            o  = coordinates(c.origin)
+            r  = c.radius
+            (M * Vec(r*cos(phi), r*sin(phi), up)) + o
         end
     end
 
