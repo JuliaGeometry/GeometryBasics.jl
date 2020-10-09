@@ -13,7 +13,6 @@ Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngo
 abstract type Polytope{Dim,T} <: AbstractGeometry{Dim,T} end
 abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 
-abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
 abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
 abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end

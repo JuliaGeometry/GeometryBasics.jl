@@ -5,9 +5,14 @@ using EarCut_jll
 
 using Base: @propagate_inbounds
 
-include("fixed_arrays.jl")
+import Base: +, -
+
+# basic concepts
 include("vectors.jl")
 include("matrices.jl")
+include("points.jl")
+
+include("fixed_arrays.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")
 
@@ -26,11 +31,14 @@ include("lines.jl")
 include("boundingboxes.jl")
 
 # points
-export AbstractPoint, Point, PointMeta, PointWithUV
+export Point, Point2, Point3, Point2f, Point3f
 
 # vectors
 export Vec, Vec2, Vec3, Vec2f, Vec3f
 export vunit, vfill
+
+# TODO: review these
+export AbstractPoint, PointMeta, PointWithUV
 
 # geometries
 export AbstractGeometry, GeometryPrimitive
