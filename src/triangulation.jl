@@ -40,7 +40,9 @@ function area(contour::AbstractVector{<:AbstractPoint{N,T}}) where {N,T}
     p = lastindex(contour)
     q = firstindex(contour)
     while q <= n
-        A += cross(contour[p], contour[q])
+        pc = coordinates(contour[p])
+        qc = coordinates(contour[q])
+        A += cross(pc, qc)
         p = q
         q += 1
     end
@@ -82,9 +84,9 @@ function Base.in(P::T, triangle::Triangle) where {T<:AbstractPoint}
 end
 
 function snip(contour::AbstractVector{<:AbstractPoint{N,T}}, u, v, w, n, V) where {N,T}
-    A = contour[V[u]]
-    B = contour[V[v]]
-    C = contour[V[w]]
+    A = coordinates(contour[V[u]])
+    B = coordinates(contour[V[v]])
+    C = coordinates(contour[V[w]])
     x = (((B[1] - A[1]) * (C[2] - A[2])) - ((B[2] - A[2]) * (C[1] - A[1])))
     if 0.0000000001f0 > x
         return false
@@ -112,7 +114,7 @@ function decompose(::Type{FaceType},
     result = FaceType[]
 
     # the algorithm doesn't like closed contours
-    contour = if isapprox(last(points), first(points))
+    contour = if isapprox(coordinates(last(points)), coordinates(first(points)))
         @view points[1:(end - 1)]
     else
         @view points[1:end]
