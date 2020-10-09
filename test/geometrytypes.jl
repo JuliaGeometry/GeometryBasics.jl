@@ -151,22 +151,22 @@ end
     sphere = Sphere{Float32}(Point3f(0,0,0), 1.0f0)
 
     points = decompose(Point, Tesselation(sphere, 3))
-    point_target = Point3f[(0.0, 0.0, 1.0),
-                           (1.0, 0.0, 6.12323e-17),
-                           (1.22465e-16, 0.0, -1.0),
-                           (-0.0, 0.0, 1.0),
-                           (-1.0, 1.22465e-16, 6.12323e-17),
-                           (-1.22465e-16, 1.49976e-32, -1.0),
-                           (0.0, -0.0, 1.0),
-                           (1.0, -2.44929e-16, 6.12323e-17),
-                           (1.22465e-16, -2.99952e-32, -1.0)]
-    @test points ≈ point_target
+    target = Point3f[(0.0, 0.0, 1.0),
+                     (1.0, 0.0, 6.12323e-17),
+                     (1.22465e-16, 0.0, -1.0),
+                     (-0.0, 0.0, 1.0),
+                     (-1.0, 1.22465e-16, 6.12323e-17),
+                     (-1.22465e-16, 1.49976e-32, -1.0),
+                     (0.0, -0.0, 1.0),
+                     (1.0, -2.44929e-16, 6.12323e-17),
+                     (1.22465e-16, -2.99952e-32, -1.0)]
+    @test all(coordinates(p) ≈ coordinates(t) for (p, t) in zip(points, target))
 
     f = decompose(TriangleFace{Int}, Tesselation(sphere, 3))
     face_target = TriangleFace{Int}[[1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5], [4, 5, 8],
                                     [4, 8, 7], [5, 6, 9], [5, 9, 8]]
     @test f == face_target
-    circle = Circle(Point2f(0,0), 1.0f0)
+    circle = HyperSphere(Point2f(0, 0), 1.0f0)
     points = decompose(Point2f, Tesselation(circle, 20))
     @test length(points) == 20
     tess_circle = Tesselation(circle, 32)

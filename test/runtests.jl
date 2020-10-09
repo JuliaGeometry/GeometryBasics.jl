@@ -450,7 +450,7 @@ end
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f0, HyperSphere(Point2f(0, 0), 1.0f0))
     tmesh = triangle_mesh(points)
     @test normals(tmesh) == nothing
 
@@ -467,7 +467,7 @@ end
     uv = decompose_uv(m)
     @test boundingbox(Point.(uv)) == Rect(0, 0, 0, 1, 1, 1)
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f0, HyperSphere(Point2f(0, 0), 1.0f0))
     m = GeometryBasics.mesh(points)
     @test coordinates(m) === points
 
@@ -490,7 +490,7 @@ end
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
+    m = uv_normal_mesh(HyperSphere(Point2f(0, 0), 1.0f0))
     # for 2D primitives we dont actually calculate normals
     @test !hasproperty(m, :normals)
 end
