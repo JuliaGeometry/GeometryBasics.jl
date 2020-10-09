@@ -622,8 +622,8 @@ end
 end
 
 @testset "MetaT and heterogeneous data" begin
-    ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
-    mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10])
+    ls = [LineString([Point(i*1.0, (i+1)^2/6), Point(i*0.86,i+5.0), Point(i/3, i/7)]) for i in 1:10]
+    mls = MultiLineString([LineString([Point(i+1.0, (i)^2/6), Point(i*0.75,i+8.0), Point(i/2.5, i/6.79)]) for i in 5:10])
     poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
     geom = [ls..., mls, poly]
     prop = Any[(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:11]
@@ -642,8 +642,7 @@ end
     (LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
     (:country_states, :rainfall), Tuple{String,Float64})
 
-
-    @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1, (2)^2/6), Point(1*0.86,6), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
+    @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1.0, (2)^2/6), Point(1*0.86,6.0), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
 
     @test Base.getindex(feat[1], 1) isa Line
     @test Base.size(feat[1]) == (2,)

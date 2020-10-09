@@ -18,13 +18,11 @@ end
         @test origin(s) == o
         @test extremity(s) == extr
         @test radius(s) == r
-        #@test abs(height(s)- norm([1,2]-[3,4]))<1e-5
         h = norm(o - extr)
         @test isapprox(height(s), h)
-        #@test norm(direction(s) - Point{2,Float32}([2,2]./norm([1,2]-[3,4])))<1e-5
-        @test isapprox(direction(s), Point2f(2, 2) ./ h)
-        v1 = rand(Point{3,Float64})
-        v2 = rand(Point{3,Float64})
+        @test isapprox(direction(s), Vec2f(2, 2) ./ h)
+        v1 = Point(rand(Vec3))
+        v2 = Point(rand(Vec3))
         R = rand()
         s = Cylinder(v1, v2, R)
         @test typeof(s) == Cylinder{3,Float64}
@@ -33,8 +31,7 @@ end
         @test extremity(s) == v2
         @test radius(s) == R
         @test height(s) == norm(v2 - v1)
-        #@test norm(direction(s) - Point{3,Float64}((v2-v1)./norm(v2-v1)))<1e-10
-        @test isapprox(direction(s), (v2 - v1) ./ norm(v2 .- v1))
+        @test isapprox(direction(s), (v2 - v1) ./ norm(v2 - v1))
     end
 
     @testset "decompose" begin
@@ -57,21 +54,18 @@ end
         v2 = Point3(4, 5, 6)
         R = 5.0
         s = Cylinder(v1, v2, R)
-        positions = Point{3,Float64}[(4.535533905932738, -1.5355339059327373, 3.0),
-                                     (7.535533905932738, 1.4644660940672627, 6.0),
-                                     (3.0412414523193148, 4.041241452319315,
-                                      -1.0824829046386295),
-                                     (6.041241452319315, 7.041241452319315,
-                                      1.9175170953613705),
-                                     (-2.535533905932737, 5.535533905932738,
-                                      2.9999999999999996),
-                                     (0.46446609406726314, 8.535533905932738, 6.0),
-                                     (-1.0412414523193152, -0.04124145231931431,
-                                      7.0824829046386295),
-                                     (1.9587585476806848, 2.9587585476806857,
-                                      10.08248290463863), (1, 2, 3), (4, 5, 6)]
+        positions = Point3[(4.535533905932738, -1.5355339059327373, 3.0),
+                           (7.535533905932738, 1.4644660940672627, 6.0),
+                           (3.0412414523193148, 4.041241452319315, -1.0824829046386295),
+                           (6.041241452319315, 7.041241452319315, 1.9175170953613705),
+                           (-2.535533905932737, 5.535533905932738, 2.9999999999999996),
+                           (0.46446609406726314, 8.535533905932738, 6.0),
+                           (-1.0412414523193152, -0.04124145231931431, 7.0824829046386295),
+                           (1.9587585476806848, 2.9587585476806857, 10.08248290463863),
+                           (1, 2, 3),
+                           (4, 5, 6)]
 
-        @test decompose(Point3{Float64}, Tesselation(s, 8)) ≈ positions
+        @test decompose(Point3, Tesselation(s, 8)) ≈ positions
 
         faces = TriangleFace{Int}[(3, 2, 1), (4, 2, 3), (5, 4, 3), (6, 4, 5), (7, 6, 5),
                                   (8, 6, 7), (1, 8, 7), (2, 8, 1), (3, 1, 9), (2, 4, 10),
@@ -82,7 +76,7 @@ end
         m = triangle_mesh(Tesselation(s, 8))
 
         @test GeometryBasics.faces(m) == faces
-        @test GeometryBasics.coordinates(m) ≈ positions
+        @test coordinates(m) ≈ positions
         m = normal_mesh(s)# just test that it works without explicit resolution parameter
         @test m isa GLNormalMesh
 
