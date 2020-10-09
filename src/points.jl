@@ -28,6 +28,8 @@ Point(coords::Vararg{T,N}) where {N,T} = Point{N,T}(SVector(coords))
 # coordinate type conversions
 Point{N,T}(coords::NTuple{N,V}) where {N,T,V} = Point(T.(coords))
 Point{N,T}(coords::Vararg{V,N}) where {N,T,V} = Point(T.(coords))
+Base.convert(::Type{Point{N,T}}, coords) where {N,T} = Point{N,T}(coords)
+Base.convert(::Type{Point{N,T}}, p::Point) where {N,T} = Point{N,T}(p.coords)
 
 # type aliases for convenience
 const Point2  = Point{2,Float64}
