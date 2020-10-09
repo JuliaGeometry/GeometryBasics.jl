@@ -160,7 +160,7 @@ end
                      (0.0, -0.0, 1.0),
                      (1.0, -2.44929e-16, 6.12323e-17),
                      (1.22465e-16, -2.99952e-32, -1.0)]
-    @test all(coordinates(p) ≈ coordinates(t) for (p, t) in zip(points, target))
+    @test coordinates.(points) ≈ coordinates.(target)
 
     f = decompose(TriangleFace{Int}, Tesselation(sphere, 3))
     face_target = TriangleFace{Int}[[1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5], [4, 5, 8],
@@ -169,9 +169,11 @@ end
     circle = HyperSphere(Point2f(0, 0), 1.0f0)
     points = decompose(Point2f, Tesselation(circle, 20))
     @test length(points) == 20
-    tess_circle = Tesselation(circle, 32)
-    mesh = triangle_mesh(tess_circle)
-    @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)
+    tess = Tesselation(circle, 32)
+    mesh = triangle_mesh(tess)
+    mpoints = decompose(Point2f, mesh)
+    tpoints = decompose(Point2f, tess)
+    @test coordinates.(mpoints) ≈ coordinates.(tpoints)
 end
 
 @testset "Rectangles" begin
