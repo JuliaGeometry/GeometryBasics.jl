@@ -9,7 +9,7 @@ using GeometryBasics: attributes
     @testset "Meshes" begin
 
         @testset "per vertex attributes" begin
-            points = rand(Point{3, Float64}, 8)
+            points = rand(Point3, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(Vec3, 8)
             stress = LinRange(0, 1, 8)
