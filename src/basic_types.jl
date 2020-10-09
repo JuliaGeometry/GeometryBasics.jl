@@ -56,7 +56,6 @@ Fixed Size Polygon, e.g.
 - ...
 """
 struct Ngon{Dim,T<:Real,N,Point<:AbstractPoint{Dim,T}} <: AbstractPolygon{Dim,T}
-
     points::SVector{N,Point}
 end
 

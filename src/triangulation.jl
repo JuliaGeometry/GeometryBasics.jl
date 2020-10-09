@@ -66,28 +66,29 @@ end
 """
 function Base.in(P::T, triangle::Triangle) where {T<:AbstractPoint}
     A, B, C = coordinates(triangle)
-    a = C .- B
-    b = A .- C
-    c = B .- A
+    a = C - B
+    b = A - C
+    c = B - A
 
-    ap = P .- A
-    bp = P .- B
-    cp = P .- C
+    ap = P - A
+    bp = P - B
+    cp = P - C
 
     a_bp = a[1] * bp[2] - a[2] * bp[1]
     c_ap = c[1] * ap[2] - c[2] * ap[1]
     b_cp = b[1] * cp[2] - b[2] * cp[1]
 
-    t0 = zero(eltype(T))
-
-    return ((a_bp >= t0) && (b_cp >= t0) && (c_ap >= t0))
+    return ((a_bp ≥ 0) && (b_cp ≥ 0) && (c_ap ≥ 0))
 end
 
 function snip(contour::AbstractVector{<:AbstractPoint{N,T}}, u, v, w, n, V) where {N,T}
-    A = coordinates(contour[V[u]])
-    B = coordinates(contour[V[v]])
-    C = coordinates(contour[V[w]])
-    x = (((B[1] - A[1]) * (C[2] - A[2])) - ((B[2] - A[2]) * (C[1] - A[1])))
+    A = contour[V[u]]
+    B = contour[V[v]]
+    C = contour[V[w]]
+    a = coordinates(A)
+    b = coordinates(B)
+    c = coordinates(C)
+    x = (((b[1] - a[1]) * (c[2] - a[2])) - ((b[2] - a[2]) * (c[1] - a[1])))
     if 0.0000000001f0 > x
         return false
     end
