@@ -7,8 +7,8 @@ Formally it is the cartesian product of intervals, which is represented by the
 `origin` and `width` fields, whose indices correspond to each of the `N` axes.
 """
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
-    origin::Vec{N,T}
-    widths::Vec{N,T}
+    origin::Point{N,T}
+    widths::SVector{N,T}
 end
 
 ##
@@ -155,14 +155,15 @@ function FRect3D(x::Tuple{Tuple{<:Number,<:Number,<:Number},
     return FRect3D(Vec3f0(x[1]...), Vec3f0(x[2]...))
 end
 
-origin(prim::Rect) = prim.origin
-Base.maximum(prim::Rect) = origin(prim) + widths(prim)
-Base.minimum(prim::Rect) = origin(prim)
-Base.length(prim::Rect{N,T}) where {T,N} = N
-widths(prim::Rect) = prim.widths
+# TODO: review these
+origin(r::Rect) = r.origin
+Base.minimum(r::Rect) = coordinates(r.origin)
+Base.maximum(r::Rect) = coordinates(r.origin) + r.widths
+Base.length(::Rect{N,T}) where {T,N} = N
+widths(r::Rect) = r.widths
 
-width(prim::Rect) = prim.widths[1]
-height(prim::Rect) = prim.widths[2]
+width(r::Rect)  = r.widths[1]
+height(r::Rect) = r.widths[2]
 
 """
     split(rectangle, axis, value)
@@ -518,12 +519,12 @@ end
 function coordinates(rect::Rect2D, nvertices=(2, 2))
     mini, maxi = extrema(rect)
     xrange, yrange = LinRange.(mini, maxi, nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+    return ivec(Vec(x, y) for x in xrange, y in yrange)
 end
 
 function texturecoordinates(rect::Rect2D, nvertices=(2, 2))
     xrange, yrange = LinRange.((0, 1), (1, 0), nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+    return ivec(Vec(x, y) for x in xrange, y in yrange)
 end
 
 function normals(rect::Rect2D, nvertices=(2, 2))
@@ -534,13 +535,13 @@ end
 # Rect3D decomposition
 function coordinates(rect::Rect3D)
     # TODO use n
-    w = widths(rect)
-    o = origin(rect)
-    points = Point{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
-                          (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
-                          (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
-                          (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
-    return ((x .* w .+ o) for x in points)
+    w  = widths(rect)
+    o  = coordinates(origin(rect))
+    xs = Vec{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
+                    (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
+                    (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
+                    (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
+    return ((x .* w .+ o) for x in xs)
 end
 
 function texturecoordinates(rect::Rect3D)

@@ -31,14 +31,15 @@ An alias for a HyperSphere of dimension 3. (i.e. `HyperSphere{3, T}`)
 """
 const Sphere{T} = HyperSphere{3,T}
 
-function Base.in(p::AbstractPoint{2}, c::Circle)
+function Base.in(p::AbstractPoint, s::HyperSphere)
     x = coordinates(p)
-    o = coordinates(c.center)
-    sum(abs2, x - o) ≤ c.radius
+    c = coordinates(s.center)
+    r = s.radius
+    sum(abs2, x - c) ≤ r^2
 end
 
 function centered(S::Type{HyperSphere{N,T}}) where {N,T}
-    center = Point{N,T}(ntuple(i->zero(T),N))
+    center = Point(ntuple(i->zero(T),N))
     radius = T(0.5)
     S(center, radius)
 end
@@ -78,5 +79,5 @@ function faces(::Sphere, nvertices=24)
 end
 
 function normals(::Sphere{T}, nvertices=24) where {T}
-    return coordinates(Sphere(Point{3,T}(0), 1), nvertices)
+    return coordinates(Sphere(Point{3,T}(0,0,0), 1), nvertices)
 end

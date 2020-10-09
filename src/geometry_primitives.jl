@@ -57,12 +57,10 @@ end
 
 to_pointn(::Type{T}, x) where {T<:Point} = convert_simplex(T, x)[1]
 
-# disambiguation method overlords
-convert_simplex(::Type{Point}, x::Point) = (x,)
 convert_simplex(::Type{Point{N,T}}, p::Point{N,T}) where {N,T} = (p,)
-function convert_simplex(::Type{Point{N,T}}, x) where {N,T}
-    N2 = length(x)
-    return (Point{N,T}(ntuple(i -> i <= N2 ? T(x[i]) : T(0), N)),)
+function convert_simplex(::Type{Point{N,T}}, p::Point{M,V}) where {N,T,M,V}
+    x = coordinates(p)
+    return (Point(ntuple(i -> i <= M ? T(x[i]) : T(0), N)),)
 end
 
 function convert_simplex(::Type{Vec{N,T}}, x) where {N,T}

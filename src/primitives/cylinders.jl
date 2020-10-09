@@ -1,13 +1,13 @@
 """
     Cylinder{N, T}
 
-A `Cylinder` is a 2D rectangle or a 3D cylinder defined by its origin point,
-its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
+A `Cylinder` is a 2D rectangle or a 3D cylinder defined by
+its `origin` point, its `extremity` and a `radius`.
 """
 struct Cylinder{N,T} <: GeometryPrimitive{N,T}
     origin::Point{N,T}
     extremity::Point{N,T}
-    r::T
+    radius::T
 end
 
 """
@@ -15,16 +15,16 @@ end
     Cylinder3{T}
 
 A `Cylinder2` or `Cylinder3` is a 2D/3D cylinder defined by its origin point,
-its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
+its extremity and a radius. `origin`, `extremity` and `radius`, must be specified.
 """
 const Cylinder2{T} = Cylinder{2,T}
 const Cylinder3{T} = Cylinder{3,T}
 
 origin(c::Cylinder{N,T}) where {N,T} = c.origin
 extremity(c::Cylinder{N,T}) where {N,T} = c.extremity
-radius(c::Cylinder{N,T}) where {N,T} = c.r
+radius(c::Cylinder{N,T}) where {N,T} = c.radius
 height(c::Cylinder{N,T}) where {N,T} = norm(c.extremity - c.origin)
-direction(c::Cylinder{N,T}) where {N,T} = (c.extremity .- c.origin) ./ height(c)
+direction(c::Cylinder{N,T}) where {N,T} = (c.extremity - c.origin) ./ height(c)
 
 function rotation(c::Cylinder{2,T}) where {T}
     d2 = direction(c)
@@ -49,11 +49,14 @@ function rotation(c::Cylinder{3,T}) where {T}
 end
 
 function coordinates(c::Cylinder{2,T}, nvertices=(2, 2)) where {T}
-    r = Rect(c.origin[1] - c.r / 2, c.origin[2], c.r, height(c))
+    o = coordinates(c.origin)
+    r = c.radius
+    h = height(c)
+    rect = Rect(o[1] - r / 2, o[2], r, h)
     M = rotation(c)
-    points = coordinates(r, nvertices)
-    vo = to_pointn(Point3{T}, origin(c))
-    return (M * (to_pointn(Point3{T}, point) .- vo) .+ vo for point in points)
+    points = Point.(coordinates(rect, nvertices))
+    vo = to_pointn(Point{3,T}, origin(c))
+    return (M * (to_pointn(Point{3,T}, point) - vo) + coordinates(vo) for point in points)
 end
 
 function faces(sphere::Cylinder{2}, nvertices=(2, 2))
@@ -78,7 +81,7 @@ function coordinates(c::Cylinder{3,T}, nvertices=30) where {T}
         else
             phi = T((2π * (((i + 1) ÷ 2) - 1)) / nbv)
             up = ifelse(isodd(i), 0, h)
-            (M * Point(c.r * cos(phi), c.r * sin(phi), up)) .+ c.origin
+            (M * Point(c.radius * cos(phi), c.radius * sin(phi), up)) .+ c.origin
         end
     end
 
