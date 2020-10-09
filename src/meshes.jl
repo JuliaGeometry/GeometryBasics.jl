@@ -124,7 +124,7 @@ function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=
     if normaltype !== nothing
         primitive_normals = normals(primitive)
         if primitive_normals !== nothing
-            attrs[:normals] = decompose(normaltype, primitive_normals)
+            attrs[:normals] = convert.(normaltype, primitive_normals)
         else
             # Normals not implemented for primitive, so we calculate them!
             n = normals(positions, faces; normaltype=normaltype)
@@ -190,8 +190,7 @@ function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f, facetype=GLTriangleFace)
 end
 
 """

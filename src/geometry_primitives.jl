@@ -57,33 +57,10 @@ end
 
 to_pointn(::Type{T}, x) where {T<:Point} = convert_simplex(T, x)[1]
 
-convert_simplex(::Type{Point{N,T}}, p::Point{N,T}) where {N,T} = (p,)
+# TODO: why increase the dimension of the point?
 function convert_simplex(::Type{Point{N,T}}, p::Point{M,V}) where {N,T,M,V}
     x = coordinates(p)
     return (Point(ntuple(i -> i <= M ? T(x[i]) : T(0), N)),)
-end
-
-function convert_simplex(::Type{Vec{N,T}}, x) where {N,T}
-    N2 = length(x)
-    return (Vec{N,T}(ntuple(i -> i <= N2 ? T(x[i]) : T(0), N)),)
-end
-
-collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
-collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
-
-function collect_with_eltype(::Type{T}, iter) where {T}
-    # TODO we could be super smart about allocating the right length
-    # but its kinda annoying, since e.g. T == Triangle and first(iter) isa Quad
-    # will need double the length etc - but could all be figured out ;)
-    result = T[]
-    for element in iter
-        # convert_simplex always returns a tuple,
-        # so that e.g. convert(Triangle, quad) can return 2 elements
-        for telement in convert_simplex(T, element)
-            push!(result, telement)
-        end
-    end
-    return result
 end
 
 """

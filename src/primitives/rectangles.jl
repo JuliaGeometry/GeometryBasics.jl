@@ -527,8 +527,8 @@ function texturecoordinates(rect::Rect2D, nvertices=(2, 2))
     return ivec(Vec(x, y) for x in xrange, y in yrange)
 end
 
-function normals(rect::Rect2D, nvertices=(2, 2))
-    return Iterators.repeated((0, 0, 1), prod(nvertices))
+function normals(::Rect2D, nvertices=(2, 2))
+    return Iterators.repeated(Vec(0, 0, 1), prod(nvertices))
 end
 
 ##
