@@ -3,7 +3,7 @@ using Test, GeometryBasics
 @testset "algorithms.jl" begin
     cube = FRect(Vec(-0.5,-0.5,-0.5), Vec(1,1,1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
-    cube_vertices = decompose(Point{3,Float32}, cube)
+    cube_vertices = decompose(Point3f, cube)
     @test area(cube_vertices, cube_faces) == 6
     mesh = Mesh(cube_vertices, cube_faces)
     @test GeometryBasics.volume(mesh) ≈ 1
@@ -38,13 +38,14 @@ end
 
         o, extr, r = Point2f(1, 2), Point2f(3, 4), 5.0f0
         s = Cylinder(o, extr, r)
-        positions = Point3f[(-0.7677671, 3.767767, 0.0),
-                            (2.767767, 0.23223293, 0.0),
-                            (0.23223293, 4.767767, 0.0),
-                            (3.767767, 1.2322329, 0.0),
-                            (1.2322329, 5.767767, 0.0),
-                            (4.767767, 2.232233, 0.0)]
-        @test decompose(Point3f, Tesselation(s, (2, 3))) ≈ positions
+        target = Point3f[(-0.7677671, 3.767767, 0.0),
+                         (2.767767, 0.23223293, 0.0),
+                         (0.23223293, 4.767767, 0.0),
+                         (3.767767, 1.2322329, 0.0),
+                         (1.2322329, 5.767767, 0.0),
+                         (4.767767, 2.232233, 0.0)]
+        points = decompose(Point3f, Tesselation(s, (2, 3)))
+        @test coordinates.(points) ≈ coordinates.(target)
 
         FT = TriangleFace{Int}
         faces = FT[(1, 2, 4), (1, 4, 3), (3, 4, 6), (3, 6, 5)]
