@@ -87,8 +87,8 @@ const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
 """
-    mesh(primitive::GeometryPrimitive;
-         pointtype=Point2, facetype=GLTriangle,
+    mesh(primitive::Meshable{N,T};
+         pointtype=Point{N,T}, facetype=GLTriangle,
          uvtype=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
@@ -98,8 +98,8 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable{N,T}; pointtype=Point{N,T}, facetype=GLTriangleFace, uv=nothing,
-              normaltype=nothing) where {N,T}
+function mesh(primitive::Meshable{N,T}; pointtype=Point{N,T}, facetype=GLTriangleFace,
+              uv=nothing, normaltype=nothing) where {N,T}
 
     positions = decompose(pointtype, primitive)
     faces = decompose(facetype, primitive)
