@@ -358,27 +358,27 @@ end
         @test mesh == [Triangle(x, x, x)]
 
         points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point2)
-        faces = connect([1, 2, 3, 4], SimplexFace{4})
-        mesh = Mesh(points, faces)
+        sfaces = connect([1, 2, 3, 4], SimplexFace{4})
+        mesh = Mesh(points, sfaces)
         @test mesh == [Tetrahedron(points...)]
 
         points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
-        normals = rand(Vec3f, 8)
+        normal = rand(Vec3f, 8)
         uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
         meshuv = Mesh(meta(points; uv=uv), tfaces)
-        meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
+        meshuvnormal = Mesh(meta(points; normals=normal, uv=uv), tfaces)
 
         @test mesh isa GLPlainMesh
         @test meshuv isa GLUVMesh3D
         @test meshuvnormal isa GLNormalUVMesh3D
 
         t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
-        m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
-        m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
+        m = GeometryBasics.mesh(t, pointtype=Point2f, facetype=QuadFace{Int})
+        m2 = GeometryBasics.mesh(m, pointtype=Point2f, facetype=QuadFace{GLIndex})
         @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
-        @test GeometryBasics.coordinates(m2) isa Vector{Point3f}
+        @test GeometryBasics.coordinates(m2) isa Vector{Point2f}
 
     end
 
@@ -451,7 +451,7 @@ end
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
-    @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
+    @test iterate(texturecoordinates(r2)) == ([0.0, 1.0], ((0.0, 2), (1.0, 2)))
     r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
@@ -459,13 +459,13 @@ end
 
     points = decompose(Point2f, HyperSphere(Point2f(0, 0), 1.0f0))
     m = GeometryBasics.mesh(points)
-    @test coordinates(m) === points
+    @test coordinates(m) == points
 
     linestring = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
     pts = Point{2, Int}[(10, 10), (20, 20), (10, 40)]
     linestring = LineString(pts)
     pts_decomp = decompose(Point{2, Int}, linestring)
-    @test pts === pts_decomp
+    @test pts == pts_decomp
 
     pts_ext = Point{2, Int}[(5, 1), (3, 3), (4, 8), (1, 2), (5, 1)]
     ls_ext = LineString(pts_ext)
@@ -548,6 +548,7 @@ end
     points2 = decompose(Point3, m)
     @test coordinates.(points1) ≈ coordinates.(points2)
 
+    m = GeometryBasics.mesh(s, pointtype=Point3f)
     tmesh = triangle_mesh(m)
     @test tmesh isa GLPlainMesh
     points1 = coordinates(tmesh)
@@ -563,7 +564,6 @@ end
     normals2 = decompose_normals(nmesh)
     @test isequal(normals1, normals2)
 
-    m = GeometryBasics.mesh(s, pointtype=Point3f)
     @test m isa Mesh{3,Float32}
     @test coordinates(m) isa Vector{Point3f}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
