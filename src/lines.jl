@@ -7,10 +7,10 @@ Returns intersection_found::Bool, intersection_point
 """
 function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
     T = promote_type(T1, T2)
-    v1, v2 = a
-    v3, v4 = b
+    v1, v2 = coordinates.(a)
+    v3, v4 = coordinates.(b)
     MT = Mat{2,2,T,4}
-    p0 = zero(Point2{T})
+    p0 = Point{2,T}(0, 0)
 
     verticalA = v1[1] == v2[1]
     verticalB = v3[1] == v4[1]
@@ -55,10 +55,10 @@ function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
     (y < prevfloat(min(v3[2], v4[2])) || y > nextfloat(max(v3[2], v4[2]))) &&
         return false, p0
 
-    point = Point2{T}(x, y)
+    point = Point{2,T}(x, y)
     # don't forget to rotate the answer back
     if dorotation
-        point = transpose(rotation) * point
+        point = Point(transpose(rotation) * coordinates(point))
     end
 
     return true, point

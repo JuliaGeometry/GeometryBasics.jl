@@ -88,7 +88,7 @@ const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
 """
     mesh(primitive::GeometryPrimitive;
-         pointtype=Point, facetype=GLTriangle,
+         pointtype=Point2, facetype=GLTriangle,
          uvtype=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
@@ -98,7 +98,7 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
+function mesh(primitive::Meshable; pointtype=Point2, facetype=GLTriangleFace, uv=nothing,
               normaltype=nothing)
 
     positions = decompose(pointtype, primitive)
@@ -170,12 +170,11 @@ function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
 end
 
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
+    mesh(primitive; pointtype=Point{N,T}, uv=Vec{2,T}, facetype=GLTriangleFace)
 end
 
-function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+function uv_normal_mesh(primitive::Meshable{N,T}) where {N,T}
+    mesh(primitive; pointtype=Point{N,T}, uv=Vec{2,T}, normaltype=Vec{3,T}, facetype=GLTriangleFace)
 end
 
 function normal_mesh(points::AbstractVector{<:AbstractPoint},
@@ -200,7 +199,7 @@ Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
 function volume(triangle::Triangle) where {VT,FT}
-    v1, v2, v3 = triangle
+    v1, v2, v3 = coordinates.(triangle)
     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end

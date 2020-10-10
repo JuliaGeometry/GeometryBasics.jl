@@ -56,8 +56,8 @@ function coordinates(s::Circle, nvertices=64)
     return (inner(φ) for φ in φ)
 end
 
-function texturecoordinates(s::Circle, nvertices=64)
-    return coordinates(Circle(Point2f0(0.5,0.5), 0.5f0), nvertices)
+function texturecoordinates(s::HyperSphere{N,T}, nvertices=64) where {N,T}
+    return coordinates(HyperSphere(Point2f(0.5,0.5), 0.5f0), nvertices)
 end
 
 function coordinates(s::Sphere, nvertices=24)
@@ -78,6 +78,6 @@ function faces(::Sphere, nvertices=24)
     return faces(Rect(0, 0, 1, 1), (nvertices, nvertices))
 end
 
-function normals(::Sphere{T}, nvertices=24) where {T}
-    return coordinates(Sphere(Point{3,T}(0,0,0), 1), nvertices)
+function normals(::HyperSphere{N,T}, nvertices=24) where {N,T}
+    return coordinates(HyperSphere(Point{3,T}(0,0,0), T(1)), nvertices)
 end

@@ -77,7 +77,7 @@ x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
     return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<:Point{N}},
+@inline function connect(points::AbstractVector{T}, ::Type{<:AbstractPoint{N}},
                          skip::Int=N) where {T <: Real,N}
     return reinterpret(Point{N,T}, TupleView{N,skip}(points))
 end

@@ -55,12 +55,18 @@ Extract all line segments in a Face.
     return v
 end
 
+# TODO: review these
 to_pointn(::Type{T}, x) where {T<:Point} = convert_simplex(T, x)[1]
 
 # TODO: why increase the dimension of the point?
 function convert_simplex(::Type{Point{N,T}}, p::Point{M,V}) where {N,T,M,V}
     x = coordinates(p)
     return (Point(ntuple(i -> i <= M ? T(x[i]) : T(0), N)),)
+end
+
+# TODO: review these
+function convert_simplex(::Type{Vec{N,T}}, v::Vec{M,V}) where {N,T,M,V}
+    return (Vec(ntuple(i -> i <= M ? T(v[i]) : T(0), N)),)
 end
 
 """
