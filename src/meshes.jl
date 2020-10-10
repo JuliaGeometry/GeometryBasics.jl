@@ -98,8 +98,8 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable; pointtype=Point2, facetype=GLTriangleFace, uv=nothing,
-              normaltype=nothing)
+function mesh(primitive::Meshable{N,T}; pointtype=Point{N,T}, facetype=GLTriangleFace, uv=nothing,
+              normaltype=nothing) where {N,T}
 
     positions = decompose(pointtype, primitive)
     faces = decompose(facetype, primitive)
@@ -161,12 +161,16 @@ function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
     return Mesh(positions, faces)
 end
 
-function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+function triangle_mesh(primitive::Meshable{N,T}; nvertices=nothing) where {N,T}
     if nvertices !== nothing
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,T}, facetype=GLTriangleFace)
+end
+
+function triangle_mesh(points::AbstractVector{P}; nvertices=nothing) where {P<:AbstractPoint}
+    triangle_mesh(Polygon(points), nvertices=nvertices)
 end
 
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
@@ -179,7 +183,7 @@ end
 
 function normal_mesh(points::AbstractVector{<:AbstractPoint},
                      faces::AbstractVector{<:AbstractFace})
-    _points = decompose(Point3f0, points)
+    _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
 end

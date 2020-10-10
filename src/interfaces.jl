@@ -1,3 +1,12 @@
+# TODO: review these
+"""
+    coordinates(geometry)
+Returns the vertices of a geometry.
+"""
+function coordinates(points::AbstractVector{<:AbstractPoint})
+    return points
+end
+
 """
     faces(geometry)
 Returns the face connections of a geometry. Is allowed to return lazy iterators!
@@ -33,7 +42,7 @@ To transport this information to the various decompose methods, you can wrap it
 in the Tesselation object e.g. like this:
 
 ```julia
-sphere = Sphere(Point3f0(0), 1)
+sphere = Sphere(Point3f(0,0,0), 1.0f0)
 m1 = mesh(sphere) # uses a default value for tesselation
 m2 = mesh(Tesselation(sphere, 64)) # uses 64 for tesselation
 length(coordinates(m1)) != length(coordinates(m2))
