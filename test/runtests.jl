@@ -9,7 +9,7 @@ using GeometryBasics: attributes
     @testset "Meshes" begin
 
         @testset "per vertex attributes" begin
-            points = rand(Point{3, Float64}, 8)
+            points = rand(Point3, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(Vec3, 8)
             stress = LinRange(0, 1, 8)
@@ -58,7 +58,7 @@ using GeometryBasics: attributes
     end
 
     @testset "polygon with metadata" begin
-        polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
+        polys = [Polygon(rand(Point2f, 20)) for i in 1:10]
         pnames = [randstring(4) for i in 1:10]
         numbers = LinRange(0.0, 1.0, 10)
         bin = rand(Bool, 10)
@@ -83,11 +83,7 @@ using GeometryBasics: attributes
     end
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
-        @test p isa AbstractVector{Float64}
         pm = GeometryBasics.PointMeta(1.1, 2.2; a=1, b=2)
-        p1 = Point(2.2, 3.6)
-        p2 = [p, p1]
-        @test coordinates(p2) == p2
         @test meta(pm) === (a=1, b=2)
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
@@ -123,7 +119,7 @@ using GeometryBasics: attributes
     end
 
     @testset "Mesh with metadata" begin
-       m = triangle_mesh(Sphere(Point3f0(0), 1))
+       m = triangle_mesh(HyperSphere(Point3f(0,0,0), 1.0f0))
        m_meta = MeshMeta(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
        @test meta(m_meta) === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
        @test metafree(m_meta) === m
@@ -133,7 +129,7 @@ end
 
 @testset "embedding MetaT" begin
     @testset "MetaT{Polygon}" begin
-        polys = [Polygon(rand(Point{2, Float32}, 20)) for i in 1:10]
+        polys = [Polygon(rand(Point2f, 20)) for i in 1:10]
         multipol = MultiPolygon(polys)
         pnames = [randstring(4) for i in 1:10]
         numbers = LinRange(0.0, 1.0, 10)
@@ -160,11 +156,7 @@ end
 
     @testset "MetaT{Point}" begin
         p = Point(1.1, 2.2)
-        @test p isa AbstractVector{Float64}
         pm = MetaT(Point(1.1, 2.2); a=1, b=2)
-        p1 = Point(2.2, 3.6)
-        p2 = [p, p1]
-        @test coordinates(p2) == p2
         @test pm.meta === (a=1, b=2)
         @test pm.main === p
         @test propertynames(pm) == (:main, :a, :b)
@@ -173,14 +165,13 @@ end
     end
 
     @testset "MetaT{MultiPoint}" begin
-        p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
-        @test p isa AbstractVector
-        mpm = MetaT(MultiPoint(p); a=1, b=2)
-        @test coordinates(mpm.main) == Point{2, Float64}[(x, x+1) for x in 1:5]
+        ps = [Point2(x, x+1) for x in 1:5]
+        @test ps isa AbstractVector
+        mpm = MetaT(MultiPoint(ps); a=1, b=2)
+        @test mpm.main == ps
         @test mpm.meta === (a=1, b=2)
-        @test mpm.main == p
         @test propertynames(mpm) == (:main, :a, :b)
-        @test GeometryBasics.metafree(mpm) == p
+        @test GeometryBasics.metafree(mpm) == ps
         @test GeometryBasics.meta(mpm) == (a = 1, b = 2)
     end
 
@@ -213,7 +204,7 @@ end
 
    @testset "MetaT{Mesh}" begin
         @testset "per vertex attributes" begin
-            points = rand(Point{3, Float64}, 8)
+            points = rand(Point3, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(Vec3, 8)
             stress = LinRange(0, 1, 8)
@@ -252,16 +243,16 @@ end
 
     @testset "connected views" begin
         numbers = [1, 2, 3, 4, 5, 6]
-        x = connect(numbers, Point{2})
+        x = connect(numbers, Point2)
 
-        @test x == Point[(1, 2), (3, 4), (5, 6)]
+        @test x == Point{2,Int}[(1, 2), (3, 4), (5, 6)]
 
         line = connect(x, Line, 1)
         @test line == [Line(Point(1, 2), Point(3, 4)), Line(Point(3, 4), Point(5, 6))]
 
         triangles = connect(x, Triangle)
         @test triangles == [Triangle(Point(1, 2), Point(3, 4), Point(5, 6))]
-        x = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+        x = connect([1, 2, 3, 4, 5, 6, 7, 8], Point2)
         tetrahedra = connect(x, NSimplex{4})
         @test tetrahedra == [Tetrahedron(x[1], x[2], x[3], x[4])]
 
@@ -283,10 +274,10 @@ end
         faces = connect([1, 2, 3], TriangleFace)
         triangles = connect(points, faces)
         @test triangles == [Triangle(Point(1, 2), Point(3, 4), Point(5, 6))]
-        x = Point{3}(1.0)
+        x = Point3(1,1,1)
         triangles = connect([x], [TriangleFace(1, 1, 1)])
         @test triangles == [Triangle(x, x, x)]
-        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point2)
         faces = connect([1, 2, 3, 4], SimplexFace{4})
         triangles = connect(points, faces)
         @test triangles == [Tetrahedron(points...)]
@@ -309,7 +300,7 @@ end
         linestring = LineString(points)
         @test linestring == [Line(points[1], points[2]), Line(points[2], points[3])]
 
-        points = rand(Point{2, Float64}, 4)
+        points = rand(Point2, 4)
         linestring = LineString(points, 2)
         @test linestring == [Line(points[1], points[2]), Line(points[3], points[4])]
 
@@ -332,11 +323,11 @@ end
 
     @testset "Polygon" begin
 
-        points = connect([1, 2, 3, 4, 5, 6], Point{2})
+        points = connect([1, 2, 3, 4, 5, 6], Point2)
         polygon = Polygon(points)
         @test polygon == Polygon(LineString(points))
 
-        points = rand(Point{2, Float64}, 4)
+        points = rand(Point2, 4)
         linestring = LineString(points, 2)
         @test Polygon(points, 2) == Polygon(linestring)
 
@@ -358,37 +349,36 @@ end
     @testset "Mesh" begin
 
         numbers = [1, 2, 3, 4, 5, 6]
-        points = connect(numbers, Point{2})
-
+        points = connect(numbers, Point2)
         mesh = Mesh(points, [1,2,3])
         @test mesh == [Triangle(points...)]
 
-        x = Point{3}(1.0)
+        x = Point3(1,1,1)
         mesh = Mesh([x], [TriangleFace(1, 1, 1)])
         @test mesh == [Triangle(x, x, x)]
 
-        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
-        faces = connect([1, 2, 3, 4], SimplexFace{4})
-        mesh = Mesh(points, faces)
+        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point2)
+        sfaces = connect([1, 2, 3, 4], SimplexFace{4})
+        mesh = Mesh(points, sfaces)
         @test mesh == [Tetrahedron(points...)]
 
-        points = rand(Point3f0, 8)
+        points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
-        normals = rand(Vec3f, 8)
+        normal = rand(Vec3f, 8)
         uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
         meshuv = Mesh(meta(points; uv=uv), tfaces)
-        meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
+        meshuvnormal = Mesh(meta(points; normals=normal, uv=uv), tfaces)
 
         @test mesh isa GLPlainMesh
         @test meshuv isa GLUVMesh3D
         @test meshuvnormal isa GLNormalUVMesh3D
 
         t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
-        m = GeometryBasics.mesh(t, pointtype=Point3f0, facetype=QuadFace{Int})
-        m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
+        m = GeometryBasics.mesh(t, pointtype=Point2f, facetype=QuadFace{Int})
+        m2 = GeometryBasics.mesh(m, pointtype=Point2f, facetype=QuadFace{GLIndex})
         @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
-        @test GeometryBasics.coordinates(m2) isa Vector{Point3f0}
+        @test GeometryBasics.coordinates(m2) isa Vector{Point2f}
 
     end
 
@@ -425,22 +415,22 @@ end
 end
 
 @testset "decompose/triangulation" begin
-    primitive = Sphere(Point3f0(0), 1)
+    primitive = HyperSphere(Point3f(0,0,0), 1.0f0)
     @test ndims(primitive) === 3
     mesh = triangle_mesh(primitive)
-    @test decompose(Point, mesh) isa Vector{Point3f0}
-    @test decompose(Point, primitive) isa Vector{Point3f0}
+    @test decompose(Point3f, mesh) isa Vector{Point3f}
+    @test decompose(Point3f, primitive) isa Vector{Point3f}
 
     primitive = Rect2D(0, 0, 1, 1)
     mesh = triangle_mesh(primitive)
 
-    @test decompose(Point, mesh) isa Vector{Point2f0}
-    @test decompose(Point, primitive) isa Vector{Point2{Int}}
+    @test decompose(Point2f, mesh) isa Vector{Point2f}
+    @test decompose(Point{2,Int}, primitive) isa Vector{Point{2,Int}}
 
     primitive = Rect3D(0, 0, 0, 1, 1, 1)
     triangle_mesh(primitive)
 
-    primitive = Sphere(Point3f0(0), 1)
+    primitive = HyperSphere(Point3f(0,0,0), 1.0f0)
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
     primitive = Rect2D(0, 0, 1, 1)
@@ -450,32 +440,32 @@ end
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f, HyperSphere(Point2f(0, 0), 1.0f0))
     tmesh = triangle_mesh(points)
     @test normals(tmesh) == nothing
 
-    m = GeometryBasics.mesh(Sphere(Point3f0(0), 1))
-    @test normals(m) == nothing
+    m = GeometryBasics.mesh(HyperSphere(Point3f(0,0,0), 1.0f0))
+    @test normals(m) === nothing
     m_normals = pointmeta(m, Normal())
     @test normals(m_normals) isa Vector{Vec3f}
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
-    @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
+    @test iterate(texturecoordinates(r2)) == ([0.0, 1.0], ((0.0, 2), (1.0, 2)))
     r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
     @test boundingbox(Point.(uv)) == Rect(0, 0, 0, 1, 1, 1)
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f, HyperSphere(Point2f(0, 0), 1.0f0))
     m = GeometryBasics.mesh(points)
-    @test coordinates(m) === points
+    @test coordinates(m) == points
 
     linestring = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
     pts = Point{2, Int}[(10, 10), (20, 20), (10, 40)]
     linestring = LineString(pts)
     pts_decomp = decompose(Point{2, Int}, linestring)
-    @test pts === pts_decomp
+    @test pts == pts_decomp
 
     pts_ext = Point{2, Int}[(5, 1), (3, 3), (4, 8), (1, 2), (5, 1)]
     ls_ext = LineString(pts_ext)
@@ -490,7 +480,7 @@ end
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
+    m = uv_normal_mesh(HyperSphere(Point2f(0, 0), 1.0f0))
     # for 2D primitives we dont actually calculate normals
     @test !hasproperty(m, :normals)
 end
@@ -498,16 +488,14 @@ end
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(FRect3D(Vec(-1,-1,-1), Vec(1, 2, 3)))
     m_normal = normal_mesh(m)
-    # make sure we don't loose the uv
     @test hasproperty(m_normal, :uv)
     @test m == m_normal
-    # Make sure we don't create any copies
-    @test m.position === m_normal.position
-    @test m.normals === m_normal.normals
-    @test m.uv === m_normal.uv
+    @test m.position == m_normal.position
+    @test m.normals == m_normal.normals
+    @test m.uv == m_normal.uv
 
     m = GeometryBasics.mesh(FRect3D(Vec(-1,-1,-1), Vec(1, 2, 3));
-                            uv=Vec2, normaltype=Vec3, pointtype=Point3{Float64})
+                            uv=Vec2, normaltype=Vec3, pointtype=Point3)
     m_normal = normal_mesh(m)
     @test hasproperty(m_normal, :uv)
     @test m.position !== m_normal.position
@@ -518,7 +506,7 @@ end
 
 @testset "modifying meta" begin
     xx = rand(10)
-    points = rand(Point3f0, 10)
+    points = rand(Point3f, 10)
     m = GeometryBasics.Mesh(meta(points, xx=xx), GLTriangleFace[(1,2,3), (3,4,5)])
     color = rand(10)
     m = pointmeta(m; color=color)
@@ -540,37 +528,44 @@ end
     @test xxpopt === xx
 
     @testset "creating meta" begin
-        x = Point3f0[(1,3,4)]
+        x = Point3f[(1,3,4)]
         # no meta gets added, so should stay the same
         @test meta(x) === x
         @test meta(x, value=[1]).position === x
     end
-    pos = Point2f0[(10, 2)]
+    pos = Point2f[(10, 2)]
     m = Mesh(meta(pos, uv=[Vec2f(1, 1)]), [GLTriangleFace(1, 1, 1)])
     @test m.position === pos
 end
 
 @testset "mesh conversion" begin
-    s = Sphere(Point3(0.0), 1.0)
-    m = GeometryBasics.mesh(s)
-    @test m isa Mesh{3, Float64}
-    @test coordinates(m) isa Vector{Point{3, Float64}}
+    s = HyperSphere(Point3(0,0,0), 1.0)
+    m = GeometryBasics.mesh(s, pointtype=Point3)
+    @test m isa Mesh{3,Float64}
+    @test coordinates(m) isa Vector{Point3}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
-    # Check, that decompose isn't making a copy for matching eltype
-    @test coordinates(m) === decompose(Point{3, Float64}, m)
+    points1 = coordinates(m)
+    points2 = decompose(Point3, m)
+    @test coordinates.(points1) ≈ coordinates.(points2)
 
+    m = GeometryBasics.mesh(s, pointtype=Point3f)
     tmesh = triangle_mesh(m)
     @test tmesh isa GLPlainMesh
-    @test coordinates(tmesh) === decompose(Point3f0, tmesh)
+    points1 = coordinates(tmesh)
+    points2 = decompose(Point3f, tmesh)
+    @test coordinates.(points1) ≈ coordinates.(points2)
 
     nmesh = normal_mesh(m)
     @test nmesh isa GLNormalMesh
-    @test metafree(coordinates(nmesh)) === decompose(Point3f0, nmesh)
-    @test normals(nmesh) === decompose_normals(nmesh)
+    points1 = metafree(coordinates(nmesh))
+    points2 = decompose(Point3f, nmesh)
+    @test coordinates.(points1) ≈ coordinates.(points2)
+    normals1 = normals(nmesh)
+    normals2 = decompose_normals(nmesh)
+    @test isequal(normals1, normals2)
 
-    m = GeometryBasics.mesh(s, pointtype=Point3f0)
-    @test m isa Mesh{3, Float32}
-    @test coordinates(m) isa Vector{Point3f0}
+    @test m isa Mesh{3,Float32}
+    @test coordinates(m) isa Vector{Point3f}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end
 
@@ -586,7 +581,7 @@ end
     @test intersects(a, c) === (false, Point(0.0, 0.0))
     @test intersects(d, d) === (false, Point(0.0, 0.0))
     found, point = intersects(d, e)
-    @test found && point ≈ Point(0.0, 4.0)
+    @test found && coordinates(point) ≈ [0.0, 4.0]
     @test intersects(a, f) === (false, Point(0.0, 0.0))
 end
 
@@ -622,8 +617,8 @@ end
 end
 
 @testset "MetaT and heterogeneous data" begin
-    ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]
-    mls = MultiLineString([LineString([Point(i+1, (i)^2/6), Point(i*0.75,i+8), Point(i/2.5, i/6.79)]) for i in 5:10])
+    ls = [LineString([Point(i*1.0, (i+1)^2/6), Point(i*0.86,i+5.0), Point(i/3, i/7)]) for i in 1:10]
+    mls = MultiLineString([LineString([Point(i+1.0, (i)^2/6), Point(i*0.75,i+8.0), Point(i/2.5, i/6.79)]) for i in 5:10])
     poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)])
     geom = [ls..., mls, poly]
     prop = Any[(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:11]
@@ -642,8 +637,7 @@ end
     (LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
     (:country_states, :rainfall), Tuple{String,Float64})
 
-
-    @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1, (2)^2/6), Point(1*0.86,6), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
+    @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1.0, (2)^2/6), Point(1*0.86,6.0), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
 
     @test Base.getindex(feat[1], 1) isa Line
     @test Base.size(feat[1]) == (2,)

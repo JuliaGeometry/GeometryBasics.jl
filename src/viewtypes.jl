@@ -77,7 +77,7 @@ x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
     return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<:Point{N}},
+@inline function connect(points::AbstractVector{T}, ::Type{<:AbstractPoint{N}},
                          skip::Int=N) where {T <: Real,N}
     return reinterpret(Point{N,T}, TupleView{N,skip}(points))
 end
@@ -109,7 +109,7 @@ FaceView enables to link one array of points via a face array, to generate one
 abstract array of elements.
 E.g., this becomes possible:
 ```
-x = FaceView(rand(Point3f0, 10), TriangleFace[(1, 2, 3), (2, 4, 5), ...])
+x = FaceView(rand(Point3f, 10), TriangleFace[(1, 2, 3), (2, 4, 5), ...])
 x[1] isa Triangle == true
 x isa AbstractVector{<: Triangle} == true
 # This means we can use it as a mesh:

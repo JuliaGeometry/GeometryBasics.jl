@@ -106,23 +106,3 @@ macro fixed_vector(name, parent)
     end
     return esc(expr)
 end
-
-abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
-@fixed_vector Point AbstractPoint
-
-const Pointf0{N} = Point{N,Float32}
-
-for i in 1:4
-    for T in [:Point]
-        name = Symbol("$T$i")
-        namef0 = Symbol("$T$(i)f0")
-        @eval begin
-            const $name = $T{$i}
-            const $namef0 = $T{$i,Float32}
-            export $name
-            export $namef0
-        end
-    end
-end
-
-export Pointf0

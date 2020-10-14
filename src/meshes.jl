@@ -87,8 +87,8 @@ const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
 """
-    mesh(primitive::GeometryPrimitive;
-         pointtype=Point, facetype=GLTriangle,
+    mesh(primitive::Meshable{N,T};
+         pointtype=Point{N,T}, facetype=GLTriangle,
          uvtype=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
@@ -98,8 +98,8 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
-              normaltype=nothing)
+function mesh(primitive::Meshable{N,T}; pointtype=Point{N,T}, facetype=GLTriangleFace,
+              uv=nothing, normaltype=nothing) where {N,T}
 
     positions = decompose(pointtype, primitive)
     faces = decompose(facetype, primitive)
@@ -124,7 +124,7 @@ function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=
     if normaltype !== nothing
         primitive_normals = normals(primitive)
         if primitive_normals !== nothing
-            attrs[:normals] = decompose(normaltype, primitive_normals)
+            attrs[:normals] = convert.(normaltype, primitive_normals)
         else
             # Normals not implemented for primitive, so we calculate them!
             n = normals(positions, faces; normaltype=normaltype)
@@ -161,26 +161,29 @@ function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
     return Mesh(positions, faces)
 end
 
-function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+function triangle_mesh(primitive::Meshable{N,T}; nvertices=nothing) where {N,T}
     if nvertices !== nothing
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,T}, facetype=GLTriangleFace)
+end
+
+function triangle_mesh(points::AbstractVector{P}; nvertices=nothing) where {P<:AbstractPoint}
+    triangle_mesh(Polygon(points), nvertices=nvertices)
 end
 
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
+    mesh(primitive; pointtype=Point{N,T}, uv=Vec{2,T}, facetype=GLTriangleFace)
 end
 
-function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+function uv_normal_mesh(primitive::Meshable{N,T}) where {N,T}
+    mesh(primitive; pointtype=Point{N,T}, uv=Vec{2,T}, normaltype=Vec{3,T}, facetype=GLTriangleFace)
 end
 
 function normal_mesh(points::AbstractVector{<:AbstractPoint},
                      faces::AbstractVector{<:AbstractFace})
-    _points = decompose(Point3f0, points)
+    _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
 end
@@ -190,8 +193,7 @@ function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f, facetype=GLTriangleFace)
 end
 
 """
@@ -201,7 +203,7 @@ Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
 function volume(triangle::Triangle) where {VT,FT}
-    v1, v2, v3 = triangle
+    v1, v2, v3 = coordinates.(triangle)
     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end

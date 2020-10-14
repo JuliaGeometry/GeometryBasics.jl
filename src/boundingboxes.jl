@@ -8,10 +8,10 @@ boundingbox(geom) = boundingbox(coordinates(geom))
 # fallback implementation treats geometry as
 # a set of points (i.e. coordinates)
 function boundingbox(geometry::AbstractArray{<:AbstractPoint{N,T}}) where {N,T}
-    vmin = Point{N,T}(typemax(T))
-    vmax = Point{N,T}(typemin(T))
+    vmin = vfill(Vec{N,T}, typemax(T))
+    vmax = vfill(Vec{N,T}, typemin(T))
     for p in geometry
-        vmin, vmax = minmax(p, vmin, vmax)
+        vmin, vmax = minmax(coordinates(p), vmin, vmax)
     end
     Rect{N,T}(vmin, vmax - vmin)
 end

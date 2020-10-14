@@ -1,8 +1,7 @@
+# TODO: review these
 """
     coordinates(geometry)
-Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy iterators!
-Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
-`ConcretePointType` to be something like `Point{3, Float32}`.
+Returns the vertices of a geometry.
 """
 function coordinates(points::AbstractVector{<:AbstractPoint})
     return points
@@ -43,7 +42,7 @@ To transport this information to the various decompose methods, you can wrap it
 in the Tesselation object e.g. like this:
 
 ```julia
-sphere = Sphere(Point3f0(0), 1)
+sphere = Sphere(Point3f(0,0,0), 1.0f0)
 m1 = mesh(sphere) # uses a default value for tesselation
 m2 = mesh(Tesselation(sphere, 64)) # uses 64 for tesselation
 length(coordinates(m1)) != length(coordinates(m2))
@@ -80,24 +79,32 @@ function texturecoordinates(tesselation::Tesselation)
     return texturecoordinates(tesselation.primitive, nvertices(tesselation))
 end
 
-## Decompose methods
-# Dispatch type to make `decompose(UV{Vec2f}, primitive)` work
-# and to pass through tesselation information
-
 # Types that can be converted to a mesh via the functions below
-const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim,T},
-                              GeometryPrimitive{Dim,T},
-                              AbstractVector{<:AbstractPoint{Dim,T}}}
+const Meshable{Dim,T} = Union{Mesh{Dim,T},
+                              Tesselation{Dim,T},
+                              AbstractPolygon{Dim,T},
+                              GeometryPrimitive{Dim,T}}
 
-struct UV{T} end
-UV(::Type{T}) where {T} = UV{T}()
-UV() = UV(Vec2f)
-struct UVW{T} end
-UVW(::Type{T}) where {T} = UVW{T}()
-UVW() = UVW(Vec3f)
-struct Normal{T} end
-Normal(::Type{T}) where {T} = Normal{T}()
-Normal() = Normal(Vec3f)
+"""
+    decompose(T, meshable)
+
+Decompose a `meshable` object (e.g. Polygon) into elements of type `T`
+
+## Example
+
+```julia
+decompose(Point3, Rect3D())
+```
+"""
+function decompose(::Type{T}, primitive) where {T}
+    return collect_with_eltype(T, primitive)
+end
+
+# Specializations
+
+function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
+    convert.(P, metafree(coordinates(primitive)))
+end
 
 function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     f = faces(primitive)
@@ -105,21 +112,23 @@ function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     return collect_with_eltype(F, f)
 end
 
-function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
-    return collect_with_eltype(P, metafree(coordinates(primitive)))
-end
-
-function decompose(::Type{Point}, primitive::Meshable{Dim,T}) where {Dim,T}
-    return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
-end
-
+# TODO: review these
 function decompose(::Type{Point}, primitive::LineString{Dim,T}) where {Dim,T}
     return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
 end
 
-function decompose(::Type{T}, primitive) where {T}
-    return collect_with_eltype(T, primitive)
-end
+# TODO: review these
+struct UV{T} end
+UV(::Type{T}) where {T} = UV{T}()
+UV() = UV(Vec2f)
+
+struct UVW{T} end
+UVW(::Type{T}) where {T} = UVW{T}()
+UVW() = UVW(Vec3f)
+
+struct Normal{T} end
+Normal(::Type{T}) where {T} = Normal{T}()
+Normal() = Normal(Vec3f)
 
 decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
@@ -133,14 +142,14 @@ function decompose(NT::Normal{T}, primitive) where {T}
     return collect_with_eltype(T, n)
 end
 
-function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
+function decompose(UVT::Union{UV{T},UVW{T}}, primitive::Meshable{Dim,V}) where {Dim,T,V}
     # This is the fallback for texture coordinates if a primitive doesn't overload them
     # We just take the positions and normalize them
     uv = texturecoordinates(primitive)
     if uv === nothing
         # If the primitive doesn't even have coordinates, we're out of options and return
         # nothing, indicating that texturecoordinates aren't implemented
-        positions = decompose(Point, primitive)
+        positions = decompose(Point{Dim,V}, primitive)
         positions === nothing && return nothing
         # Let this overlord do the work
         return decompose(UVT, positions)
@@ -148,17 +157,20 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
     return collect_with_eltype(T, uv)
 end
 
-function decompose(UVT::Union{UV{T},UVW{T}},
-                   positions::AbstractVector{<:Point}) where {T}
+function decompose(UVT::Union{UV{T},UVW{T}}, positions::AbstractVector{<:AbstractPoint}) where {T}
     N = length(T)
-    bb = boundingbox(positions) # Make sure we get this as points
+    bb = boundingbox(positions)
     return map(positions) do p
-        return (p .- minimum(bb)) ./ widths(bb)
+        return (coordinates(p) - minimum(bb)) ./ widths(bb)
     end
 end
 
-# Stay backward compatible:
-
-function decompose(::Type{T}, primitive::Meshable, nvertices) where {T}
-    return decompose(T, Tesselation(primitive, nvertices))
+function collect_with_eltype(::Type{T}, iter) where {T}
+    result = T[]
+    for element in iter
+        for telement in convert_simplex(T, element)
+            push!(result, telement)
+        end
+    end
+    return result
 end
