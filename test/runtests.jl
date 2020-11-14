@@ -638,9 +638,8 @@ end
     @test getproperty(sa, :country_states) isa Array{Any}
     @test getproperty(sa, :main) == geom
 
-    @test GeometryBasics.getnamestypes(typeof(feat[1])) ==
-    (LineString{2,Float64,Point{2,Float64},Base.ReinterpretArray{GeometryBasics.Ngon{2,Float64,2,Point{2,Float64}},1,Tuple{Point{2,Float64},Point{2,Float64}},TupleView{Tuple{Point{2,Float64},Point{2,Float64}},2,1,Array{Point{2,Float64},1}}}},
-    (:country_states, :rainfall), Tuple{String,Float64})
+    maintype, metanames, metatype = GeometryBasics.getnamestypes(typeof(feat[1]))
+    @test (metanames, metatype) == ((:country_states, :rainfall), Tuple{String,Float64})
 
 
     @test StructArrays.createinstance(typeof(feat[1]), LineString([Point(1, (2)^2/6), Point(1*0.86,6), Point(1/3, 1/7)]), "Mumbai", 100) isa typeof(feat[1])
