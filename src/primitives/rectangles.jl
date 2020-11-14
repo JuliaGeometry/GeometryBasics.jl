@@ -4,7 +4,7 @@
 
 A `HyperRectangle` is a generalization of a rectangle into N-dimensions.
 Formally it is the cartesian product of intervals, which is represented by the
-`origin` and `width` fields, whose indices correspond to each of the `N` axes.
+`origin` and `widths` fields, whose indices correspond to each of the `N` axes.
 """
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
     origin::Vec{N,T}
