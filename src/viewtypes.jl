@@ -103,7 +103,7 @@ end
 end
 
 """
-    FaceView{Elemnt, Point, Face, P, F}
+    FaceView{Element, Point, Face, P, F}
 
 FaceView enables to link one array of points via a face array, to generate one
 abstract array of elements.
@@ -114,14 +114,13 @@ x[1] isa Triangle == true
 x isa AbstractVector{<: Triangle} == true
 # This means we can use it as a mesh:
 Mesh(x) # should just work!
-Can also be used for Points:
+# Can also be used for Points:
 
 linestring = FaceView(points, LineFace[...])
 Polygon(linestring)
 ```
 """
 struct FaceView{Element,Point <: AbstractPoint,Face <: AbstractFace,P <: AbstractVector{Point},F <: AbstractVector{Face}} <: AbstractVector{Element}
-
     elements::P
     faces::F
 end
