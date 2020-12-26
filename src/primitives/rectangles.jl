@@ -309,6 +309,13 @@ end
 # set operations
 
 """
+    isempty(h::Rect)
+
+Return `true` if any of the widths of `h` are negative.
+"""
+Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
+
+"""
 Perform a union between two Rects.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
