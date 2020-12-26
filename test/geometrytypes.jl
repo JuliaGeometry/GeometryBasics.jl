@@ -105,6 +105,8 @@ end
                              [2, 2, 2], [2, 2, 1], [1, 2, 1], [1, 2, 2]]
     @test decompose(Point{3,Int}, b) == pt_expb
     mesh = normal_mesh(b)
+
+    @test isempty(Rect{3,Float32}())
 end
 
 NFace = NgonFace
