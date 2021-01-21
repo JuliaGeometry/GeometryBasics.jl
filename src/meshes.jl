@@ -86,6 +86,17 @@ const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim,Float32}
 const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
 const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
+function decompose_triangulate_fallback(primitive::Meshable; pointtype, facetype)
+    positions = decompose(pointtype, primitive)
+    faces = decompose(facetype, primitive)
+    # If faces returns nothing for primitive, we try to triangulate!
+    if faces === nothing
+        # triangulation.jl
+        faces = decompose(facetype, positions)
+    end
+    return positions, faces
+end
+
 """
     mesh(primitive::GeometryPrimitive;
          pointtype=Point, facetype=GLTriangle,
@@ -101,13 +112,7 @@ It also only losely correlates to the number of vertices, depending on the algor
 function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
               normaltype=nothing)
 
-    positions = decompose(pointtype, primitive)
-    faces = decompose(facetype, primitive)
-    # If faces returns nothing for primitive, we try to triangulate!
-    if faces === nothing
-        # triangulation.jl
-        faces = decompose(facetype, positions)
-    end
+    positions, faces = decompose_triangulate_fallback(primitive; pointtype, facetype)
 
     # We want to preserve any existing attributes!
     attrs = attributes(primitive)
@@ -151,8 +156,7 @@ end
 function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
               facetype=GLTriangleFace, normaltype=nothing) where {Dim,T}
 
-    faces = decompose(facetype, polygon)
-    positions = decompose(pointtype, polygon)
+    positions, faces = decompose_triangulate_fallback(polygon; pointtype, facetype)
 
     if normaltype !== nothing
         n = normals(positions, faces; normaltype=normaltype)
