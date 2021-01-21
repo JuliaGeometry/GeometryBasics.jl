@@ -1,9 +1,27 @@
-using Test, Random, StructArrays, Tables, StaticArrays
+using Test, Random, StructArrays, Tables, StaticArrays, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: attributes
 
 @testset "GeometryBasics" begin
+
+@testset "algorithms" begin
+    cube = Rect(Vec3f0(-0.5), Vec3f0(1))
+    cube_faces = decompose(TriangleFace{Int}, faces(cube))
+    cube_vertices = decompose(Point{3,Float32}, cube)
+    @test area(cube_vertices, cube_faces) == 6
+    mesh = Mesh(cube_vertices, cube_faces)
+    @test GeometryBasics.volume(mesh) ≈ 1
+
+    points_cwise = Point2f0[(0,0), (0,1), (1,1)]
+    points_ccwise = Point2f0[(0,0), (1,0), (1,1)]
+    @test area(points_cwise) ≈ -0.5
+    @test area(points_ccwise) ≈ 0.5
+    @test area(OffsetArray(points_cwise, -2)) ≈ -0.5
+
+    points3d = Point3f0[(0,0,0), (0,0,1), (0,1,1)]
+    @test area(OffsetArray(points3d, -2)) ≈ 0.5
+end
 
 @testset "embedding metadata" begin
     @testset "Meshes" begin
