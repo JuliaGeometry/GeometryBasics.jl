@@ -1,7 +1,7 @@
 name = "GeometryBasics"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 authors = ["SimonDanisch <sdanisch@gmail.com>"]
-version = "0.3.5"
+version = "0.3.6"
 
 [deps]
 EarCut_jll = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
