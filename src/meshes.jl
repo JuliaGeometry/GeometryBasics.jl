@@ -112,7 +112,7 @@ It also only losely correlates to the number of vertices, depending on the algor
 function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
               normaltype=nothing)
 
-    positions, faces = decompose_triangulate_fallback(primitive; pointtype, facetype)
+    positions, faces = decompose_triangulate_fallback(primitive; pointtype=pointtype, facetype=facetype)
 
     # We want to preserve any existing attributes!
     attrs = attributes(primitive)
@@ -156,7 +156,7 @@ end
 function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
               facetype=GLTriangleFace, normaltype=nothing) where {Dim,T}
 
-    positions, faces = decompose_triangulate_fallback(polygon; pointtype, facetype)
+    positions, faces = decompose_triangulate_fallback(polygon; pointtype=pointtype, facetype=facetype)
 
     if normaltype !== nothing
         n = normals(positions, faces; normaltype=normaltype)
