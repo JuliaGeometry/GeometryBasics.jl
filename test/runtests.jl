@@ -489,6 +489,12 @@ end
     @test decompose(Point{2, Int}, poly_ext_int) == [pts_ext..., pts_int1..., pts_int2...]
 end
 
+@testset "mesh" begin
+    primitive = Triangle(Point2f0(0), Point2f0(1), Point2f0(1,0))
+    m = GeometryBasics.mesh(primitive)
+    @test length(faces(m)) == 1
+end
+
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
     # for 2D primitives we dont actually calculate normals
