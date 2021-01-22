@@ -24,6 +24,9 @@ using GeometryBasics: attributes
 
     pm2d = [PointMeta(0.0, 0.0, a=:d), PointMeta(0.0, 1.0, a=:e), PointMeta(1.0, 0.0, a=:f)]
     @test area(pm2d) ≈ -0.5
+
+    pm3d = [PointMeta(0.0, 0.0, 0.0, a=:d), PointMeta(0.0, 1.0, 0.0, a=:e), PointMeta(1.0, 0.0, 0.0, a=:f)]
+    @test_broken area(pm3d) ≈ 0.5 # Currently broken as zero(PointMeta(0.0, 0.0, 0.0, a=:d)) fails
 end
 
 @testset "embedding metadata" begin
@@ -113,6 +116,7 @@ end
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
         @test GeometryBasics.MetaFree(typeof(pm)) == Point{2,Float64}
+        @test_broken zero(pm) == [0, 0]
     end
 
     @testset "MultiPoint with metadata" begin
