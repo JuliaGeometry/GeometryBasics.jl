@@ -21,6 +21,9 @@ using GeometryBasics: attributes
 
     points3d = Point3f0[(0,0,0), (0,0,1), (0,1,1)]
     @test area(OffsetArray(points3d, -2)) ≈ 0.5
+
+    pm2d = [PointMeta(0.0, 0.0, a=:d), PointMeta(0.0, 1.0, a=:e), PointMeta(1.0, 0.0, a=:f)]
+    @test area(pm2d) ≈ -0.5
 end
 
 @testset "embedding metadata" begin
@@ -102,13 +105,14 @@ end
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
         @test p isa AbstractVector{Float64}
-        pm = GeometryBasics.PointMeta(1.1, 2.2; a=1, b=2)
+        pm = PointMeta(1.1, 2.2; a=1, b=2)
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
         @test coordinates(p2) == p2
         @test meta(pm) === (a=1, b=2)
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
+        @test GeometryBasics.MetaFree(typeof(pm)) == Point{2,Float64}
     end
 
     @testset "MultiPoint with metadata" begin

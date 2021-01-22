@@ -102,7 +102,7 @@ macro meta_type(name, mainfield, supertype, params...)
             return $MetaName{$(params_sym...),ST,Names,Types}
         end
 
-        GeometryBasics.MetaFree(::Type{<:$MetaName{Typ}}) where {Typ} = Typ
+        GeometryBasics.MetaFree(::Type{<:$MetaName{$(params_sym...),Typ}}) where {$(params_sym...), Typ<:$supertype{$(params_sym...)} } = Typ
         GeometryBasics.MetaFree(::Type{<:$MetaName}) = $name
         GeometryBasics.metafree(x::$MetaName) = getfield(x, :main)
         GeometryBasics.metafree(x::AbstractVector{<:$MetaName}) = getproperty(x, $field)
