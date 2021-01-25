@@ -18,5 +18,4 @@ Cylinder
 GeometryPrimitive
 AbstractSimplex
 AbstractMesh
-AbstractDistanceField
 ```
