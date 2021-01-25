@@ -62,7 +62,7 @@ end
 end
 
 """
-    connect(points::AbstractVector{<: AbstractPoint}, P::Type{<: Polytype{N}}, skip::Int = N)
+    connect(points::AbstractVector{<: AbstractPoint}, P::Type{<: Polytope{N}}, skip::Int = N)
 
 Creates a view that connects a number of points to a Polytope `P`.
 Between each polytope, `skip` elements are skipped untill the next starts.

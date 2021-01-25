@@ -6,16 +6,12 @@
 
 ## Shapes
 
-```@docs
-Circle
-Sphere
-Cylinder
-```
+* [`Circle`](@ref)
+* [`Sphere`](@ref)
+* [`Cylinder`](@ref)
 
 ## Abstract types
 
-```@docs
-GeometryPrimitive
-AbstractSimplex
-AbstractMesh
-```
+* `GeometryPrimitive`
+* `AbstractSimplex`
+* [`AbstractMesh`](@ref)

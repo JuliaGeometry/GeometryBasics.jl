@@ -2,10 +2,8 @@
 
 ## Types
 
-```@docs
-AbstractMesh
-Mesh
-```
+* [`AbstractMesh`](@ref)
+* [`Mesh`](@ref)
 
 ## How to create a mesh
 
