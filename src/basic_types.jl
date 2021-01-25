@@ -197,7 +197,7 @@ end
 """
     LineString(points::AbstractVector{<: AbstractPoint}, skip = 1)
 
-Creates a LineString from a vector of points
+Creates a LineString from a vector of points.
 With `skip == 1`, the default, it will connect the line like this:
 ```julia
 points = Point[a, b, c, d]
