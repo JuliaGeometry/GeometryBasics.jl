@@ -4,6 +4,8 @@ using Documenter
 
 using GeometryBasics
 
+DocMeta.setdocmeta!(GeometryBasics, :DocTestSetup, :(using GeometryBasics); recursive=true)
+
 # Copy the README to serve as the homepage
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md"))
 
