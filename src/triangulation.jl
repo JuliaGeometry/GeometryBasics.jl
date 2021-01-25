@@ -33,23 +33,28 @@ function area(vertices::AbstractVector{<:AbstractPoint{3,VT}},
     return sum(x -> area(vertices, x), faces)
 end
 
-function area(contour::AbstractVector{<:AbstractPoint{N,T}}) where {N,T}
-    n = length(contour)
-    n < 3 && return zero(T)
+"""
+    area(contour::AbstractVector{AbstractPoint}})
+
+Calculate the area of a polygon.
+
+For 2D points, the oriented area is returned (negative when the points are
+oriented clockwise).
+"""
+function area(contour::AbstractVector{<:AbstractPoint{2,T}}) where {T}
+    length(contour) < 3 && return zero(T)
     A = zero(T)
     p = lastindex(contour)
-    q = firstindex(contour)
-    while q <= n
+    for q in eachindex(contour)
         A += cross(contour[p], contour[q])
         p = q
-        q += 1
     end
     return A * T(0.5)
 end
 
-function area(contour::AbstractVector{Point{3,T}}) where {T}
+function area(contour::AbstractVector{<:AbstractPoint{3,T}}) where {T}
     A = zero(eltype(contour))
-    o = contour[1]
+    o = first(contour)
     for i in (firstindex(contour) + 1):(lastindex(contour) - 1)
         A += cross(contour[i] - o, contour[i + 1] - o)
     end
@@ -59,8 +64,7 @@ end
 """
     in(point, triangle)
 
- InsideTriangle decides if a point P is Inside of the triangle
- defined by A, B, C.
+Determine if a point is inside of a triangle.
 """
 function Base.in(P::T, triangle::Triangle) where {T<:AbstractPoint}
     A, B, C = coordinates(triangle)

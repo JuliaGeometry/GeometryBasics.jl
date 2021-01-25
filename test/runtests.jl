@@ -1,9 +1,33 @@
-using Test, Random, StructArrays, Tables, StaticArrays
+using Test, Random, StructArrays, Tables, StaticArrays, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: attributes
 
 @testset "GeometryBasics" begin
+
+@testset "algorithms" begin
+    cube = Rect(Vec3f0(-0.5), Vec3f0(1))
+    cube_faces = decompose(TriangleFace{Int}, faces(cube))
+    cube_vertices = decompose(Point{3,Float32}, cube)
+    @test area(cube_vertices, cube_faces) == 6
+    mesh = Mesh(cube_vertices, cube_faces)
+    @test GeometryBasics.volume(mesh) ≈ 1
+
+    points_cwise = Point2f0[(0,0), (0,1), (1,1)]
+    points_ccwise = Point2f0[(0,0), (1,0), (1,1)]
+    @test area(points_cwise) ≈ -0.5
+    @test area(points_ccwise) ≈ 0.5
+    @test area(OffsetArray(points_cwise, -2)) ≈ -0.5
+
+    points3d = Point3f0[(0,0,0), (0,0,1), (0,1,1)]
+    @test area(OffsetArray(points3d, -2)) ≈ 0.5
+
+    pm2d = [PointMeta(0.0, 0.0, a=:d), PointMeta(0.0, 1.0, a=:e), PointMeta(1.0, 0.0, a=:f)]
+    @test area(pm2d) ≈ -0.5
+
+    pm3d = [PointMeta(0.0, 0.0, 0.0, a=:d), PointMeta(0.0, 1.0, 0.0, a=:e), PointMeta(1.0, 0.0, 0.0, a=:f)]
+    @test_broken area(pm3d) ≈ 0.5 # Currently broken as zero(PointMeta(0.0, 0.0, 0.0, a=:d)) fails
+end
 
 @testset "embedding metadata" begin
     @testset "Meshes" begin
@@ -84,13 +108,15 @@ using GeometryBasics: attributes
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
         @test p isa AbstractVector{Float64}
-        pm = GeometryBasics.PointMeta(1.1, 2.2; a=1, b=2)
+        pm = PointMeta(1.1, 2.2; a=1, b=2)
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
         @test coordinates(p2) == p2
         @test meta(pm) === (a=1, b=2)
         @test metafree(pm) === p
         @test propertynames(pm) == (:position, :a, :b)
+        @test GeometryBasics.MetaFree(typeof(pm)) == Point{2,Float64}
+        @test_broken zero(pm) == [0, 0]
     end
 
     @testset "MultiPoint with metadata" begin

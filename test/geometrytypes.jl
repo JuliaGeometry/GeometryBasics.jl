@@ -1,14 +1,5 @@
 using Test, GeometryBasics
 
-@testset "algorithms.jl" begin
-    cube = Rect(Vec3f0(-0.5), Vec3f0(1))
-    cube_faces = decompose(TriangleFace{Int}, faces(cube))
-    cube_vertices = decompose(Point{3,Float32}, cube)
-    @test area(cube_vertices, cube_faces) == 6
-    mesh = Mesh(cube_vertices, cube_faces)
-    @test GeometryBasics.volume(mesh) ≈ 1
-end
-
 @testset "Cylinder" begin
     @testset "constructors" begin
         o, extr, r = Point2f0(1, 2), Point2f0(3, 4), 5.0f0
