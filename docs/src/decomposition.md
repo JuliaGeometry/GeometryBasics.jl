@@ -1,9 +1,9 @@
 # Decomposition
 
 
-## GeometryBasic Mesh interface
+## GeometryBasics Mesh interface
 
-GeometryBasic defines an interface, to decompose abstract geometries into
+GeometryBasics defines an interface to decompose abstract geometries into
 points and triangle meshes.
 This can be done for any arbitrary primitive, by overloading the following interface:
 
@@ -39,7 +39,7 @@ m = GeometryBasics.mesh(Tesselation(rect, (50, 50)))
 length(coordinates(m)) == 50^2
 ```
 
-As you can see, `coordinates` and `faces` is also defined on a mesh
+As you can see, `coordinates` and `faces` are also defined on a mesh
 ```julia
 coordinates(m)
 faces(m)
