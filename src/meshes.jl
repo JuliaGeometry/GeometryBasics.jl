@@ -103,6 +103,7 @@ end
          uvtype=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
+
 Uses the element types from the keyword arguments to create the attributes.
 The attributes that have their type set to nothing are not added to the mesh.
 Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is grid based.
@@ -144,7 +145,8 @@ end
 """
     mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
          normaltype=nothing)
-Polygon triangluation!
+
+Create a mesh from a polygon given as a vector of points, using triangulation.
 """
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
               normaltype=nothing) where {P<:AbstractPoint{2}}

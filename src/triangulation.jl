@@ -105,10 +105,11 @@ function snip(contour::AbstractVector{<:AbstractPoint{N,T}}, u, v, w, n, V) wher
 end
 
 """
-    faces(contour::AbstractArray{Point}, [facetype = GLTriangleFace])
+    decompose(facetype, contour::AbstractArray{AbstractPoint})
 
-Triangulates a Polygon given as an `AbstractArray{Point}` without holes.
-It will return a Vector{`facetype`}, defining indexes into `contour`
+Triangulate a Polygon without hole.
+
+Returns a Vector{`facetype`} defining indexes into `contour`.
 """
 function decompose(::Type{FaceType},
                    points::AbstractArray{P}) where {P<:AbstractPoint,FaceType<:AbstractFace}
