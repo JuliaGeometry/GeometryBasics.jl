@@ -12,6 +12,10 @@ using GeometryBasics: attributes
     @test area(cube_vertices, cube_faces) == 6
     mesh = Mesh(cube_vertices, cube_faces)
     @test GeometryBasics.volume(mesh) ≈ 1
+    @test GeometryBasics.volume(cube) ≈ 1
+
+    rect = Rect(1, 2, 7.5, 2.0)
+    @test GeometryBasics.area(rect) ≈ 15
 
     points_cwise = Point2f0[(0,0), (0,1), (1,1)]
     points_ccwise = Point2f0[(0,0), (1,0), (1,1)]
