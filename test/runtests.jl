@@ -684,6 +684,29 @@ end
     @test Base.size(feat[1]) == (2,)
 end
 
+@testset "StructArrays integration" begin
+    pt = meta(Point(0.0, 0.0), color="red", alpha=0.1)
+    @test StructArrays.component(pt, :position) == Point(0.0, 0.0)
+    @test StructArrays.component(pt, :color) == "red"
+    @test StructArrays.component(pt, :alpha) == 0.1
+    @test StructArrays.staticschema(typeof(pt)) ==
+        NamedTuple{(:position, :color, :alpha), Tuple{Point2{Float64}, String, Float64}}
+    @test StructArrays.createinstance(typeof(pt), Point(0.0, 0.0), "red", 0.1) == pt
+
+    s = StructArray([pt, pt])
+    @test StructArrays.components(s) == (
+        position = [Point(0.0, 0.0), Point(0.0, 0.0)],
+        color = ["red", "red"],
+        alpha = [0.1, 0.1]
+    )
+    s[2] = meta(Point(0.1, 0.1), color="blue", alpha=0.3)
+    @test StructArrays.components(s) == (
+        position = [Point(0.0, 0.0), Point(0.1, 0.1)],
+        color = ["red", "blue"],
+        alpha = [0.1, 0.3]
+    )
+end
+
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
 end
