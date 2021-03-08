@@ -158,6 +158,11 @@ macro meta_type(name, mainfield, supertype, params...)
             return ($field, Names...)
         end
 
+        function StructArrays.component(x::$MetaName{$(params_sym...),Typ,Names,Types},
+                                        field::Symbol) where {$(params...),Typ,Names,Types}
+            return getproperty(x, field)
+        end
+
         function StructArrays.staticschema(::Type{$MetaName{$(params_sym...),Typ,Names,
                                                             Types}}) where {$(params...),
                                                                             Typ,Names,Types}
