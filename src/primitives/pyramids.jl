@@ -12,8 +12,14 @@ function coordinates(p::Pyramid{T}) where {T}
     ld = Point{3,T}(p.middle + leftdown)
     ru = Point{3,T}(p.middle - leftdown)
     rd = Point{3,T}(p.middle - leftup)
-    return Point{3,T}[tip, rd, ru, tip, ru, lu, tip, lu, ld, tip, ld, rd, rd, ru, lu, lu,
-                      ld, rd]
+    return Point{3,T}[
+        tip, rd, ru, 
+        tip, ru, lu, 
+        tip, lu, ld, 
+        tip, ld, rd, 
+        ru, rd, lu, 
+        ld, lu, rd
+    ]
 end
 
 function faces(::Pyramid)
