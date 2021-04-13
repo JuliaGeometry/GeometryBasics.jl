@@ -12,6 +12,10 @@ using GeometryBasics: attributes
     @test area(cube_vertices, cube_faces) == 6
     mesh = Mesh(cube_vertices, cube_faces)
     @test GeometryBasics.volume(mesh) ≈ 1
+    @test GeometryBasics.volume(cube) ≈ 1
+
+    rect = Rect(1, 2, 7.5, 2.0)
+    @test GeometryBasics.area(rect) ≈ 15
 
     points_cwise = Point2f0[(0,0), (0,1), (1,1)]
     points_ccwise = Point2f0[(0,0), (1,0), (1,1)]
@@ -678,6 +682,29 @@ end
 
     @test Base.getindex(feat[1], 1) isa Line
     @test Base.size(feat[1]) == (2,)
+end
+
+@testset "StructArrays integration" begin
+    pt = meta(Point(0.0, 0.0), color="red", alpha=0.1)
+    @test StructArrays.component(pt, :position) == Point(0.0, 0.0)
+    @test StructArrays.component(pt, :color) == "red"
+    @test StructArrays.component(pt, :alpha) == 0.1
+    @test StructArrays.staticschema(typeof(pt)) ==
+        NamedTuple{(:position, :color, :alpha), Tuple{Point2{Float64}, String, Float64}}
+    @test StructArrays.createinstance(typeof(pt), Point(0.0, 0.0), "red", 0.1) == pt
+
+    s = StructArray([pt, pt])
+    @test StructArrays.components(s) == (
+        position = [Point(0.0, 0.0), Point(0.0, 0.0)],
+        color = ["red", "red"],
+        alpha = [0.1, 0.1]
+    )
+    s[2] = meta(Point(0.1, 0.1), color="blue", alpha=0.3)
+    @test StructArrays.components(s) == (
+        position = [Point(0.0, 0.0), Point(0.1, 0.1)],
+        color = ["red", "blue"],
+        alpha = [0.1, 0.3]
+    )
 end
 
 @testset "Tests from GeometryTypes" begin

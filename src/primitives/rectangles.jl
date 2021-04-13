@@ -164,6 +164,9 @@ widths(prim::Rect) = prim.widths
 width(prim::Rect) = prim.widths[1]
 height(prim::Rect) = prim.widths[2]
 
+volume(prim::HyperRectangle) = prod(prim.widths)
+area(prim::Rect2D) = volume(prim)
+
 """
     split(rectangle, axis, value)
 
