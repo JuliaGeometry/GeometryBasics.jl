@@ -2,9 +2,8 @@
 [![Build Status](https://api.travis-ci.org/JuliaGeometry/GeometryBasics.jl.svg?branch=master)](https://travis-ci.com/JuliaGeometry/GeometryBasics.jl)
 [![Codecov](https://codecov.io/gh/JuliaGeometry/GeometryBasics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGeometry/GeometryBasics.jl)
 
-**Documentation**:
 [![Docs - stable](https://img.shields.io/badge/docs-stable-lightgrey.svg)](http://juliageometry.github.io/GeometryBasics.jl/stable/)
-[![Docs - dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://juliageometry.github.io/GeometryBasics.jl/dev)
+[![Docs - dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://juliageometry.github.io/GeometryBasics.jl/dev/)
 
 # GeometryBasics.jl
 
@@ -17,3 +16,22 @@ geo applications, and general geometry manipulations - while offering a Julian
 API that still allows performant C-interop.
 
 This package is a replacement for the discontinued [GeometryTypes](https://github.com/JuliaGeometry/GeometryTypes.jl/).
+
+**Documentation:** http://juliageometry.github.io/GeometryBasics.jl/stable/
+
+## Contributing
+
+Make sure your changes don't break the documentation.
+
+To build the documentation locally, you first need to instantiate the `docs/` project:
+
+```
+julia --project=docs/
+pkg> instantiate
+pkg> dev .
+```
+
+Then use `julia --project=docs/ docs/make.jl` to build the documentation. This
+will also run the doctests defined in Markdown files. The doctests should be
+written for the Julia version configured in [ci.yml](.github/workflows/ci.yml)
+(`:docs` section).
