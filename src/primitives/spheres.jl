@@ -8,6 +8,7 @@ struct HyperSphere{N,T} <: GeometryPrimitive{N,T}
     center::Point{N,T}
     r::T
 end
+
 """
     Circle{T}
 
