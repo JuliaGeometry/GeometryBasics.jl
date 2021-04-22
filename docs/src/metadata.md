@@ -18,65 +18,43 @@ meta(meta-geometry)
 
 ### Examples
 
-```jldoctest meta
-julia> using GeometryBasics
-
-julia> p1 = Point(2.2, 3.6)
-2-element Point2{Float64} with indices SOneTo(2):
- 2.2
- 3.6
-
-julia> poi = meta(p1, city="Abuja", rainfall=1221.2)
-2-element PointMeta{2, Float64, Point2{Float64}, (:city, :rainfall), Tuple{String, Float64}} with indices SOneTo(2):
- 2.2
- 3.6
+```@repl meta
+using GeometryBasics
+p1 = Point(2.2, 3.6)
+poi = meta(p1, city="Abuja", rainfall=1221.2)
 ```
 
 Metadata is stored in a NamedTuple and can be retrieved as such:
 
-```jldoctest meta
-julia> meta(poi)
-(city = "Abuja", rainfall = 1221.2)
+```@repl meta
+meta(poi)
 ```
 
 Specific metadata attributes can be directly retrieved:
 
-```jldoctest meta
-julia> poi.rainfall
-1221.2
-
-julia> metafree(poi)
-2-element Point2{Float64} with indices SOneTo(2):
- 2.2
- 3.6
+```@repl meta
+poi.rainfall
+metafree(poi)
 ```
 
 Metatypes are predefined for geometries:
 
-```jldoctest meta
-julia> multipoi = MultiPointMeta([p1], city="Abuja", rainfall=1221.2)
-1-element MultiPointMeta{Point2{Float64}, MultiPoint{2, Float64, Point2{Float64}, Vector{Point2{Float64}}}, (:city, :rainfall), Tuple{String, Float64}}:
- [2.2, 3.6]
+```@repl meta
+multipoi = MultiPointMeta([p1], city="Abuja", rainfall=1221.2)
 ```
 
 (In the above example we have also used a geometry-specific meta method.)
 
-```jldoctest meta
-julia> GeometryBasics.MetaType(Polygon)
-PolygonMeta
-
-julia> GeometryBasics.MetaType(Mesh)
-MeshMeta
+```@repl meta
+GeometryBasics.MetaType(Polygon)
+GeometryBasics.MetaType(Mesh)
 ```
 
 The metageometry objects are infact composed of the original geometry types.
 
-```jldoctest meta
-julia> GeometryBasics.MetaFree(PolygonMeta)
-Polygon
-
-julia> GeometryBasics.MetaFree(MeshMeta)
-Mesh
+```@repl meta
+GeometryBasics.MetaFree(PolygonMeta)
+GeometryBasics.MetaFree(MeshMeta)
 ```
 
 ## MetaT
@@ -103,9 +81,8 @@ For example, while a Point MetaGeometry is a `PointMeta`, the MetaT representati
 
 ### Examples
 
-```jldoctest meta
-julia> MetaT(Point(1, 2), city = "Mumbai")
-MetaT{Point2{Int64}, (:city,), Tuple{String}}([1, 2], (city = "Mumbai",))
+```@repl meta
+MetaT(Point(1, 2), city = "Mumbai")
 ```
 
 For a tabular representation, an iterable of `MetaT` types can be passed on to a `meta_table` method.
@@ -120,75 +97,50 @@ meta_table(iter)
 
  Create an array of 2 linestrings:
 
-```jldoctest meta
-julia> ls = [LineString([Point(i, i+1), Point(i-1,i+5)]) for i in 1:2];
-
-julia> coordinates.(ls)
-2-element Vector{Vector{Point2{Int64}}}:
- [[1, 2], [0, 6]]
- [[2, 3], [1, 7]]
+```@repl meta
+ls = [LineString([Point(i, i+1), Point(i-1,i+5)]) for i in 1:2];
+coordinates.(ls)
 ```
 
 Create a multi-linestring:
 
-```jldoctest meta
-julia> mls = MultiLineString(ls);
-
-julia> coordinates.(mls)
-2-element Vector{Vector{Point2{Int64}}}:
- [[1, 2], [0, 6]]
- [[2, 3], [1, 7]]
+```@repl meta
+mls = MultiLineString(ls);
+coordinates.(mls)
 ```
 
 Create a polygon:
 
-```jldoctest meta
-julia> poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)]);
-
-julia> coordinates(poly)
-4-element Vector{Point2{Int64}}:
- [40, 40]
- [20, 45]
- [45, 30]
- [40, 40]
+```@repl meta
+poly = Polygon(Point{2, Int}[(40, 40), (20, 45), (45, 30), (40, 40)]);
+coordinates(poly)
 ```
 
 Put all geometries into an array:
 
-```jldoctest meta
-julia> geom = [ls..., mls, poly];
+```@repl meta
+geom = [ls..., mls, poly];
 ```
 
 Generate some random metadata:
 
-```jldoctest meta
-julia> prop = [(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:4]
-4-element Vector{NamedTuple{(:country_states, :rainfall), Tuple{String, Float64}}}:
- (country_states = "India1", rainfall = 4.5)
- (country_states = "India2", rainfall = 9.0)
- (country_states = "India3", rainfall = 13.5)
- (country_states = "India4", rainfall = 18.0)
-
-julia> feat = [MetaT(i, j) for (i,j) = zip(geom, prop)]; # create an array of MetaT
+```@repl meta
+prop = [(country_states = "India$(i)", rainfall = (i*9)/2) for i in 1:4]
+feat = [MetaT(i, j) for (i,j) = zip(geom, prop)]; # create an array of MetaT
 ```
 
 We can now generate a `StructArray` / `Table` with `meta_table`:
 
-```jldoctest meta
-julia> sa = meta_table(feat);
+```@repl meta
+sa = meta_table(feat);
 ```
 
 The data can be accessed through `sa.main` and the metadata through
 `sa.country_states` and `sa.rainfall`. Here we print only the type names of the
 data items for brevity:
 
-```jldoctest meta
-julia> [nameof.(typeof.(sa.main)) sa.country_states sa.rainfall]
-4×3 Matrix{Any}:
- :LineString       "India1"   4.5
- :LineString       "India2"   9.0
- :MultiLineString  "India3"  13.5
- :Polygon          "India4"  18.0
+```@repl meta
+[nameof.(typeof.(sa.main)) sa.country_states sa.rainfall]
 ```
 
 ### Disadvantages
