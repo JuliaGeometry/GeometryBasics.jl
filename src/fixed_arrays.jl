@@ -1,3 +1,4 @@
+using Random
 
 function unit(::Type{T}, i::Integer) where {T <: StaticVector}
     tup = ntuple(Val(length(T))) do j
@@ -111,6 +112,11 @@ macro fixed_vector(name, parent)
         function Base.broadcasted(f, a::AbstractArray{T}, b::$name) where {T <: $name}
             return Base.broadcasted(f, a, (b,))
         end
+        Base.map(f, x::T) where {T <: $name} = T(map(f, Tuple(x)))
+        Base.map(f, x::T, y::T) where {T <: $name} = T(map(f, Tuple(x), Tuple(y)))
+
+        Base.randn(rng::AbstractRNG, ::Type{$name{N, T}}) where {N, T} = $name{N, T}(ntuple(i-> randn(rng, T), N))
+        Base.rand(rng::AbstractRNG, ::Type{$name{N, T}}) where {N, T} = $name{N, T}(ntuple(i-> rand(rng, T), N))
     end
     return esc(expr)
 end
@@ -149,3 +155,14 @@ end
 
 export Mat, Vec, Point, unit
 export Vecf0, Pointf0
+
+function Base.:(*)(a::Mat4, b::Vec{4, T}) where {T}
+    return Vec{4, T}((
+        a[1, 1] + b[1] + a[1, 2] * b[2] + a[1, 3] * b[3] + a[1, 4] * b[4],
+        a[2, 1] + b[1] + a[2, 2] * b[2] + a[2, 3] * b[3] + a[2, 4] * b[4],
+        a[3, 1] + b[1] + a[3, 2] * b[2] + a[3, 3] * b[3] + a[3, 4] * b[4],
+        a[4, 1] + b[1] + a[4, 2] * b[2] + a[4, 3] * b[3] + a[4, 4] * b[4],
+    ))
+end
+
+Base.map(f, x::Vec{N}, y::Point{N}) where {N} = Vec(map(f, Tuple(x), Tuple(y)))
