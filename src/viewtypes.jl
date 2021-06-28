@@ -96,7 +96,7 @@ end
         columns = ntuple(N) do i
             return view(points, ((i - 1) * seglen + 1):(i * seglen))
         end
-        return StructArray{Point{N,T}}((StructArray{NTuple{N,T}}(columns),))
+        return StructArray{Point{N,T}}(columns)
     else
         error("Dim 1 or 2 must be equal to the point dimension!")
     end
