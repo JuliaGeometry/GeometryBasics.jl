@@ -24,6 +24,8 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
+include("deprecated.jl")
+
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex

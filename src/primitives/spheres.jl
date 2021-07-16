@@ -48,7 +48,7 @@ function coordinates(s::Circle, nvertices=64)
 end
 
 function texturecoordinates(s::Circle, nvertices=64)
-    return coordinates(Circle(Point2f0(0.5), 0.5f0), nvertices)
+    return coordinates(Circle(Point2f(0.5), 0.5f0), nvertices)
 end
 
 function coordinates(s::Sphere, nvertices=24)

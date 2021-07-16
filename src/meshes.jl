@@ -44,7 +44,7 @@ const GLPlainMesh3D = GLPlainMesh{3}
     UVMesh{Dim, T}
 
 PlainMesh with texture coordinates meta at each point.
-`uvmesh.uv isa AbstractVector{Vec2f0}`
+`uvmesh.uv isa AbstractVector{Vec2f}`
 """
 const UVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUV{Dim,T}}
 const GLUVMesh{Dim} = UVMesh{Dim,Float32}
@@ -55,7 +55,7 @@ const GLUVMesh3D = UVMesh{3}
     NormalMesh{Dim, T}
 
 PlainMesh with normals meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f0}`
+`normalmesh.normals isa AbstractVector{Vec3f}`
 """
 const NormalMesh{Dim,T} = TriangleMesh{Dim,T,PointWithNormal{Dim,T}}
 const GLNormalMesh{Dim} = NormalMesh{Dim,Float32}
@@ -66,8 +66,8 @@ const GLNormalMesh3D = GLNormalMesh{3}
     NormalUVMesh{Dim, T}
 
 PlainMesh with normals and uv meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f0}`
-`normalmesh.uv isa AbstractVector{Vec2f0}`
+`normalmesh.normals isa AbstractVector{Vec3f}`
+`normalmesh.uv isa AbstractVector{Vec2f}`
 """
 const NormalUVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVNormal{Dim,T}}
 const GLNormalUVMesh{Dim} = NormalUVMesh{Dim,Float32}
@@ -78,8 +78,8 @@ const GLNormalUVMesh3D = GLNormalUVMesh{3}
     NormalUVWMesh{Dim, T}
 
 PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f0}`
-`normalmesh.uvw isa AbstractVector{Vec3f0}`
+`normalmesh.normals isa AbstractVector{Vec3f}`
+`normalmesh.uvw isa AbstractVector{Vec3f}`
 """
 const NormalUVWMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVWNormal{Dim,T}}
 const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim,Float32}
@@ -176,17 +176,17 @@ function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
 end
 
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f0, facetype=GLTriangleFace)
+    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
 end
 
 function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f0, normaltype=Vec3f0,
+    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, normaltype=Vec3f,
                 facetype=GLTriangleFace)
 end
 
 function normal_mesh(points::AbstractVector{<:AbstractPoint},
                      faces::AbstractVector{<:AbstractFace})
-    _points = decompose(Point3f0, points)
+    _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
 end
@@ -196,7 +196,7 @@ function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
     end
-    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f0,
+    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f,
                 facetype=GLTriangleFace)
 end
 

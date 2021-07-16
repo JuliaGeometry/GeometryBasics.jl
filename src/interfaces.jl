@@ -43,7 +43,7 @@ To transport this information to the various decompose methods, you can wrap it
 in the Tesselation object e.g. like this:
 
 ```julia
-sphere = Sphere(Point3f0(0), 1)
+sphere = Sphere(Point3f(0), 1)
 m1 = mesh(sphere) # uses a default value for tesselation
 m2 = mesh(Tesselation(sphere, 64)) # uses 64 for tesselation
 length(coordinates(m1)) != length(coordinates(m2))
@@ -81,7 +81,7 @@ function texturecoordinates(tesselation::Tesselation)
 end
 
 ## Decompose methods
-# Dispatch type to make `decompose(UV{Vec2f0}, primitive)` work
+# Dispatch type to make `decompose(UV{Vec2f}, primitive)` work
 # and to pass through tesselation information
 
 # Types that can be converted to a mesh via the functions below
@@ -91,13 +91,13 @@ const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim
 
 struct UV{T} end
 UV(::Type{T}) where {T} = UV{T}()
-UV() = UV(Vec2f0)
+UV() = UV(Vec2f)
 struct UVW{T} end
 UVW(::Type{T}) where {T} = UVW{T}()
-UVW() = UVW(Vec3f0)
+UVW() = UVW(Vec3f)
 struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
-Normal() = Normal(Vec3f0)
+Normal() = Normal(Vec3f)
 
 function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     f = faces(primitive)

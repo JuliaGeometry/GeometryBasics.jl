@@ -121,31 +121,30 @@ abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 
 const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
-const Vecf0{N} = Vec{N,Float32}
-const Pointf0{N} = Point{N,Float32}
+const Vecf{N} = Vec{N,Float32}
+const Pointf{N} = Point{N,Float32}
 Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
 
-# Create constes like Mat4f0, Point2, Point2f0
 for i in 1:4
     for T in [:Point, :Vec]
         name = Symbol("$T$i")
-        namef0 = Symbol("$T$(i)f0")
+        namef = Symbol("$T$(i)f")
         @eval begin
             const $name = $T{$i}
-            const $namef0 = $T{$i,Float32}
+            const $namef = $T{$i,Float32}
             export $name
-            export $namef0
+            export $namef
         end
     end
     name = Symbol("Mat$i")
-    namef0 = Symbol("Mat$(i)f0")
+    namef = Symbol("Mat$(i)f")
     @eval begin
         const $name{T} = $Mat{$i,$i,T,$(i * i)}
-        const $namef0 = $name{Float32}
+        const $namef = $name{Float32}
         export $name
-        export $namef0
+        export $namef
     end
 end
 
 export Mat, Vec, Point, unit
-export Vecf0, Pointf0
+export Vecf, Pointf

@@ -147,12 +147,12 @@ function Rect2D(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
 end
 
 function FRect3D(x::Tuple{Tuple{<:Number,<:Number},Tuple{<:Number,<:Number}})
-    return FRect3D(Vec3f0(x[1]..., 0), Vec3f0(x[2]..., 0))
+    return FRect3D(Vec3f(x[1]..., 0), Vec3f(x[2]..., 0))
 end
 
 function FRect3D(x::Tuple{Tuple{<:Number,<:Number,<:Number},
                           Tuple{<:Number,<:Number,<:Number}})
-    return FRect3D(Vec3f0(x[1]...), Vec3f0(x[2]...))
+    return FRect3D(Vec3f(x[1]...), Vec3f(x[2]...))
 end
 
 origin(prim::Rect) = prim.origin
