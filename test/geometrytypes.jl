@@ -77,7 +77,7 @@ using Test, GeometryBasics
         @test m isa GLNormalMesh
 
         muv = uv_mesh(s)
-        @test Rect(Point.(texturecoordinates(muv))) == FRect2D(Vec2f(0), Vec2f(1.0))
+        @test Rect(Point.(texturecoordinates(muv))) == Rect2f(Vec2f(0), Vec2f(1.0))
     end
 end
 
@@ -134,7 +134,7 @@ end
                          (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
                          (0.0, -1.0, 0.0),]
     n32 = map(Vec{3,Float32}, n64)
-    r = triangle_mesh(centered(Rect3D))
+    r = triangle_mesh(centered(Rect3))
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n32
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n64
 end
@@ -164,31 +164,31 @@ end
 end
 
 @testset "Rectangles" begin
-    rect = FRect2D(0, 7, 20, 3)
-    @test (rect + 4) == FRect2D(4, 11, 20, 3)
-    @test (rect + Vec(2, -2)) == FRect2D(2, 5, 20, 3)
+    rect = Rect2f(0, 7, 20, 3)
+    @test (rect + 4) == Rect2f(4, 11, 20, 3)
+    @test (rect + Vec(2, -2)) == Rect2f(2, 5, 20, 3)
 
-    @test (rect - 4) == FRect2D(-4, 3, 20, 3)
-    @test (rect - Vec(2, -2)) == FRect2D(-2, 9, 20, 3)
-
-    base = Vec3f(1, 2, 3)
-    wxyz = Vec3f(-2, 4, 2)
-    rect = FRect3D(base, wxyz)
-    @test (rect + 4) == FRect3D(base .+ 4, wxyz)
-    @test (rect + Vec(2, -2, 3)) == FRect3D(base .+ Vec(2, -2, 3), wxyz)
-
-    @test (rect - 4) == FRect3D(base .- 4, wxyz)
-    @test (rect - Vec(2, -2, 7)) == FRect3D(base .- Vec(2, -2, 7), wxyz)
-
-    rect = FRect2D(0, 7, 20, 3)
-    @test (rect * 4) == FRect2D(0, 7 * 4, 20 * 4, 3 * 4)
-    @test (rect * Vec(2, -2)) == FRect2D(0, -7 * 2, 20 * 2, -3 * 2)
+    @test (rect - 4) == Rect2f(-4, 3, 20, 3)
+    @test (rect - Vec(2, -2)) == Rect2f(-2, 9, 20, 3)
 
     base = Vec3f(1, 2, 3)
     wxyz = Vec3f(-2, 4, 2)
-    rect = FRect3D(base, wxyz)
-    @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
-    @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
+    rect = Rect3f(base, wxyz)
+    @test (rect + 4) == Rect3f(base .+ 4, wxyz)
+    @test (rect + Vec(2, -2, 3)) == Rect3f(base .+ Vec(2, -2, 3), wxyz)
+
+    @test (rect - 4) == Rect3f(base .- 4, wxyz)
+    @test (rect - Vec(2, -2, 7)) == Rect3f(base .- Vec(2, -2, 7), wxyz)
+
+    rect = Rect2f(0, 7, 20, 3)
+    @test (rect * 4) == Rect2f(0, 7 * 4, 20 * 4, 3 * 4)
+    @test (rect * Vec(2, -2)) == Rect2f(0, -7 * 2, 20 * 2, -3 * 2)
+
+    base = Vec3f(1, 2, 3)
+    wxyz = Vec3f(-2, 4, 2)
+    rect = Rect3f(base, wxyz)
+    @test (rect * 4) == Rect3f(base .* 4, wxyz .* 4)
+    @test (rect * Vec(2, -2, 3)) == Rect3f(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
 
     rect1 = Rect(Vec(0.0, 0.0), Vec(1.0, 2.0))
     rect2 = Rect(0.0, 0.0, 1.0, 2.0)
@@ -208,8 +208,8 @@ end
     @test width(prim) == 1.0
     @test height(prim) == 1.0
 
-    b1 = Rect2D(0.0, 0.0, 2.0, 2.0)
-    b2 = Rect2D(0, 0, 2, 2)
+    b1 = Rect2(0.0, 0.0, 2.0, 2.0)
+    b2 = Rect2(0, 0, 2, 2)
     @test isequal(b1, b2)
 
     pt = Point(1.0, 1.0)

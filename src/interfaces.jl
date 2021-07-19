@@ -50,7 +50,7 @@ length(coordinates(m1)) != length(coordinates(m2))
 ```
 For grid based tesselation, you can also use a tuple:
 ```julia
-rect = Rect2D(0, 0, 1, 1)
+rect = Rect2(0, 0, 1, 1)
 Tesselation(rect, (5, 5))
 """
 struct Tesselation{Dim,T,Primitive,NGrid}

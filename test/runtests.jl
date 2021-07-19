@@ -414,7 +414,7 @@ end
         @test meshuv isa GLUVMesh3D
         @test meshuvnormal isa GLNormalUVMesh3D
 
-        t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
+        t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
         m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
         @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
@@ -461,22 +461,22 @@ end
     @test decompose(Point, mesh) isa Vector{Point3f}
     @test decompose(Point, primitive) isa Vector{Point3f}
 
-    primitive = Rect2D(0, 0, 1, 1)
+    primitive = Rect2(0, 0, 1, 1)
     mesh = triangle_mesh(primitive)
 
     @test decompose(Point, mesh) isa Vector{Point2f}
     @test decompose(Point, primitive) isa Vector{Point2{Int}}
 
-    primitive = Rect3D(0, 0, 0, 1, 1, 1)
+    primitive = Rect3(0, 0, 0, 1, 1, 1)
     triangle_mesh(primitive)
 
     primitive = Sphere(Point3f(0), 1)
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
-    primitive = Rect2D(0, 0, 1, 1)
+    primitive = Rect2(0, 0, 1, 1)
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
-    primitive = Rect3D(0, 0, 0, 1, 1, 1)
+    primitive = Rect3(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
     @test normals(m_normal) isa Vector{Vec3f}
 
@@ -490,9 +490,9 @@ end
     @test normals(m_normals) isa Vector{Vec3f}
 
     @test texturecoordinates(m) == nothing
-    r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
+    r2 = Rect2(0.0, 0.0, 1.0, 1.0)
     @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
-    r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
+    r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
     @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
@@ -532,7 +532,7 @@ end
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(FRect3D(Vec3f(-1), Vec3f(1, 2, 3)))
+    m = uv_normal_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
     m_normal = normal_mesh(m)
     # make sure we don't loose the uv
     @test hasproperty(m_normal, :uv)
@@ -542,7 +542,7 @@ end
     @test m.normals === m_normal.normals
     @test m.uv === m_normal.uv
 
-    m = GeometryBasics.mesh(FRect3D(Vec3f(-1), Vec3f(1, 2, 3));
+    m = GeometryBasics.mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3));
                             uv=Vec2{Float64}, normaltype=Vec3{Float64}, pointtype=Point3{Float64})
     m_normal = normal_mesh(m)
     @test hasproperty(m_normal, :uv)

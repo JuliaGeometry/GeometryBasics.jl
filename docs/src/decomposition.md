@@ -9,13 +9,13 @@ This can be done for any arbitrary primitive, by overloading the following inter
 
 ```julia
 
-function GeometryBasics.coordinates(rect::Rect2D, nvertices=(2,2))
+function GeometryBasics.coordinates(rect::Rect2, nvertices=(2,2))
     mini, maxi = extrema(rect)
     xrange, yrange = LinRange.(mini, maxi, nvertices)
     return ivec(((x,y) for x in xrange, y in yrange))
 end
 
-function GeometryBasics.faces(rect::Rect2D, nvertices=(2, 2))
+function GeometryBasics.faces(rect::Rect2, nvertices=(2, 2))
     w, h = nvertices
     idx = LinearIndices(nvertices)
     quad(i, j) = QuadFace{Int}(idx[i, j], idx[i+1, j], idx[i+1, j+1], idx[i, j+1])
@@ -29,7 +29,7 @@ can also return any `AbstractArray`.
 With these methods defined, this constructor will magically work:
 
 ```julia
-rect = Rect2D(0.0, 0.0, 1.0, 1.0)
+rect = Rect2(0.0, 0.0, 1.0, 1.0)
 m = GeometryBasics.mesh(rect)
 ```
 If you want to set the `nvertices` argument, you need to wrap your primitive in a `Tesselation`
