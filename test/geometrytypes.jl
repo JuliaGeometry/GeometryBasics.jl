@@ -2,7 +2,7 @@ using Test, GeometryBasics
 
 @testset "Cylinder" begin
     @testset "constructors" begin
-        o, extr, r = Point2f0(1, 2), Point2f0(3, 4), 5.0f0
+        o, extr, r = Point2f(1, 2), Point2f(3, 4), 5.0f0
         s = Cylinder(o, extr, r)
         @test typeof(s) == Cylinder{2,Float32}
         @test typeof(s) == Cylinder2{Float32}
@@ -13,7 +13,7 @@ using Test, GeometryBasics
         h = norm(o - extr)
         @test isapprox(height(s), h)
         #@test norm(direction(s) - Point{2,Float32}([2,2]./norm([1,2]-[3,4])))<1e-5
-        @test isapprox(direction(s), Point2f0(2, 2) ./ h)
+        @test isapprox(direction(s), Point2f(2, 2) ./ h)
         v1 = rand(Point{3,Float64})
         v2 = rand(Point{3,Float64})
         R = rand()
@@ -30,14 +30,14 @@ using Test, GeometryBasics
 
     @testset "decompose" begin
 
-        o, extr, r = Point2f0(1, 2), Point2f0(3, 4), 5.0f0
+        o, extr, r = Point2f(1, 2), Point2f(3, 4), 5.0f0
         s = Cylinder(o, extr, r)
         positions = Point{3,Float32}[(-0.7677671, 3.767767, 0.0),
                                      (2.767767, 0.23223293, 0.0),
                                      (0.23223293, 4.767767, 0.0),
                                      (3.767767, 1.2322329, 0.0), (1.2322329, 5.767767, 0.0),
                                      (4.767767, 2.232233, 0.0)]
-        @test decompose(Point3f0, Tesselation(s, (2, 3))) ≈ positions
+        @test decompose(Point3f, Tesselation(s, (2, 3))) ≈ positions
 
         FT = TriangleFace{Int}
         faces = FT[(1, 2, 4), (1, 4, 3), (3, 4, 6), (3, 6, 5)]
@@ -77,7 +77,7 @@ using Test, GeometryBasics
         @test m isa GLNormalMesh
 
         muv = uv_mesh(s)
-        @test Rect(Point.(texturecoordinates(muv))) == FRect2D(Vec2f0(0), Vec2f0(1.0))
+        @test Rect(Point.(texturecoordinates(muv))) == Rect2f(Vec2f(0), Vec2f(1.0))
     end
 end
 
@@ -86,7 +86,7 @@ end
     pt_expa = Point{2,Int}[(0, 0), (1, 0), (0, 1), (1, 1)]
     @test decompose(Point{2,Int}, a) == pt_expa
     mesh = normal_mesh(a)
-    @test decompose(Point2f0, mesh) == pt_expa
+    @test decompose(Point2f, mesh) == pt_expa
 
     b = Rect(Vec(1, 1, 1), Vec(1, 1, 1))
     pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 2], [1, 2, 1], [1, 1, 1],
@@ -134,13 +134,13 @@ end
                          (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
                          (0.0, -1.0, 0.0),]
     n32 = map(Vec{3,Float32}, n64)
-    r = triangle_mesh(centered(Rect3D))
+    r = triangle_mesh(centered(Rect3))
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n32
     # @test normals(coordinates(r), GeometryBasics.faces(r)) == n64
 end
 
 @testset "HyperSphere" begin
-    sphere = Sphere{Float32}(Point3f0(0), 1.0f0)
+    sphere = Sphere{Float32}(Point3f(0), 1.0f0)
 
     points = decompose(Point, Tesselation(sphere, 3))
     point_target = Point{3,Float32}[[0.0, 0.0, 1.0], [1.0, 0.0, 6.12323e-17],
@@ -155,40 +155,40 @@ end
     face_target = TriangleFace{Int}[[1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5], [4, 5, 8],
                                     [4, 8, 7], [5, 6, 9], [5, 9, 8]]
     @test f == face_target
-    circle = Circle(Point2f0(0), 1.0f0)
-    points = decompose(Point2f0, Tesselation(circle, 20))
+    circle = Circle(Point2f(0), 1.0f0)
+    points = decompose(Point2f, Tesselation(circle, 20))
     @test length(points) == 20
     tess_circle = Tesselation(circle, 32)
     mesh = triangle_mesh(tess_circle)
-    @test decompose(Point2f0, mesh) ≈ decompose(Point2f0, tess_circle)
+    @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)
 end
 
 @testset "Rectangles" begin
-    rect = FRect2D(0, 7, 20, 3)
-    @test (rect + 4) == FRect2D(4, 11, 20, 3)
-    @test (rect + Vec(2, -2)) == FRect2D(2, 5, 20, 3)
+    rect = Rect2f(0, 7, 20, 3)
+    @test (rect + 4) == Rect2f(4, 11, 20, 3)
+    @test (rect + Vec(2, -2)) == Rect2f(2, 5, 20, 3)
 
-    @test (rect - 4) == FRect2D(-4, 3, 20, 3)
-    @test (rect - Vec(2, -2)) == FRect2D(-2, 9, 20, 3)
+    @test (rect - 4) == Rect2f(-4, 3, 20, 3)
+    @test (rect - Vec(2, -2)) == Rect2f(-2, 9, 20, 3)
 
-    base = Vec3f0(1, 2, 3)
-    wxyz = Vec3f0(-2, 4, 2)
-    rect = FRect3D(base, wxyz)
-    @test (rect + 4) == FRect3D(base .+ 4, wxyz)
-    @test (rect + Vec(2, -2, 3)) == FRect3D(base .+ Vec(2, -2, 3), wxyz)
+    base = Vec3f(1, 2, 3)
+    wxyz = Vec3f(-2, 4, 2)
+    rect = Rect3f(base, wxyz)
+    @test (rect + 4) == Rect3f(base .+ 4, wxyz)
+    @test (rect + Vec(2, -2, 3)) == Rect3f(base .+ Vec(2, -2, 3), wxyz)
 
-    @test (rect - 4) == FRect3D(base .- 4, wxyz)
-    @test (rect - Vec(2, -2, 7)) == FRect3D(base .- Vec(2, -2, 7), wxyz)
+    @test (rect - 4) == Rect3f(base .- 4, wxyz)
+    @test (rect - Vec(2, -2, 7)) == Rect3f(base .- Vec(2, -2, 7), wxyz)
 
-    rect = FRect2D(0, 7, 20, 3)
-    @test (rect * 4) == FRect2D(0, 7 * 4, 20 * 4, 3 * 4)
-    @test (rect * Vec(2, -2)) == FRect2D(0, -7 * 2, 20 * 2, -3 * 2)
+    rect = Rect2f(0, 7, 20, 3)
+    @test (rect * 4) == Rect2f(0, 7 * 4, 20 * 4, 3 * 4)
+    @test (rect * Vec(2, -2)) == Rect2f(0, -7 * 2, 20 * 2, -3 * 2)
 
-    base = Vec3f0(1, 2, 3)
-    wxyz = Vec3f0(-2, 4, 2)
-    rect = FRect3D(base, wxyz)
-    @test (rect * 4) == FRect3D(base .* 4, wxyz .* 4)
-    @test (rect * Vec(2, -2, 3)) == FRect3D(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
+    base = Vec3f(1, 2, 3)
+    wxyz = Vec3f(-2, 4, 2)
+    rect = Rect3f(base, wxyz)
+    @test (rect * 4) == Rect3f(base .* 4, wxyz .* 4)
+    @test (rect * Vec(2, -2, 3)) == Rect3f(base .* Vec(2, -2, 3), wxyz .* Vec(2, -2, 3))
 
     rect1 = Rect(Vec(0.0, 0.0), Vec(1.0, 2.0))
     rect2 = Rect(0.0, 0.0, 1.0, 2.0)
@@ -208,8 +208,8 @@ end
     @test width(prim) == 1.0
     @test height(prim) == 1.0
 
-    b1 = Rect2D(0.0, 0.0, 2.0, 2.0)
-    b2 = Rect2D(0, 0, 2, 2)
+    b1 = Rect2(0.0, 0.0, 2.0, 2.0)
+    b2 = Rect2(0, 0, 2, 2)
     @test isequal(b1, b2)
 
     pt = Point(1.0, 1.0)

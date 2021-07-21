@@ -6,7 +6,7 @@ using GeometryBasics: attributes
 @testset "GeometryBasics" begin
 
 @testset "algorithms" begin
-    cube = Rect(Vec3f0(-0.5), Vec3f0(1))
+    cube = Rect(Vec3f(-0.5), Vec3f(1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
     cube_vertices = decompose(Point{3,Float32}, cube)
     @test area(cube_vertices, cube_faces) == 6
@@ -17,13 +17,13 @@ using GeometryBasics: attributes
     rect = Rect(1, 2, 7.5, 2.0)
     @test GeometryBasics.area(rect) ≈ 15
 
-    points_cwise = Point2f0[(0,0), (0,1), (1,1)]
-    points_ccwise = Point2f0[(0,0), (1,0), (1,1)]
+    points_cwise = Point2f[(0,0), (0,1), (1,1)]
+    points_ccwise = Point2f[(0,0), (1,0), (1,1)]
     @test area(points_cwise) ≈ -0.5
     @test area(points_ccwise) ≈ 0.5
     @test area(OffsetArray(points_cwise, -2)) ≈ -0.5
 
-    points3d = Point3f0[(0,0,0), (0,0,1), (0,1,1)]
+    points3d = Point3f[(0,0,0), (0,0,1), (0,1,1)]
     @test area(OffsetArray(points3d, -2)) ≈ 0.5
 
     pm2d = [PointMeta(0.0, 0.0, a=:d), PointMeta(0.0, 1.0, a=:e), PointMeta(1.0, 0.0, a=:f)]
@@ -153,7 +153,7 @@ end
     end
 
     @testset "Mesh with metadata" begin
-       m = triangle_mesh(Sphere(Point3f0(0), 1))
+       m = triangle_mesh(Sphere(Point3f(0), 1))
        m_meta = MeshMeta(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
        @test meta(m_meta) === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
        @test metafree(m_meta) === m
@@ -402,10 +402,10 @@ end
         mesh = Mesh(points, faces)
         @test mesh == [Tetrahedron(points...)]
 
-        points = rand(Point3f0, 8)
+        points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
-        normals = rand(Vec3f0, 8)
-        uv = rand(Vec2f0, 8)
+        normals = rand(Vec3f, 8)
+        uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
         meshuv = Mesh(meta(points; uv=uv), tfaces)
         meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
@@ -414,11 +414,11 @@ end
         @test meshuv isa GLUVMesh3D
         @test meshuvnormal isa GLNormalUVMesh3D
 
-        t = Tesselation(FRect2D(0, 0, 2, 2), (30, 30))
-        m = GeometryBasics.mesh(t, pointtype=Point3f0, facetype=QuadFace{Int})
+        t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
+        m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
         @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
-        @test GeometryBasics.coordinates(m2) isa Vector{Point3f0}
+        @test GeometryBasics.coordinates(m2) isa Vector{Point3f}
 
     end
 
@@ -455,49 +455,49 @@ end
 end
 
 @testset "decompose/triangulation" begin
-    primitive = Sphere(Point3f0(0), 1)
+    primitive = Sphere(Point3f(0), 1)
     @test ndims(primitive) === 3
     mesh = triangle_mesh(primitive)
-    @test decompose(Point, mesh) isa Vector{Point3f0}
-    @test decompose(Point, primitive) isa Vector{Point3f0}
+    @test decompose(Point, mesh) isa Vector{Point3f}
+    @test decompose(Point, primitive) isa Vector{Point3f}
 
-    primitive = Rect2D(0, 0, 1, 1)
+    primitive = Rect2(0, 0, 1, 1)
     mesh = triangle_mesh(primitive)
 
-    @test decompose(Point, mesh) isa Vector{Point2f0}
+    @test decompose(Point, mesh) isa Vector{Point2f}
     @test decompose(Point, primitive) isa Vector{Point2{Int}}
 
-    primitive = Rect3D(0, 0, 0, 1, 1, 1)
+    primitive = Rect3(0, 0, 0, 1, 1, 1)
     triangle_mesh(primitive)
 
-    primitive = Sphere(Point3f0(0), 1)
+    primitive = Sphere(Point3f(0), 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
-    primitive = Rect2D(0, 0, 1, 1)
+    @test normals(m_normal) isa Vector{Vec3f}
+    primitive = Rect2(0, 0, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
-    primitive = Rect3D(0, 0, 0, 1, 1, 1)
+    @test normals(m_normal) isa Vector{Vec3f}
+    primitive = Rect3(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f0}
+    @test normals(m_normal) isa Vector{Vec3f}
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f, Circle(Point2f(0), 1))
     tmesh = triangle_mesh(points)
     @test normals(tmesh) == nothing
 
-    m = GeometryBasics.mesh(Sphere(Point3f0(0), 1))
+    m = GeometryBasics.mesh(Sphere(Point3f(0), 1))
     @test normals(m) == nothing
     m_normals = pointmeta(m, Normal())
-    @test normals(m_normals) isa Vector{Vec3f0}
+    @test normals(m_normals) isa Vector{Vec3f}
 
     @test texturecoordinates(m) == nothing
-    r2 = Rect2D(0.0, 0.0, 1.0, 1.0)
+    r2 = Rect2(0.0, 0.0, 1.0, 1.0)
     @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
-    r3 = Rect3D(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
+    r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
     uv = decompose_uv(m)
     @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
 
-    points = decompose(Point2f0, Circle(Point2f0(0), 1))
+    points = decompose(Point2f, Circle(Point2f(0), 1))
     m = GeometryBasics.mesh(points)
     @test coordinates(m) === points
 
@@ -520,19 +520,19 @@ end
 end
 
 @testset "mesh" begin
-    primitive = Triangle(Point2f0(0), Point2f0(1), Point2f0(1,0))
+    primitive = Triangle(Point2f(0), Point2f(1), Point2f(1,0))
     m = GeometryBasics.mesh(primitive)
     @test length(faces(m)) == 1
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(Circle(Point2f0(0), 1f0))
+    m = uv_normal_mesh(Circle(Point2f(0), 1f0))
     # for 2D primitives we dont actually calculate normals
     @test !hasproperty(m, :normals)
 end
 
 @testset "convert mesh + meta" begin
-    m = uv_normal_mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3)))
+    m = uv_normal_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
     m_normal = normal_mesh(m)
     # make sure we don't loose the uv
     @test hasproperty(m_normal, :uv)
@@ -542,7 +542,7 @@ end
     @test m.normals === m_normal.normals
     @test m.uv === m_normal.uv
 
-    m = GeometryBasics.mesh(FRect3D(Vec3f0(-1), Vec3f0(1, 2, 3));
+    m = GeometryBasics.mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3));
                             uv=Vec2{Float64}, normaltype=Vec3{Float64}, pointtype=Point3{Float64})
     m_normal = normal_mesh(m)
     @test hasproperty(m_normal, :uv)
@@ -554,7 +554,7 @@ end
 
 @testset "modifying meta" begin
     xx = rand(10)
-    points = rand(Point3f0, 10)
+    points = rand(Point3f, 10)
     m = GeometryBasics.Mesh(meta(points, xx=xx), GLTriangleFace[(1,2,3), (3,4,5)])
     color = rand(10)
     m = pointmeta(m; color=color)
@@ -576,13 +576,13 @@ end
     @test xxpopt === xx
 
     @testset "creating meta" begin
-        x = Point3f0[(1,3,4)]
+        x = Point3f[(1,3,4)]
         # no meta gets added, so should stay the same
         @test meta(x) === x
         @test meta(x, value=[1]).position === x
     end
-    pos = Point2f0[(10, 2)]
-    m = Mesh(meta(pos, uv=[Vec2f0(1, 1)]), [GLTriangleFace(1, 1, 1)])
+    pos = Point2f[(10, 2)]
+    m = Mesh(meta(pos, uv=[Vec2f(1, 1)]), [GLTriangleFace(1, 1, 1)])
     @test m.position === pos
 end
 
@@ -597,16 +597,16 @@ end
 
     tmesh = triangle_mesh(m)
     @test tmesh isa GLPlainMesh
-    @test coordinates(tmesh) === decompose(Point3f0, tmesh)
+    @test coordinates(tmesh) === decompose(Point3f, tmesh)
 
     nmesh = normal_mesh(m)
     @test nmesh isa GLNormalMesh
-    @test metafree(coordinates(nmesh)) === decompose(Point3f0, nmesh)
+    @test metafree(coordinates(nmesh)) === decompose(Point3f, nmesh)
     @test normals(nmesh) === decompose_normals(nmesh)
 
-    m = GeometryBasics.mesh(s, pointtype=Point3f0)
+    m = GeometryBasics.mesh(s, pointtype=Point3f)
     @test m isa Mesh{3, Float32}
-    @test coordinates(m) isa Vector{Point3f0}
+    @test coordinates(m) isa Vector{Point3f}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end
 

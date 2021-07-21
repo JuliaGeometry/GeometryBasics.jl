@@ -15,21 +15,21 @@ end
 # Constructors & typealiases
 
 const Rect{N,T} = HyperRectangle{N,T}
-const Rect2D{T} = Rect{2,T}
-const Rect3D{T} = Rect{3,T}
-const TRect{T} = Rect{N,T} where {N}
+const Rect2{T} = Rect{2,T}
+const Rect3{T} = Rect{3,T}
+const RectT{T} = Rect{N,T} where {N}
 
-const FRect{N} = Rect{N,Float32}
-const FRect2D = Rect2D{Float32}
-const FRect3D = Rect3D{Float32}
+const Rectf{N} = Rect{N,Float32}
+const Rect2f = Rect2{Float32}
+const Rect3f = Rect3{Float32}
 
-const IRect{N} = HyperRectangle{N,Int}
-const IRect2D = Rect2D{Int}
-const IRect3D = Rect3D{Int}
+const Recti{N} = HyperRectangle{N,Int}
+const Rect2i = Rect2{Int}
+const Rect3i = Rect3{Int}
 
 Rect() = Rect{2,Float32}()
 
-TRect{T}() where {T} = Rect{2,T}()
+RectT{T}() where {T} = Rect{2,T}()
 
 Rect{N}() where {N} = Rect{N,Float32}()
 
@@ -48,7 +48,7 @@ function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
-function TRect{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
+function RectT{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
     return if T <: Integer
         Rect{N,T}(round.(T, v1), round.(T, v2))
     else
@@ -84,75 +84,75 @@ width == Vec(1,2)
     return Expr(:call, :Rect, v1, v2)
 end
 
-Rect3D(a::Vararg{Number,6}) = Rect3D(Vec{3}(a[1], a[2], a[3]), Vec{3}(a[4], a[5], a[6]))
-Rect3D(args::Vararg{Number,4}) = Rect3D(Rect{2}(args...))
+Rect3(a::Vararg{Number,6}) = Rect3(Vec{3}(a[1], a[2], a[3]), Vec{3}(a[4], a[5], a[6]))
+Rect3(args::Vararg{Number,4}) = Rect3(Rect{2}(args...))
 #=
 From different args
 =#
 function (Rect)(args::Vararg{Number,4})
     args_prom = promote(args...)
-    return Rect2D{typeof(args_prom[1])}(args_prom...)
+    return Rect2{typeof(args_prom[1])}(args_prom...)
 end
 
-function (Rect2D)(args::Vararg{Number,4})
+function (Rect2)(args::Vararg{Number,4})
     args_prom = promote(args...)
-    return Rect2D{typeof(args_prom[1])}(args_prom...)
+    return Rect2{typeof(args_prom[1])}(args_prom...)
 end
 
 function (Rect{2,T})(args::Vararg{Number,4}) where {T}
     x, y, w, h = T <: Integer ? round.(T, args) : args
-    return Rect2D{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
+    return Rect2{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
 end
 
-function TRect{T}(args::Vararg{Number,4}) where {T}
+function RectT{T}(args::Vararg{Number,4}) where {T}
     x, y, w, h = T <: Integer ? round.(T, args) : args
-    return Rect2D{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
+    return Rect2{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
 end
 
-function FRect3D(x::Rect2D{T}) where {T}
+function Rect3f(x::Rect2{T}) where {T}
     return Rect{3,T}(Vec{3,T}(minimum(x)..., 0), Vec{3,T}(widths(x)..., 0.0))
 end
 
-function Rect2D{T}(a::Rect2D) where {T}
-    return Rect2D{T}(minimum(a), widths(a))
+function Rect2{T}(a::Rect2) where {T}
+    return Rect2{T}(minimum(a), widths(a))
 end
 
-function TRect{T}(a::Rect2D) where {T}
-    return Rect2D{T}(minimum(a), widths(a))
+function RectT{T}(a::Rect2) where {T}
+    return Rect2{T}(minimum(a), widths(a))
 end
 
 function Rect{N,T}(a::GeometryPrimitive) where {N,T}
     return Rect{N,T}(Vec{N,T}(minimum(a)), Vec{N,T}(widths(a)))
 end
 
-function Rect2D(xy::VecTypes{2}, w::Number, h::Number)
-    return Rect2D(xy..., w, h)
+function Rect2(xy::VecTypes{2}, w::Number, h::Number)
+    return Rect2(xy..., w, h)
 end
 
-function Rect2D(x::Number, y::Number, wh::VecTypes{2})
-    return Rect2D(x, y, wh...)
+function Rect2(x::Number, y::Number, wh::VecTypes{2})
+    return Rect2(x, y, wh...)
 end
 
-function TRect{T}(xy::VecTypes{2}, w::Number, h::Number) where {T}
-    return Rect2D{T}(xy..., w, h)
+function RectT{T}(xy::VecTypes{2}, w::Number, h::Number) where {T}
+    return Rect2{T}(xy..., w, h)
 end
 
-function TRect{T}(x::Number, y::Number, wh::VecTypes{2}) where {T}
-    return Rect2D{T}(x, y, wh...)
+function RectT{T}(x::Number, y::Number, wh::VecTypes{2}) where {T}
+    return Rect2{T}(x, y, wh...)
 end
 
 # TODO These are kinda silly
-function Rect2D(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
-    return Rect2D(xy.x, xy.y, wh.width, wh.height)
+function Rect2(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
+    return Rect2(xy.x, xy.y, wh.width, wh.height)
 end
 
-function FRect3D(x::Tuple{Tuple{<:Number,<:Number},Tuple{<:Number,<:Number}})
-    return FRect3D(Vec3f0(x[1]..., 0), Vec3f0(x[2]..., 0))
+function Rect3f(x::Tuple{Tuple{<:Number,<:Number},Tuple{<:Number,<:Number}})
+    return Rect3f(Vec3f(x[1]..., 0), Vec3f(x[2]..., 0))
 end
 
-function FRect3D(x::Tuple{Tuple{<:Number,<:Number,<:Number},
+function Rect3f(x::Tuple{Tuple{<:Number,<:Number,<:Number},
                           Tuple{<:Number,<:Number,<:Number}})
-    return FRect3D(Vec3f0(x[1]...), Vec3f0(x[2]...))
+    return Rect3f(Vec3f(x[1]...), Vec3f(x[2]...))
 end
 
 origin(prim::Rect) = prim.origin
@@ -165,7 +165,7 @@ width(prim::Rect) = prim.widths[1]
 height(prim::Rect) = prim.widths[2]
 
 volume(prim::HyperRectangle) = prod(prim.widths)
-area(prim::Rect2D) = volume(prim)
+area(prim::Rect2) = volume(prim)
 
 """
     split(rectangle, axis, value)
@@ -279,7 +279,7 @@ function Base.:(*)(rect::Rect, scaling::Union{Number,StaticVector})
 end
 
 # Enables rectangular indexing into a matrix
-function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2D{IT}}) where {T,IT<:Integer}
+function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2{IT}}) where {T,IT<:Integer}
     rect = I[1]
     mini = minimum(rect)
     wh = widths(rect)
@@ -515,33 +515,33 @@ centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1)
 centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
-# Rect2D decomposition
+# Rect2 decomposition
 
-function faces(rect::Rect2D, nvertices=(2, 2))
+function faces(rect::Rect2, nvertices=(2, 2))
     w, h = nvertices
     idx = LinearIndices(nvertices)
     quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
     return ivec((quad(i, j) for i in 1:(w - 1), j in 1:(h - 1)))
 end
 
-function coordinates(rect::Rect2D, nvertices=(2, 2))
+function coordinates(rect::Rect2, nvertices=(2, 2))
     mini, maxi = extrema(rect)
     xrange, yrange = LinRange.(mini, maxi, nvertices)
     return ivec(((x, y) for x in xrange, y in yrange))
 end
 
-function texturecoordinates(rect::Rect2D, nvertices=(2, 2))
+function texturecoordinates(rect::Rect2, nvertices=(2, 2))
     xrange, yrange = LinRange.((0, 1), (1, 0), nvertices)
     return ivec(((x, y) for x in xrange, y in yrange))
 end
 
-function normals(rect::Rect2D, nvertices=(2, 2))
+function normals(rect::Rect2, nvertices=(2, 2))
     return Iterators.repeated((0, 0, 1), prod(nvertices))
 end
 
 ##
-# Rect3D decomposition
-function coordinates(rect::Rect3D)
+# Rect3 decomposition
+function coordinates(rect::Rect3)
     # TODO use n
     w = widths(rect)
     o = origin(rect)
@@ -552,11 +552,11 @@ function coordinates(rect::Rect3D)
     return ((x .* w .+ o) for x in points)
 end
 
-function texturecoordinates(rect::Rect3D)
-    return coordinates(Rect3D(0, 0, 0, 1, 1, 1))
+function texturecoordinates(rect::Rect3)
+    return coordinates(Rect3(0, 0, 0, 1, 1, 1))
 end
 
-function faces(rect::Rect3D)
+function faces(rect::Rect3)
     return QuadFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (13, 14, 15, 16),
                          (17, 18, 19, 20), (21, 22, 23, 24),]
 end

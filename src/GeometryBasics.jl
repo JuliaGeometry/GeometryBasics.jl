@@ -24,6 +24,8 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
+include("deprecated.jl")
+
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
@@ -61,7 +63,7 @@ export uv_mesh, normal_mesh, uv_normal_mesh
 export height, origin, radius, width, widths, xwidth, yheight
 export HyperSphere, Circle, Sphere
 export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
-export HyperRectangle, Rect, Rect2D, Rect3D, IRect, IRect2D, IRect3D, FRect, FRect2D, FRect3D
+export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f
 export before, during, isinside, isoutside, meets, overlaps, intersects, finishes
 export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
