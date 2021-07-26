@@ -23,6 +23,7 @@ include("meshes.jl")
 include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
+include("distances.jl")
 
 include("deprecated.jl")
 
@@ -69,6 +70,8 @@ export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
+
+export signed_distance, absolute_distance
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

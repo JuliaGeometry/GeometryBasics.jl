@@ -707,6 +707,36 @@ end
     )
 end
 
+@testset "Distance functions" begin
+
+    # any non-co-linear a,b,c should work
+    a,b,c = Point3f0(1,0,0),Point3f0(0,1,0),Point3f0(0,0,1)
+    n = GeometryBasics.orthogonal_vector(a,b,c)
+    tri = Triangle(a,b,c)
+    for p ∈ (a,b,c,(a+b)/2,(a+c)/2,(c+b)/2,(a+b+c)/3)
+        s = p-(a+b+c)/3 # tangent vector from center to p
+        q = p-n+s
+        @test GeometryBasics.closest(q,tri) ≈ p
+        @test absolute_distance(q,tri) ≈ norm(n+s) # ignores sign
+        @test signed_distance(q,tri) ≈ -norm(n) # ignores s offset
+    end
+
+    # HyperRectangle test
+    r = Rect(Vec3(1.),Vec3(2.))
+    p = Point3f0(0)
+    @test signed_distance(p,r) ≈ √3
+    m = GeometryBasics.mesh(r) # aligns perfectly with r
+    @test absolute_distance(p,m) ≈ √3
+    @test signed_distance(p,m) ≈ 1  # ∞-norm
+
+    # HyperSphere test
+    s = Sphere(Point3f0(1),2)
+    @test signed_distance(p,s) ≈ √3-2
+    m = GeometryBasics.mesh(s) # only approximately aligns with s
+    @test isapprox(signed_distance(p,m),√3-2,rtol=0.05)
+    @test isapprox(absolute_distance(p,m),2-√3,rtol=0.05)
+end
+
 @testset "Tests from GeometryTypes" begin
     include("geometrytypes.jl")
 end
