@@ -710,7 +710,7 @@ end
 @testset "Distance functions" begin
 
     # any non-co-linear a,b,c should work
-    a,b,c = Point3f0(1,0,0),Point3f0(0,1,0),Point3f0(0,0,1)
+    a,b,c = Point3f(1,0,0),Point3f(0,1,0),Point3f(0,0,1)
     n = GeometryBasics.orthogonal_vector(a,b,c)
     tri = Triangle(a,b,c)
     for p ∈ (a,b,c,(a+b)/2,(a+c)/2,(c+b)/2,(a+b+c)/3)
@@ -723,18 +723,29 @@ end
 
     # HyperRectangle test
     r = Rect(Vec3(1.),Vec3(2.))
-    p = Point3f0(0)
+    p = Point3f(0)
     @test signed_distance(p,r) ≈ √3
     m = GeometryBasics.mesh(r) # aligns perfectly with r
     @test absolute_distance(p,m) ≈ √3
     @test signed_distance(p,m) ≈ 1  # ∞-norm
 
     # HyperSphere test
-    s = Sphere(Point3f0(1),2)
+    s = Sphere(Point3f(1),2)
     @test signed_distance(p,s) ≈ √3-2
+    @test absolute_distance(p,s) ≈ 2-√3
     m = GeometryBasics.mesh(s) # only approximately aligns with s
     @test isapprox(signed_distance(p,m),√3-2,rtol=0.05)
     @test isapprox(absolute_distance(p,m),2-√3,rtol=0.05)
+
+    # Cylinder test
+    s = Cylinder(Point3(0.),Point3(1.),2.)
+    p = Point(0.,2.,-2.)
+    @test signed_distance(p,s) ≈ √8-2
+
+    # Pyramid test
+    s = Pyramid(Point3(0.),1.,1.)
+    p = Point3f(0,0,-1)
+    @test signed_distance(p,s) ≈ 1
 end
 
 @testset "Tests from GeometryTypes" begin

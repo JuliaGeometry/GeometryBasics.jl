@@ -90,28 +90,48 @@ passing through each `mesh` face.
 signed_distance(p,mesh::AbstractMesh) = maximum(t->signed_distance(p,t), nonzero(mesh))
 
 """
-    absolute_distance(p,prim) = |signed_distance(p,prim)|
-
-Fallback absolute distance function.
-"""
-absolute_distance(p,prim) = abs(signed_distance(p,prim))
-
-"""
     signed_distance(p,s::HyperSphere)
 
 Return the signed distance from `p` to `s`.
 """
 signed_distance(p,s::HyperSphere) = norm(p-origin(s))-radius(s)
 
+distance_to_corner(q) = norm(max.(q, 0.))+min(maximum(q),0.)
 """
     signed_distance(p,r::Rect)
 
 Return the signed distance from `p` to `r`.
 """
 function signed_distance(p,r::Rect)
-    # reflect p to positive Rect quadrant and get vector relative to Rect corner
-    @show p,origin(r),width(r)
+    # Get vector relative to Rect corner
     q = abs.(p-origin(r).-0.5*width(r)).-0.5*width(r)
-    # 2-norm for positive distances, ∞-norm for negative
-    return norm(max.(q, 0.))+min(maximum(q),0.)
+    return distance_to_corner(q)
 end
+
+"""
+    signed_distance(p,c::Cylinder)
+
+Return the signed distance from `p` to `c`.
+"""
+function signed_distance(p,c::Cylinder)
+    e = (extremity(c)-origin(c))/2    # center to edge (defines length direction)
+    r = p-(extremity(c)+origin(c))/2  # center to point
+    e₁ = norm(e)                      # cylinder half-length
+    r₁ = abs(e ⋅ r) / e₁              # projected length to point
+    r₂ = √(r ⋅ r - r₁^2)              # height to point
+    return distance_to_corner(Point(r₁-e₁,r₂-radius(c)))
+end
+
+"""
+    signed_distance(p,prim)
+
+Fallback signed distance function.
+"""
+signed_distance(p,prim::GeometryPrimitive) = signed_distance(p,GeometryBasics.mesh(prim))
+
+"""
+    absolute_distance(p,prim) = |signed_distance(p,prim)|
+
+Fallback absolute distance function.
+"""
+absolute_distance(p,prim) = abs(signed_distance(p,prim))
