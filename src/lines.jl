@@ -1,9 +1,9 @@
 
 """
-    intersect(a::Line, b::Line) -> Point
+    intersects(a::Line, b::Line) -> Bool, Point
 
 Intersection of 2 line segmens `a` and `b`.
-Returns intersection_found::Bool, intersection_point
+Returns intersection_found::Bool, intersection_point::Point
 """
 function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
     T = promote_type(T1, T2)
