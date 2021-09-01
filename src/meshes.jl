@@ -100,7 +100,7 @@ end
 """
     mesh(primitive::GeometryPrimitive;
          pointtype=Point, facetype=GLTriangle,
-         uvtype=nothing, normaltype=nothing)
+         uv=nothing, normaltype=nothing)
 
 Creates a mesh from `primitive`.
 
