@@ -370,7 +370,7 @@ abstract type AbstractMesh{Element<:Polytope} <: AbstractVector{Element} end
 
 """
     Mesh <: AbstractVector{Element}
-The conrecte AbstractMesh implementation
+The concrete AbstractMesh implementation.
 """
 struct Mesh{Dim,T<:Number,Element<:Polytope{Dim,T},V<:AbstractVector{Element}} <:
        AbstractMesh{Element}
