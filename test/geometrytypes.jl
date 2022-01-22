@@ -286,4 +286,9 @@ end
     rect2 = Rect(0.0, 0.0, 2.0, 3.0)
     @test finishes(rect1, rect2)
 
+    rect1 = @inferred Rect(1, 2, 3, 4, 5, 6, 7, 8)
+    rect2 = Rect(Vec(1, 2, 3, 4), Vec(5, 6, 7, 8))
+    @test rect1 == rect2
+
+    @test_throws ArgumentError Rect(1, 2, 3)
 end
