@@ -85,7 +85,7 @@ function Base.in(P::T, triangle::Triangle) where {T<:AbstractPoint}
     return ((a_bp >= t0) && (b_cp >= t0) && (c_ap >= t0))
 end
 
-function snip(contour::AbstractVector{<:AbstractPoint{N,T}}, u, v, w, n, V) where {N,T}
+function snip(contour::AbstractVector{<:AbstractPoint}, u, v, w, n, V)
     A = contour[V[u]]
     B = contour[V[v]]
     C = contour[V[w]]
@@ -105,7 +105,7 @@ function snip(contour::AbstractVector{<:AbstractPoint{N,T}}, u, v, w, n, V) wher
 end
 
 """
-    decompose(facetype, contour::AbstractArray{AbstractPoint})
+    decompose(facetype, contour::AbstractArray{<:AbstractPoint})
 
 Triangulate a Polygon without hole.
 
