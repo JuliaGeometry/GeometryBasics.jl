@@ -295,8 +295,9 @@ function meta_table(iter)
     return meta_table(first(cols), Base.tail(cols))
 end
 
-function meta_table(main, meta::NamedTuple{names,types}) where {names,types}
-    F = MetaT{eltype(main),names,StructArrays.eltypes(types)}
+function meta_table(main, meta::NamedTuple{names}) where {names}
+    eltypes = Tuple{map(eltype, values(meta))...}
+    F = MetaT{eltype(main),names,eltypes}
     return StructArray{F}(; main=main, meta...)
 end
 
