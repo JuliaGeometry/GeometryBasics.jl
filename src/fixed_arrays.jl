@@ -203,10 +203,21 @@ end
 # Since we don't inherit from AbstractArray, some extra functions need to be overloaded
 LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T
 
+
+
 abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 
 @fixed_vector Point AbstractPoint
 @fixed_vector Vec StaticVector
+
+function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
+    idx = CartesianIndices((NR, NC))
+    data = ntuple(NR * NC) do i
+        ri, ci = Tuple(idx[i])
+        return mat[r[ri], c[ci]]
+    end
+    return Mat{NR, NC, T}(data)
+end
 
 Base.lastindex(::StaticVector{N}) where N = N
 

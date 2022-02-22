@@ -16,14 +16,6 @@ end
 Base.size(::Mat{R, C}) where {R, C} = (R, C)
 Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
 
-function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
-    idx = CartesianIndices((NR, NC))
-    data = ntuple(NR * NC) do i
-        ri, ci = Tuple(idx[i])
-        return mat[r[ri], c[ci]]
-    end
-    return Mat{NR, NC, T}(data)
-end
 
 Base.IndexStyle(::Mat)= Base.IndexLinear()
 
