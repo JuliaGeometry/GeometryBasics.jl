@@ -233,7 +233,7 @@ for i in 1:4
     namef = Symbol("Mat$(i)f")
     namef = Symbol("Mat$(i)f")
     @eval begin
-        const $name{T} = $Mat{$i,$i,T}
+        const $name{T} = $Mat{$i,$i,T, $(i*i)}
         const $namef = $name{Float32}
         export $name
         export $namef
