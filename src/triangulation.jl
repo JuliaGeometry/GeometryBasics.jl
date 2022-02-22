@@ -68,22 +68,21 @@ Determine if a point is inside of a triangle.
 """
 function Base.in(P::T, triangle::Triangle) where {T<:AbstractPoint}
     A, B, C = coordinates(triangle)
-    a = C .- B
-    b = A .- C
-    c = B .- A
 
-    ap = P .- A
-    bp = P .- B
-    cp = P .- C
+    ap = A .- P
+    bp = B .- P
+    cp = C .- P
 
-    a_bp = a[1] * bp[2] - a[2] * bp[1]
-    c_ap = c[1] * ap[2] - c[2] * ap[1]
-    b_cp = b[1] * cp[2] - b[2] * cp[1]
+    u = cross(bp, cp)
+    v = cross(cp, ap)
+    w = cross(ap, bp)
 
     t0 = zero(eltype(T))
-
-    return ((a_bp >= t0) && (b_cp >= t0) && (c_ap >= t0))
+    dot(u, v) < t0 && return false
+    dot(u, w) < t0 && return false
+    return true
 end
+
 
 function snip(contour::AbstractVector{<:AbstractPoint}, u, v, w, n, V)
     A = contour[V[u]]

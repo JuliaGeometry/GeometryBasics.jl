@@ -100,6 +100,7 @@ macro fixed_vector(VecT, SuperT)
             return $(VecT)(map(f, a.data, b.data))
         end
 
+        Base.broadcasted(f, a::$(VecT)) = $(VecT)(f.(a.data))
         Base.broadcasted(f, a::$(VecT), b) = $(VecT)(f.(a.data, b))
         Base.broadcasted(f, a, b::$(VecT)) = $(VecT)(f.(a, b.data))
 
@@ -207,6 +208,7 @@ abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 @fixed_vector Point AbstractPoint
 @fixed_vector Vec StaticVector
 
+Base.lastindex(::StaticVector{N}) where N = N
 
 Base.broadcasted(f, a::Point, b::GeometryBasics.Vec) = Vec(f.(a.data, b.data))
 Base.broadcasted(f, a::Vec, b::Point) = Vec(f.(a.data, b.data))

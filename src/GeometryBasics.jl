@@ -64,4 +64,9 @@ export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
 
+if Base.VERSION >= v"1.4.2"
+    include("precompiles.jl")
+    _precompile_()
+end
+
 end # module

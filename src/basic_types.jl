@@ -19,7 +19,6 @@ abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
 
-
 @fixed_vector SimplexFace AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
