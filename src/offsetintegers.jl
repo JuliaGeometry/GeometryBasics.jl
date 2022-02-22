@@ -20,7 +20,7 @@ raw(x::Integer) = x
 value(x::OffsetInteger{O,T}) where {O,T} = raw(x) - O
 value(x::Integer) = x
 
-function show(io::IO, oi::OffsetInteger)
+function Base.show(io::IO, oi::OffsetInteger)
     return print(io, "|$(raw(oi)) (indexes as $(value(oi))|")
 end
 

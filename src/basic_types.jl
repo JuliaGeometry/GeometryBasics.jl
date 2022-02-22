@@ -13,26 +13,20 @@ Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngo
 abstract type Polytope{Dim,T} <: AbstractGeometry{Dim,T} end
 abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 
-abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
 abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
 abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
 
-"""
-Face index, connecting points to form a simplex
-"""
 
 @fixed_vector SimplexFace AbstractSimplexFace
+
 const TetrahedronFace{T} = SimplexFace{4,T}
 Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 
-"""
-Face index, connecting points to form an Ngon
-"""
-
 @fixed_vector NgonFace AbstractNgonFace
+
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}
 const QuadFace{T} = NgonFace{4,T}
@@ -58,14 +52,14 @@ Fixed Size Polygon, e.g.
 """
 struct Ngon{Dim,T<:Real,N,Point<:AbstractPoint{Dim,T}} <: AbstractPolygon{Dim,T}
 
-    points::SVector{N,Point}
+    points::Vec{N,Point}
 end
 
 const NNgon{N} = Ngon{Dim,T,N,P} where {Dim,T,P}
 
 function (::Type{<:NNgon{N}})(points::Vararg{P,N}) where {P<:AbstractPoint{Dim,T},
                                                           N} where {Dim,T}
-    return Ngon{Dim,T,N,P}(SVector(points))
+    return Ngon{Dim,T,N,P}(Vec(points))
 end
 Base.show(io::IO, x::NNgon{N}) where {N} = print(io, "Ngon{$N}(", join(x, ", "), ")")
 
@@ -138,7 +132,7 @@ to allow embedding in higher-order spaces by parameterizing on `T`.
 """
 struct Simplex{Dim,T<:Real,N,Point<:AbstractPoint{Dim,T}} <: Polytope{Dim,T}
 
-    points::SVector{N,Point}
+    points::Vec{N,Point}
 end
 
 const NSimplex{N} = Simplex{Dim,T,N,P} where {Dim,T,P}
@@ -151,7 +145,7 @@ coordinates(x::Simplex) = x.points
 
 function (::Type{<:NSimplex{N}})(points::Vararg{P,N}) where {P<:AbstractPoint{Dim,T},
                                                              N} where {Dim,T}
-    return Simplex{Dim,T,N,P}(SVector(points))
+    return Simplex{Dim,T,N,P}(Vec(points))
 end
 
 # Base Array interface

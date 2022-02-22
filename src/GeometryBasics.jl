@@ -1,10 +1,12 @@
 module GeometryBasics
 
-using StaticArrays, Tables, StructArrays, IterTools, LinearAlgebra
+using Tables, StructArrays, IterTools, LinearAlgebra
 using EarCut_jll
+import Base: *
 
 using Base: @propagate_inbounds
 
+include("mat.jl")
 include("fixed_arrays.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")
@@ -24,8 +26,6 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
-include("deprecated.jl")
-
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
@@ -43,18 +43,12 @@ export PolygonMeta, MultiPointMeta, MultiLineStringMeta, MeshMeta, LineStringMet
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
        texturecoordinates
 export Tesselation, pointmeta, Normal, UV, UVW
-export GLTriangleFace, GLNormalMesh3D, GLPlainTriangleMesh, GLUVMesh3D, GLUVNormalMesh3D
-export AbstractMesh, Mesh, TriangleMesh
-export GLNormalMesh2D, PlainTriangleMesh
+export AbstractMesh, Mesh
 export MetaT, meta_table
 
 # all the different predefined mesh types
 # Note: meshes can contain arbitrary meta information,
-export AbstractMesh, TriangleMesh, PlainMesh, GLPlainMesh, GLPlainMesh2D, GLPlainMesh3D
-export UVMesh, GLUVMesh, GLUVMesh2D, GLUVMesh3D
-export NormalMesh, GLNormalMesh, GLNormalMesh2D, GLNormalMesh3D
-export NormalUVMesh, GLNormalUVMesh, GLNormalUVMesh2D, GLNormalUVMesh3D
-export NormalUVWMesh, GLNormalUVWMesh, GLNormalUVWMesh2D, GLNormalUVWMesh3D
+export AbstractMesh, TriangleMesh, PlainMesh
 
 # mesh creation functions
 export triangle_mesh, triangle_mesh, uv_mesh
@@ -69,10 +63,5 @@ export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
-
-if Base.VERSION >= v"1.4.2"
-    include("precompile.jl")
-    _precompile_()
-end
 
 end # module

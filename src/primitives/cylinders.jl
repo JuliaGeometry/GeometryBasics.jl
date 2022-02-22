@@ -28,24 +28,24 @@ direction(c::Cylinder{N,T}) where {N,T} = (c.extremity .- c.origin) ./ height(c)
 
 function rotation(c::Cylinder{2,T}) where {T}
     d2 = direction(c)
-    u = @SVector [d2[1], d2[2], T(0)]
-    v = @MVector [u[2], -u[1], T(0)]
-    normalize!(v)
-    return hcat(v, u, @SVector T[0, 0, 1])
+    u = Vec{3, T}(d2[1], d2[2], T(0))
+    v = Vec{3, T}(u[2], -u[1], T(0))
+    v = normalize(v)
+    return Mat{3, 3, T}(v..., u..., 0, 0, 1)
 end
 
 function rotation(c::Cylinder{3,T}) where {T}
     d3 = direction(c)
-    u = @SVector [d3[1], d3[2], d3[3]]
+    u = Vec{3, T}(d3[1], d3[2], d3[3])
     if abs(u[1]) > 0 || abs(u[2]) > 0
-        v = @MVector [u[2], -u[1], T(0)]
+        v = Vec{3, T}(u[2], -u[1], T(0))
     else
-        v = @MVector [T(0), -u[3], u[2]]
+        v = Vec{3, T}(T(0), -u[3], u[2])
     end
-    normalize!(v)
-    w = @SVector [u[2] * v[3] - u[3] * v[2], -u[1] * v[3] + u[3] * v[1],
-                  u[1] * v[2] - u[2] * v[1]]
-    return hcat(v, w, u)
+    v = normalize(v)
+    w = Vec{3, T}(u[2] * v[3] - u[3] * v[2], -u[1] * v[3] + u[3] * v[1],
+                  u[1] * v[2] - u[2] * v[1])
+    return Mat{3, 3, T}(v..., w..., u...)
 end
 
 function coordinates(c::Cylinder{2,T}, nvertices=(2, 2)) where {T}

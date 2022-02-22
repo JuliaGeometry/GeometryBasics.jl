@@ -1,4 +1,7 @@
 const FaceMesh{Dim,T,Element} = Mesh{Dim,T,Element,<:FaceView{Element}}
+const GLTriangleElement = Triangle{3,Float32}
+const GLTriangleFace = TriangleFace{GLIndex}
+
 
 coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
 faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
@@ -13,78 +16,6 @@ function normals(mesh::AbstractMesh)
     hasproperty(mesh, :normals) && return mesh.normals
     return nothing
 end
-
-const GLTriangleElement = Triangle{3,Float32}
-const GLTriangleFace = TriangleFace{GLIndex}
-const PointWithUV{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:uv,),Tuple{Vec{2,T}}}
-const PointWithNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals,),Tuple{Vec{3,T}}}
-const PointWithUVNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uv),
-                                           Tuple{Vec{3,T},Vec{2,T}}}
-const PointWithUVWNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uvw),
-                                            Tuple{Vec{3,T},Vec{3,T}}}
-
-"""
-    TriangleMesh{Dim, T, PointType}
-
-Abstract Mesh with triangle elements of eltype `T`.
-"""
-const TriangleMesh{Dim,T,PointType} = AbstractMesh{TriangleP{Dim,T,PointType}}
-
-"""
-    PlainMesh{Dim, T}
-
-Triangle mesh with no meta information (just points + triangle faces)
-"""
-const PlainMesh{Dim,T} = TriangleMesh{Dim,T,Point{Dim,T}}
-const GLPlainMesh{Dim} = PlainMesh{Dim,Float32}
-const GLPlainMesh2D = GLPlainMesh{2}
-const GLPlainMesh3D = GLPlainMesh{3}
-
-"""
-    UVMesh{Dim, T}
-
-PlainMesh with texture coordinates meta at each point.
-`uvmesh.uv isa AbstractVector{Vec2f}`
-"""
-const UVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUV{Dim,T}}
-const GLUVMesh{Dim} = UVMesh{Dim,Float32}
-const GLUVMesh2D = UVMesh{2}
-const GLUVMesh3D = UVMesh{3}
-
-"""
-    NormalMesh{Dim, T}
-
-PlainMesh with normals meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-"""
-const NormalMesh{Dim,T} = TriangleMesh{Dim,T,PointWithNormal{Dim,T}}
-const GLNormalMesh{Dim} = NormalMesh{Dim,Float32}
-const GLNormalMesh2D = GLNormalMesh{2}
-const GLNormalMesh3D = GLNormalMesh{3}
-
-"""
-    NormalUVMesh{Dim, T}
-
-PlainMesh with normals and uv meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-`normalmesh.uv isa AbstractVector{Vec2f}`
-"""
-const NormalUVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVNormal{Dim,T}}
-const GLNormalUVMesh{Dim} = NormalUVMesh{Dim,Float32}
-const GLNormalUVMesh2D = GLNormalUVMesh{2}
-const GLNormalUVMesh3D = GLNormalUVMesh{3}
-
-"""
-    NormalUVWMesh{Dim, T}
-
-PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-`normalmesh.uvw isa AbstractVector{Vec3f}`
-"""
-const NormalUVWMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVWNormal{Dim,T}}
-const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim,Float32}
-const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
-const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
 
 function decompose_triangulate_fallback(primitive::Meshable; pointtype, facetype)
     positions = decompose(pointtype, primitive)

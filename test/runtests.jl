@@ -1,10 +1,9 @@
-using Test, Random, StructArrays, Tables, StaticArrays, OffsetArrays
+using Test, Random, StructArrays, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: attributes
 
 @testset "GeometryBasics" begin
-
 @testset "algorithms" begin
     cube = Rect(Vec3f(-0.5), Vec3f(1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
@@ -39,7 +38,7 @@ end
         @testset "per vertex attributes" begin
             points = rand(Point{3, Float64}, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
-            normals = rand(SVector{3, Float64}, 8)
+            normals = rand(Vec{3, Float64}, 8)
             stress = LinRange(0, 1, 8)
             mesh = Mesh(meta(points, normals = normals, stress = stress), tfaces)
 
@@ -111,7 +110,6 @@ end
     end
     @testset "point with metadata" begin
         p = Point(1.1, 2.2)
-        @test p isa AbstractVector{Float64}
         pm = PointMeta(1.1, 2.2; a=1, b=2)
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
@@ -190,7 +188,6 @@ end
 
     @testset "MetaT{Point}" begin
         p = Point(1.1, 2.2)
-        @test p isa AbstractVector{Float64}
         pm = MetaT(Point(1.1, 2.2); a=1, b=2)
         p1 = Point(2.2, 3.6)
         p2 = [p, p1]
@@ -245,7 +242,7 @@ end
         @testset "per vertex attributes" begin
             points = rand(Point{3, Float64}, 8)
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
-            normals = rand(SVector{3, Float64}, 8)
+            normals = rand(Vec{3, Float64}, 8)
             stress = LinRange(0, 1, 8)
             mesh_nometa = Mesh(points, tfaces)
             mesh = MetaT(mesh_nometa, normals = normals, stress = stress)
@@ -410,10 +407,6 @@ end
         meshuv = Mesh(meta(points; uv=uv), tfaces)
         meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
 
-        @test mesh isa GLPlainMesh
-        @test meshuv isa GLUVMesh3D
-        @test meshuvnormal isa GLNormalUVMesh3D
-
         t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
         m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
@@ -472,28 +465,28 @@ end
 
     primitive = Sphere(Point3f(0), 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
     primitive = Rect2(0, 0, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
     primitive = Rect3(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test normals(m_normal) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
 
     points = decompose(Point2f, Circle(Point2f(0), 1))
     tmesh = triangle_mesh(points)
-    @test normals(tmesh) == nothing
+    @test GeometryBasics.normals(tmesh) == nothing
 
     m = GeometryBasics.mesh(Sphere(Point3f(0), 1))
-    @test normals(m) == nothing
+    @test GeometryBasics.normals(m) == nothing
     m_normals = pointmeta(m, Normal())
-    @test normals(m_normals) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normals) isa Vector{Vec3f}
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2(0.0, 0.0, 1.0, 1.0)
-    @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
+    @test collect(texturecoordinates(r2)) == [(0.0, 1.0), (1.0, 1.0), (0.0, 0.0), (1.0, 0.0)]
     r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
-    @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
+    @test first(texturecoordinates(r3)) == Vec3(0, 0, 0)
     uv = decompose_uv(m)
     @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
 
@@ -596,13 +589,11 @@ end
     @test coordinates(m) === decompose(Point{3, Float64}, m)
 
     tmesh = triangle_mesh(m)
-    @test tmesh isa GLPlainMesh
     @test coordinates(tmesh) === decompose(Point3f, tmesh)
 
     nmesh = normal_mesh(m)
-    @test nmesh isa GLNormalMesh
     @test metafree(coordinates(nmesh)) === decompose(Point3f, nmesh)
-    @test normals(nmesh) === decompose_normals(nmesh)
+    @test GeometryBasics.normals(nmesh) === decompose_normals(nmesh)
 
     m = GeometryBasics.mesh(s, pointtype=Point3f)
     @test m isa Mesh{3, Float32}
@@ -715,4 +706,4 @@ end
     include("fixed_arrays.jl")
 end
 
-end  # testset "GeometryBasics"
+end

@@ -74,7 +74,6 @@ using Test, GeometryBasics
         @test GeometryBasics.faces(m) == faces
         @test GeometryBasics.coordinates(m) ≈ positions
         m = normal_mesh(s)# just test that it works without explicit resolution parameter
-        @test m isa GLNormalMesh
 
         muv = uv_mesh(s)
         @test Rect(Point.(texturecoordinates(muv))) == Rect2f(Vec2f(0), Vec2f(1.0))
