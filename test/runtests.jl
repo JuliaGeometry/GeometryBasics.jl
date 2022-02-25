@@ -491,9 +491,9 @@ end
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2(0.0, 0.0, 1.0, 1.0)
-    @test iterate(texturecoordinates(r2)) == ((0.0, 1.0), ((0.0, 2), (1.0, 2)))
+    @test collect(texturecoordinates(r2)) == [(0.0, 1.0), (1.0, 1.0), (0.0, 0.0), (1.0, 0.0)]
     r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
-    @test iterate(texturecoordinates(r3)) == ([0, 0, 0], 2)
+    @test first(texturecoordinates(r3)) == Vec3(0, 0, 0)
     uv = decompose_uv(m)
     @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
 
