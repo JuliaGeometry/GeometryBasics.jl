@@ -164,8 +164,11 @@ Base.eltype(::StaticVector{N, T}) where {N, T} = T
 Base.eltype(::Type{<: StaticVector{N, T}}) where {N, T} = T
 
 Base.size(::StaticVector{N}) where {N} = (N,)
+Base.size(::Type{<: StaticVector{N}}) where {N} = (N,)
 Base.length(::StaticVector{N}) where {N} = N
 Base.length(::Type{<: StaticVector{N}}) where {N} = N
+Base.ndims(::Type{<: StaticVector}) = 1
+
 function Base.iterate(A::StaticVector, i=1)
     i - 1 < length(A) ? (A[i], i + 1) : nothing
 end
@@ -199,6 +202,7 @@ end
         Mat{1,N,T}($(expr...))
     end
 end
+Base.reverse(x::P) where P <: StaticVector = P(reverse(x.data))
 
 # Since we don't inherit from AbstractArray, some extra functions need to be overloaded
 LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T

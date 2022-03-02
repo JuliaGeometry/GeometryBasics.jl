@@ -14,6 +14,8 @@ struct Mat{Row, Column, T, L} <: AbstractMatrix{T}
 end
 
 Base.size(::Mat{R, C}) where {R, C} = (R, C)
+Base.size(::Type{<: Mat{R, C}}) where {R, C} = (R, C)
+Base.ndims(::Type{<: Mat}) = 2
 Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
 
 
@@ -38,6 +40,7 @@ function Mat{C, R, T, L}(::LinearAlgebra.UniformScaling) where {C, R, T, L}
 end
 
 Mat{C, R, T}(args...) where {C, R, T} = Mat{C, R, T}(args)
+Mat{C, R, T, L}(args...) where {C, R, T, L} = Mat{C, R, T}(args)
 Mat{C}(args...) where {C} = Mat{C, C}(args)
 Mat{C}(arg) where {C} = Mat{C, C}(arg)
 Mat{C, R}(x::Tuple) where {C, R} = Mat{C, R}(promote(x...))
@@ -47,6 +50,8 @@ Mat{C, R, T1}(x::NTuple{L, T2}) where {C, R, L, T1, T2} = Mat{C, R, T1}(convert(
 
 Mat{C, R}(x::AbstractMatrix{T}) where {C, R, T} = Mat{C, R, T}(x)
 Mat{C, R, T}(x::AbstractMatrix) where {C, R, T} = Mat{C, R, T}(ntuple(i-> convert(T, x[i]), C*R))
+
+Base.convert(::Type{Mat{C, R, T, L}}, from::Mat{C, R}) where {C, R, T, L} = Mat{C, R, T}(from.values)
 
 # Matrix products
 # General shape mismatched versions are errors
