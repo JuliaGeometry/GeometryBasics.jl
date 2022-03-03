@@ -1,7 +1,6 @@
 #! /usr/bin/env julia
 
 using Documenter
-
 using GeometryBasics
 
 DocMeta.setdocmeta!(GeometryBasics, :DocTestSetup, :(using GeometryBasics); recursive=true)
