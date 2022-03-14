@@ -30,6 +30,9 @@ using Test, GeometryBasics
 
     @testset "decompose" begin
 
+        m = GeometryBasics.normal_mesh(Sphere(Point3f(0), 1f0))
+        @test decompose_uv(m) isa Vector{Vec2f}
+
         o, extr, r = Point2f(1, 2), Point2f(3, 4), 5.0f0
         s = Cylinder(o, extr, r)
         positions = Point{3,Float32}[(-0.7677671, 3.767767, 0.0),

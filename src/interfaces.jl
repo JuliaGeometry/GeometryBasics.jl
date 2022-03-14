@@ -154,7 +154,7 @@ function decompose(UVT::Union{UV{T},UVW{T}},
     positions_nd = decompose(Point{N,eltype(T)}, positions)
     bb = Rect(positions_nd) # Make sure we get this as points
     return map(positions_nd) do p
-        return (p .- minimum(bb)) ./ widths(bb)
+        return T((p .- minimum(bb)) ./ widths(bb))
     end
 end
 
