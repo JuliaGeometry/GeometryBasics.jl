@@ -106,15 +106,15 @@ function decompose(::Type{F}, primitive) where {F<:AbstractFace}
 end
 
 function decompose(::Type{P}, primitive) where {P<:Point}
-    return collect_with_eltype(P, metafree(coordinates(primitive)))
+    return collect_with_eltype(P, coordinates(primitive))
 end
 
 function decompose(::Type{Point}, primitive::Meshable{Dim,T}) where {Dim,T}
-    return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
+    return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
 
 function decompose(::Type{Point}, primitive::LineString{Dim,T}) where {Dim,T}
-    return collect_with_eltype(Point{Dim,T}, metafree(coordinates(primitive)))
+    return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
 
 function decompose(::Type{T}, primitive) where {T}
@@ -128,7 +128,7 @@ decompose_normals(primitive) = decompose(Normal(), primitive)
 function decompose(NT::Normal{T}, primitive) where {T}
     n = normals(primitive)
     if n === nothing
-        return collect_with_eltype(T, normals(coordinates(primitive), faces(primitive)))
+        return collect_with_eltype(T, normals(decompose(Point, primitive), faces(primitive), T))
     end
     return collect_with_eltype(T, n)
 end
@@ -141,7 +141,7 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
         # If the primitive doesn't even have coordinates, we're out of options and return
         # nothing, indicating that texturecoordinates aren't implemented
         positions = decompose(Point, primitive)
-        positions === nothing && return nothing
+        isnothing(positions) && return nothing
         # Let this overlord do the work
         return decompose(UVT, positions)
     end
@@ -153,8 +153,9 @@ function decompose(UVT::Union{UV{T},UVW{T}},
     N = length(T)
     positions_nd = decompose(Point{N,eltype(T)}, positions)
     bb = Rect(positions_nd) # Make sure we get this as points
+    mini, w = minimum(bb), widths(bb)
     return map(positions_nd) do p
-        return T((p .- minimum(bb)) ./ widths(bb))
+        return T((p .- mini) ./ w)
     end
 end
 

@@ -304,21 +304,6 @@ end
         end
     end
 
-    @testset "face views" begin
-        numbers = [1, 2, 3, 4, 5, 6]
-        points = connect(numbers, Point{2})
-        faces = connect([1, 2, 3], TriangleFace)
-        triangles = connect(points, faces)
-        @test triangles == [Triangle(Point(1, 2), Point(3, 4), Point(5, 6))]
-        x = Point{3}(1.0)
-        triangles = connect([x], [TriangleFace(1, 1, 1)])
-        @test triangles == [Triangle(x, x, x)]
-        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
-        faces = connect([1, 2, 3, 4], SimplexFace{4})
-        triangles = connect(points, faces)
-        @test triangles == [Tetrahedron(points...)]
-    end
-
     @testset "reinterpret" begin
         numbers = collect(reshape(1:6, 2, 3))
         points = reinterpret(Point{2, Int}, numbers)
@@ -383,36 +368,35 @@ end
     end
 
     @testset "Mesh" begin
-
         numbers = [1, 2, 3, 4, 5, 6]
         points = connect(numbers, Point{2})
 
         mesh = Mesh(points, [1,2,3])
-        @test mesh == [Triangle(points...)]
+        @test faces(mesh) == [TriangleFace(1, 2, 3)]
 
         x = Point{3}(1.0)
         mesh = Mesh([x], [TriangleFace(1, 1, 1)])
-        @test mesh == [Triangle(x, x, x)]
+        @test coordinates(mesh) == [x]
+        @test faces(mesh) == [TriangleFace(1, 1, 1)]
 
         points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
-        faces = connect([1, 2, 3, 4], SimplexFace{4})
-        mesh = Mesh(points, faces)
-        @test mesh == [Tetrahedron(points...)]
+        f = connect([1, 2, 3, 4], SimplexFace{4})
+        mesh = Mesh(points, f)
+        @test collect(mesh) == [Tetrahedron(points...)]
 
         points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
         normals = rand(Vec3f, 8)
         uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
-        meshuv = Mesh(meta(points; uv=uv), tfaces)
-        meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
-
+        meshuv = MetaMesh(points, tfaces; uv=uv)
+        meshuvnormal = MetaMesh(points, tfaces; normals=normals, uv=uv)
         t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
-        m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
+
+        m = GeometryBasics.mesh(t; pointtype=Point3f, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
         @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
         @test GeometryBasics.coordinates(m2) isa Vector{Point3f}
-
     end
 
     @testset "Multi geometries" begin

@@ -56,7 +56,7 @@ function TupleView{N,M}(x::AbstractVector{T}; connect=false) where {T,N,M}
     return TupleView{NTuple{N,T},N,M,typeof(x)}(x, connect)
 end
 
-@inline function connected_line(points::AbstractVector{<:Point{N}},
+function connected_line(points::AbstractVector{<:Point{N}},
                                 skip=N) where {N}
     return connect(points, Line, skip)
 end
@@ -71,23 +71,22 @@ Example:
 x = connect(Point[(1, 2), (3, 4), (5, 6), (7, 8)], Line, 2)
 x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
 """
-@inline function connect(points::AbstractVector{Point},
+function connect(points::AbstractVector{Point},
                          P::Type{<:Polytope{N,T} where {N,T}},
                          skip::Int=length(P)) where {Point <: Point}
-    return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
+    return map(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<:Point{N}},
-                         skip::Int=N) where {T <: Real,N}
-    return reinterpret(Point{N,T}, TupleView{N,skip}(points))
+function connect(points::AbstractVector{T}, ::Type{<:Point{N}}, skip::Int=N) where {T <: Real,N}
+    return map(Point{N,T}, TupleView{N,skip}(points))
 end
 
-@inline function connect(points::AbstractVector{T}, P::Type{<:AbstractFace{N}},
-                         skip::Int=N) where {T <: Real,N}
-    return reinterpret(Face(P, T), TupleView{N,skip}(points))
+function connect(indices::AbstractVector{T}, P::Type{<:AbstractFace{N}},
+                         skip::Int=N) where {T <: Integer, N}
+    return map(Face(P, T), TupleView{N, skip}(indices))
 end
 
-@inline function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Real, N}
+function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Real, N}
     return if size(points, 1) === N
         return reinterpret(Point{N,T}, points)
     elseif size(points, 2) === N

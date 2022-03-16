@@ -1,11 +1,4 @@
-
-const GLTriangleElement = Triangle{3,Float32}
-const GLTriangleFace = TriangleFace{GLIndex}
-
-coordinates(mesh::Mesh) = mesh.vertices
-faces(mesh::Mesh) = mesh.connectivity
-
-function decompose_triangulate_fallback(primitive::Meshable; pointtype, facetype)
+function decompose_triangulate_fallback(primitive::Meshable, pointtype, facetype)
     positions = decompose(pointtype, primitive)
     faces = decompose(facetype, primitive)
     # If faces returns nothing for primitive, we try to triangulate!
@@ -29,36 +22,9 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
-              normaltype=nothing)
-
-    positions, faces = decompose_triangulate_fallback(primitive; pointtype=pointtype, facetype=facetype)
-
-    # We want to preserve any existing attributes!
-    attrs = attributes(primitive)
-    # Make sure this doesn't contain position, we'll add position explicitely via meta!
-    delete!(attrs, :position)
-
-    if uv !== nothing
-        # this may overwrite an existing :uv, but will only create a copy
-        # if it has a different eltype, otherwise it should replace it
-        # with exactly the same instance - which is what we want here
-        attrs[:uv] = decompose(UV(uv), primitive)
-    end
-
-    if normaltype !== nothing
-        primitive_normals = normals(primitive)
-        if primitive_normals !== nothing
-            attrs[:normals] = decompose(normaltype, primitive_normals)
-        else
-            # Normals not implemented for primitive, so we calculate them!
-            n = normals(positions, faces; normaltype=normaltype)
-            if n !== nothing # ok jeez, this is a 2d mesh which cant have normals
-                attrs[:normals] = n
-            end
-        end
-    end
-    return Mesh(meta(positions; attrs...), faces)
+function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace)
+    positions, faces = decompose_triangulate_fallback(primitive, pointtype, facetype)
+    return Mesh(positions, faces)
 end
 
 """
@@ -74,49 +40,35 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
                 normaltype=normaltype)
 end
 
-function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
-              facetype=GLTriangleFace, normaltype=nothing) where {Dim,T}
-
-    positions, faces = decompose_triangulate_fallback(polygon; pointtype=pointtype, facetype=facetype)
-
-    if normaltype !== nothing
-        n = normals(positions, faces; normaltype=normaltype)
-        positions = meta(positions; normals=n)
-    end
+function mesh(polygon::AbstractPolygon{Dim,T}) where {Dim,T}
+    positions, faces = decompose_triangulate_fallback(polygon; pointtype=Point{Dim, T}, facetype=GLTriangleFace)
     return Mesh(positions, faces)
 end
 
-function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
-    if nvertices !== nothing
-        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
-        primitive = Tesselation(primitive, nvertices)
-    end
-    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+function triangle_mesh(primitive::Meshable{N}) where {N}
+    return Mesh(decompose(Point{N,Float32}, primitive), decompose(GLTriangleFace, primitive))
 end
 
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (uv=decompose_uv(primitive),))
 end
 
 function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (uv=decompose_uv(primitive), normals=decompose_normals(primitive)))
 end
 
 function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
-    return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
+    return MetaMesh(Mesh(_points, _faces), (normals=normals(_points, _faces),))
 end
 
-function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
-    if nvertices !== nothing
-        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
-        primitive = Tesselation(primitive, nvertices)
-    end
-    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+function normal_mesh(primitive::Meshable{N}) where {N}
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (normals=decompose_normals(primitive),))
 end
 
 """

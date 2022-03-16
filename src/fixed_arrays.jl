@@ -80,7 +80,7 @@ macro fixed_vector(VecT, SuperT)
 
         @inline similar_type(::$(VecT){N, T}, n::Integer) where {N, T} = $(VecT){n, T}
         @inline similar_type(::$(VecT){N}, ::Type{T}) where {N, T} = $(VecT){N, T}
-        @inline similar_type(::$(VecT), ::Integer, ::Type{T}) where {N, T} = $(VecT){N, T}
+        @inline similar_type(::$(VecT), n::Integer, ::Type{T}) where {N, T} = $(VecT){n, T}
         @inline similar_type(::$(VecT)) = $(VecT)
 
         function Base.broadcasted(f, a::$(VecT), b::$(VecT))
@@ -97,13 +97,9 @@ macro fixed_vector(VecT, SuperT)
 end
 
 Base.broadcasted(f, a::StaticVector) = similar_type(a)(f.(a.data))
-Base.broadcasted(::typeof(+), a::StaticVector, b::OneTo{Int64}) = similar_type(a)((a.data .+ b))
+Base.broadcasted(::typeof(+), a::StaticVector, b::Base.OneTo{Int64}) = similar_type(a)((a.data .+ b))
 Base.broadcasted(f, a::StaticVector, b) = similar_type(a)(f.(a.data, b))
 Base.broadcasted(f, a, b::StaticVector) = similar_type(b)(f.(a, b.data))
-
-Base.@propagate_inbounds function Base.getindex(a::AbstractArray{T}, idx::StaticVector{N, <:Integer}) where {N,T}
-    return similar_type(idx, N, T)(map(i-> a[i], idx))
-end
 
 Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
 
@@ -126,11 +122,13 @@ end
 
 Base.:(-)(a::StaticVector) = (-).(a)
 
-for op in [:(Base.:(*)), :(Base.:(+)), :(Base.:(-))]
+import Base: *, +, -
+
+for op in [:*, :+, :-]
     @eval begin
-        ($op)(a::StaticVector, b::StaticVector) = a .* b
-        ($op)(a::Number, b::StaticVector) = a .* b
-        ($op)(a::StaticVector, b::Number) = a .* b
+        ($op)(a::StaticVector, b::StaticVector) = Base.broadcasted($(op), a, b)
+        ($op)(a::Number, b::StaticVector) = Base.broadcasted($(op), a, b)
+        ($op)(a::StaticVector, b::Number) = Base.broadcasted($(op), a, b)
     end
 end
 
@@ -187,7 +185,6 @@ LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T
 
 @fixed_vector Point StaticVector
 @fixed_vector Vec StaticVector
-
 
 Base.lastindex(::StaticVector{N}) where N = N
 

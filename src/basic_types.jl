@@ -3,7 +3,7 @@ Abstract Geometry in R{Dim} with Number type T
 """
 abstract type AbstractGeometry{Dim,T<:Number} end
 abstract type GeometryPrimitive{Dim,T} <: AbstractGeometry{Dim,T} end
-Base.ndims(x::AbstractGeometry{Dim}) where {Dim} = Dim
+Base.ndims(::AbstractGeometry{Dim}) where {Dim} = Dim
 
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
@@ -19,6 +19,10 @@ abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
 
+@propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Point, F <: AbstractFace}
+    Polytope(P, F)(map(i-> points[i], face.data))
+end
+
 @fixed_vector SimplexFace AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
@@ -29,6 +33,7 @@ Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}
 const QuadFace{T} = NgonFace{4,T}
+const GLTriangleFace = TriangleFace{GLIndex}
 
 function Base.show(io::IO, x::TriangleFace{T}) where {T}
     return print(io, "TriangleFace(", join(x, ", "), ")")
@@ -69,9 +74,9 @@ Base.length(::NNgon{N}) where {N} = N
 """
 The Ngon Polytope element type when indexing an array of points with a SimplexFace
 """
-function Polytope(P::Type{Point{Dim,T}},
+function Polytope(::Type{Point{Dim,T}},
                   ::Type{<:AbstractNgonFace{N,IT}}) where {N,Dim,T,IT}
-    return Ngon{Dim,T,N,P}
+    return Ngon{Dim,T,N}
 end
 
 """
@@ -88,6 +93,7 @@ const Line{Dim,T} = Ngon{Dim,T,2}
 # for triangle:
 const Triangle{Dim,T} = Ngon{Dim,T,3}
 const Triangle3d{T} = Triangle{3,T}
+const GLTriangleElement = Triangle{3,Float32}
 
 Base.show(io::IO, x::Triangle) = print(io, "Triangle(", join(x, ", "), ")")
 
@@ -141,15 +147,15 @@ Base.length(::NSimplex{N}) where {N} = N
 """
 The Simplex Polytope element type when indexing an array of points with a SimplexFace
 """
-function Polytope(P::Type{Point{Dim,T}}, ::Type{<:AbstractSimplexFace{N}}) where {N,Dim,T}
-    return Simplex{Dim,T,N,P}
+function Polytope(::Type{Point{Dim,T}}, ::Type{<:AbstractSimplexFace{N}}) where {N,Dim,T}
+    return Simplex{Dim,T,N}
 end
 
 """
 The fully concrete Simplex type, when constructed from a point type!
 """
 function Polytope(::Type{<:NSimplex{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
-    return Simplex{NDim,T,N,P}
+    return Simplex{NDim,T,N}
 end
 Base.show(io::IO, x::Line) = print(io, "Line(", x[1], " => ", x[2], ")")
 
@@ -326,34 +332,54 @@ An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
 The connections are defined via faces(mesh), the coordinates of the elements are returned by
 coordinates(mesh). Arbitrary meta information can be attached per point or per face
 """
-abstract type AbstractMesh{Element} end
+abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
 
 """
-    Mesh <: AbstractVector{Element}
-The concrete AbstractMesh implementation.
+    Mesh <: AbstractMesh{Element}
+The concrete AbstractMesh type.
 """
-struct Mesh{Dim,T<:Number, Element, V<:AbstractVector{Point{Dim, T}}, C} <:
-       AbstractMesh{Element}
+struct Mesh{Dim, T<:Number, V<:AbstractVector{Point{Dim, T}}, C <: AbstractVector{<: AbstractFace}} <: AbstractMesh{Dim, T}
     vertices::V
     connectivity::C
 end
+coordinates(mesh::Mesh) = mesh.vertices
+faces(mesh::Mesh) = mesh.connectivity
+Base.getindex(mesh::Mesh, i::Integer) = mesh.vertices[mesh.connectivity[i]]
+Base.length(mesh::Mesh) = length(mesh.connectivity)
 
-function Base.summary(io::IO, ::Mesh{Dim,T,Element}) where {Dim,T,Element}
-    print(io, "Mesh{$Dim, $T, ")
-    summary(io, Element)
-    return print(io, "}")
+function Base.iterate(mesh::Mesh, i=1)
+    return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
-function Mesh(elements::AbstractVector{<:Polytope{Dim,T}}) where {Dim,T}
-    return Mesh{Dim,T,eltype(elements),typeof(elements)}(elements, nothing)
-end
-
-function Mesh(points::AbstractVector{<:Point},
-              faces::AbstractVector{<:AbstractFace})
-    return Mesh(points, faces)
+function Mesh(points::AbstractVector{Point{Dim, T}},
+              faces::AbstractVector{<:AbstractFace}) where {Dim, T}
+    return Mesh{Dim, T, }(points, faces)
 end
 
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
               facetype=TriangleFace, skip=1)
-    return Mesh(connect(points, connect(faces, facetype, skip)))
+    return Mesh(points, connect(faces, facetype, skip))
 end
+
+struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}, Names, Types} <: AbstractMesh{Dim, T}
+    mesh::M
+    meta::NamedTuple{Names, Types}
+    function MetaMesh(mesh::AbstractMesh{Dim, T}, meta::NamedTuple{Names, Types}) where {Dim, T, Names, Types}
+        new{Dim, T, typeof(mesh), Names, Types}(mesh, meta)
+    end
+end
+
+function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; meta...)
+    MetaMesh(Mesh(points, faces), values(meta))
+end
+
+function MetaMesh(m::AbstractMesh; meta...)
+    MetaMesh(m, values(meta))
+end
+
+@inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
+@inline Base.getproperty(mesh::MetaMesh, field::Symbol) = getproperty(getfield(mesh, :meta), field)
+coordinates(mesh::MetaMesh) = coordinates(getfield(mesh, :mesh))
+faces(mesh::MetaMesh) = faces(getfield(mesh, :mesh))
+normals(mesh::MetaMesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
+texturecoordinates(mesh::MetaMesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
