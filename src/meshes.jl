@@ -80,7 +80,7 @@ end
 Create a mesh from a polygon given as a vector of points, using triangulation.
 """
 function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
-              normaltype=nothing) where {P<:AbstractPoint{2}}
+              normaltype=nothing) where {P<:Point{2}}
 
     return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype,
                 normaltype=normaltype)
@@ -115,7 +115,7 @@ function uv_normal_mesh(primitive::Meshable{N}) where {N}
                 facetype=GLTriangleFace)
 end
 
-function normal_mesh(points::AbstractVector{<:AbstractPoint},
+function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)

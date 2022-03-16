@@ -4,7 +4,7 @@ Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy 
 Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
 `ConcretePointType` to be something like `Point{3, Float32}`.
 """
-function coordinates(points::AbstractVector{<:AbstractPoint})
+function coordinates(points::AbstractVector{<:Point})
     return points
 end
 
@@ -87,7 +87,7 @@ end
 # Types that can be converted to a mesh via the functions below
 const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim,T},
                               GeometryPrimitive{Dim,T},
-                              AbstractVector{<:AbstractPoint{Dim,T}}}
+                              AbstractVector{Point{Dim,T}}}
 
 struct UV{T} end
 UV(::Type{T}) where {T} = UV{T}()
@@ -105,7 +105,7 @@ function decompose(::Type{F}, primitive) where {F<:AbstractFace}
     return collect_with_eltype(F, f)
 end
 
-function decompose(::Type{P}, primitive) where {P<:AbstractPoint}
+function decompose(::Type{P}, primitive) where {P<:Point}
     return collect_with_eltype(P, metafree(coordinates(primitive)))
 end
 

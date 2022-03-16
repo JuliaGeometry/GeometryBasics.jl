@@ -162,3 +162,26 @@ function Base.transpose(a::Mat{R, C, T}) where {R, C, T}
     end
     Mat{R, C, T}(data)
 end
+
+(*)(a::Mat{M, N, T1}, b::StaticVector{O, T2}) where {T1, T2, M, N, O} = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
+
+# vector * (row vector)
+@generated function *(a::StaticVector{N, T1}, b::Mat{1, M, T2}) where {T1, T2, N, M}
+    elements = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:M]...)
+    return :(similar_type(a)($elements))
+end
+
+# matrix * vector
+@generated function *(a::Mat{M, N, T1}, b::StaticVector{N, T2}) where {T1, T2, M, N}
+    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    return :(similar_type(b)($elements))
+end
+
+function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
+    idx = CartesianIndices((NR, NC))
+    data = ntuple(NR * NC) do i
+        ri, ci = Tuple(idx[i])
+        return mat[r[ri], c[ci]]
+    end
+    return Mat{NR, NC, T}(data)
+end

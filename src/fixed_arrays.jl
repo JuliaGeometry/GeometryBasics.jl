@@ -4,6 +4,7 @@ import Random
 import Base: setindex
 
 abstract type StaticVector{N, T} end
+function similar_type end
 
 macro fixed_vector(VecT, SuperT)
     expr = quote
@@ -77,74 +78,13 @@ macro fixed_vector(VecT, SuperT)
         end
         Base.convert(::Type{$(VecT)}, x::Tuple) = $(VecT)(x)
 
-        Base.@propagate_inbounds function Base.getindex(v::$(VecT){N,T}, i::Int) where {N,T}
-            return v.data[i]
-        end
-        Base.setindex(c::$(VecT){N, T}, v, i::Integer) where {N,T} = $(VecT){N,T}(Base.setindex(c.data, v, i))
-        Base.@propagate_inbounds function Base.getindex(a::AbstractArray{T}, idx::$(VecT){N, <:Integer}) where {N,T}
-            return $(VecT){N,T}(map(i-> a[i], idx))
-        end
-
-        Base.@propagate_inbounds function Base.getindex(a::StaticVector{N1, T}, idx::$(VecT){N, <:Integer}) where {N,N1,T}
-            return $(VecT){N,T}(map(i-> a[i], idx))
-        end
-
-        Base.Tuple(v::$(VecT)) = v.data
-
-
-        function Base.broadcasted(f, a::AbstractArray{T}, b::$(VecT)) where {T <: $(VecT)}
-            return Base.broadcasted(f, a, (b,))
-        end
+        @inline similar_type(::$(VecT){N, T}, n::Integer) where {N, T} = $(VecT){n, T}
+        @inline similar_type(::$(VecT){N}, ::Type{T}) where {N, T} = $(VecT){N, T}
+        @inline similar_type(::$(VecT), ::Integer, ::Type{T}) where {N, T} = $(VecT){N, T}
+        @inline similar_type(::$(VecT)) = $(VecT)
 
         function Base.broadcasted(f, a::$(VecT), b::$(VecT))
             return $(VecT)(map(f, a.data, b.data))
-        end
-
-        Base.broadcasted(f, a::$(VecT)) = $(VecT)(f.(a.data))
-        Base.broadcasted(f, a::$(VecT), b) = $(VecT)(f.(a.data, b))
-        Base.broadcasted(f, a, b::$(VecT)) = $(VecT)(f.(a, b.data))
-
-        Base.map(f, b::$(VecT)) = $(VecT)(map(f, b.data))
-
-        (*)(a::Mat{M, N, T1}, b::$(VecT){O, T2}) where {T1, T2, M, N, O} = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
-
-        # vector * (row vector)
-        @generated function *(a::$VecT{N, T1}, b::Mat{1, M, T2}) where {T1, T2, N, M}
-            elements = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:M]...)
-            return :($($(VecT))($elements))
-        end
-
-        # matrix * vector
-        @generated function *(a::Mat{M, N, T1}, b::$VecT{N, T2}) where {T1, T2, M, N}
-            total_terms = M*N
-            if total_terms <= 64
-                # Full unrolling
-                elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
-            else
-                # Expand as a bunch of dot products
-                elements = Expr(:tuple, [:(bilindot($($(VecT))(row(a,$i)),b)) for i in 1:M]...)
-            end
-            return :($($(VecT))($elements))
-        end
-
-        Base.:(*)(a::$VecT, b::$VecT) = a .* b
-        Base.:(*)(a::Number, b::$VecT) = a .* b
-        Base.:(*)(a::$VecT, b::Number) = a .* b
-
-        Base.:(+)(a::$VecT, b::$VecT) = a .+ b
-        Base.:(+)(a::Number, b::$VecT) = a .+ b
-        Base.:(+)(a::$VecT, b::Number) = a .+ b
-
-        Base.:(-)(a::$VecT) = (-).(a)
-        Base.:(-)(a::$VecT, b::$VecT) = a .- b
-        Base.:(-)(a::Number, b::$VecT) = a .- b
-        Base.:(-)(a::$VecT, b::Number) = a .- b
-
-        function Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{$(VecT){N,T}}) where {N,T}
-            $(VecT){N,T}(ntuple(i-> rand(rng, T), N))
-        end
-        function Random.randn(rng::Random.AbstractRNG, ::Type{$(VecT){N,T}}) where {N,T}
-            $(VecT){N,T}(ntuple(i-> randn(rng, T), N))
         end
         function LinearAlgebra.cross(a::$(VecT){3}, b::$(VecT){3})
             @inbounds elements = (a[2]*b[3]-a[3]*b[2],
@@ -154,6 +94,44 @@ macro fixed_vector(VecT, SuperT)
         end
     end
     return esc(expr)
+end
+
+Base.broadcasted(f, a::StaticVector) = similar_type(a)(f.(a.data))
+Base.broadcasted(::typeof(+), a::StaticVector, b::OneTo{Int64}) = similar_type(a)((a.data .+ b))
+Base.broadcasted(f, a::StaticVector, b) = similar_type(a)(f.(a.data, b))
+Base.broadcasted(f, a, b::StaticVector) = similar_type(b)(f.(a, b.data))
+
+Base.@propagate_inbounds function Base.getindex(a::AbstractArray{T}, idx::StaticVector{N, <:Integer}) where {N,T}
+    return similar_type(idx, N, T)(map(i-> a[i], idx))
+end
+
+Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
+
+function Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{V}) where V <: StaticVector{N,T} where {N, T}
+    V(ntuple(i-> rand(rng, T), N))
+end
+function Random.randn(rng::Random.AbstractRNG, ::Type{V}) where V <: StaticVector{N,T} where {N, T}
+    V(ntuple(i-> randn(rng, T), N))
+end
+
+Base.@propagate_inbounds function Base.getindex(v::StaticVector{N,T}, i::Int) where {N,T}
+    return v.data[i]
+end
+
+Base.setindex(c::V, v, i::Integer) where {V <: StaticVector} = V(Base.setindex(c.data, v, i))
+
+Base.@propagate_inbounds function Base.getindex(a::StaticVector{N1, T}, idx::StaticVector{N, <:Integer}) where {N,N1,T}
+    return similar_type(idx, N, T)(map(i-> a[i], idx))
+end
+
+Base.:(-)(a::StaticVector) = (-).(a)
+
+for op in [:(Base.:(*)), :(Base.:(+)), :(Base.:(-))]
+    @eval begin
+        ($op)(a::StaticVector, b::StaticVector) = a .* b
+        ($op)(a::Number, b::StaticVector) = a .* b
+        ($op)(a::StaticVector, b::Number) = a .* b
+    end
 end
 
 LinearAlgebra.cross(a::StaticVector{2}, b::StaticVector{2}) = a[1]*b[2]-a[2]*b[1]
@@ -207,33 +185,22 @@ Base.reverse(x::P) where P <: StaticVector = P(reverse(x.data))
 # Since we don't inherit from AbstractArray, some extra functions need to be overloaded
 LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T
 
-
-
-abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
-
-@fixed_vector Point AbstractPoint
+@fixed_vector Point StaticVector
 @fixed_vector Vec StaticVector
 
-function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
-    idx = CartesianIndices((NR, NC))
-    data = ntuple(NR * NC) do i
-        ri, ci = Tuple(idx[i])
-        return mat[r[ri], c[ci]]
-    end
-    return Mat{NR, NC, T}(data)
-end
 
 Base.lastindex(::StaticVector{N}) where N = N
 
-Base.broadcasted(f, a::Point, b::GeometryBasics.Vec) = Vec(f.(a.data, b.data))
+Base.broadcasted(f, a::Point, b::Vec) = Vec(f.(a.data, b.data))
 Base.broadcasted(f, a::Vec, b::Point) = Vec(f.(a.data, b.data))
-
 Base.:(+)(a::Vec{N}, b::Point{N}) where {N} = Point{N}(a.data .+ b.data)
 
 const VecTypes{N,T} = Union{StaticVector{N,T}, NTuple{N,T}}
 const Vecf{N} = Vec{N, Float32}
 const Pointf{N} = Point{N,Float32}
-Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
+Base.isnan(p::Union{Point,Vec}) = any(x -> isnan(x), p)
+
+include("mat.jl")
 
 for i in 1:4
     for T in [:Point, :Vec]

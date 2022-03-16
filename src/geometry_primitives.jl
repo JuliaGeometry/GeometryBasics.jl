@@ -105,12 +105,12 @@ normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
 ```
 Compute all vertex normals.
 """
-function normals(vertices::AbstractVector{<:AbstractPoint{3,T}}, faces::AbstractVector{F};
+function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
                  normaltype=Vec{3,T}) where {T,F<:NgonFace}
     return normals(vertices, faces, normaltype)
 end
 
-function normals(vertices::AbstractVector{<:AbstractPoint{3,T}}, faces::AbstractVector{F},
+function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F},
                  ::Type{N}) where {T,F<:NgonFace,N}
     normals_result = zeros(N, length(vertices))
     for face in faces

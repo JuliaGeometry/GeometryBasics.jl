@@ -235,7 +235,7 @@ end
 
     #=
     So mesh works differently for MetaT
-    since `MetaT{Point}` not subtyped to `AbstractPoint`
+    since `MetaT{Point}` not subtyped to `Point`
     =#
 
    @testset "MetaT{Mesh}" begin

@@ -56,7 +56,7 @@ function coordinates(c::Cylinder{2,T}, nvertices=(2, 2)) where {T}
     return (M * (to_pointn(Point3{T}, point) .- vo) .+ vo for point in points)
 end
 
-function faces(sphere::Cylinder{2}, nvertices=(2, 2))
+function faces(::Cylinder{2}, nvertices=(2, 2))
     return faces(Rect(0, 0, 1, 1), nvertices)
 end
 

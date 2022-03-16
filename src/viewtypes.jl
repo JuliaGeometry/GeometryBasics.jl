@@ -56,13 +56,13 @@ function TupleView{N,M}(x::AbstractVector{T}; connect=false) where {T,N,M}
     return TupleView{NTuple{N,T},N,M,typeof(x)}(x, connect)
 end
 
-@inline function connected_line(points::AbstractVector{<:AbstractPoint{N}},
+@inline function connected_line(points::AbstractVector{<:Point{N}},
                                 skip=N) where {N}
     return connect(points, Line, skip)
 end
 
 """
-    connect(points::AbstractVector{<: AbstractPoint}, P::Type{<: Polytope{N}}, skip::Int = N)
+    connect(points::AbstractVector{<: Point}, P::Type{<: Polytope{N}}, skip::Int = N)
 
 Creates a view that connects a number of points to a Polytope `P`.
 Between each polytope, `skip` elements are skipped untill the next starts.
@@ -73,7 +73,7 @@ x == [Line(Point(1, 2), Point(3, 4)), Line(Point(5, 6), Point(7, 8))]
 """
 @inline function connect(points::AbstractVector{Point},
                          P::Type{<:Polytope{N,T} where {N,T}},
-                         skip::Int=length(P)) where {Point <: AbstractPoint}
+                         skip::Int=length(P)) where {Point <: Point}
     return reinterpret(Polytope(P, Point), TupleView{length(P),skip}(points))
 end
 
@@ -87,8 +87,7 @@ end
     return reinterpret(Face(P, T), TupleView{N,skip}(points))
 end
 
-@inline function connect(points::AbstractMatrix{T},
-                         P::Type{<:AbstractPoint{N}}) where {T <: Real,N}
+@inline function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Real, N}
     return if size(points, 1) === N
         return reinterpret(Point{N,T}, points)
     elseif size(points, 2) === N

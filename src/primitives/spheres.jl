@@ -32,7 +32,7 @@ origin(c::HyperSphere) = c.center
 Base.minimum(c::HyperSphere{N,T}) where {N,T} = Vec{N,T}(origin(c)) - Vec{N,T}(radius(c))
 Base.maximum(c::HyperSphere{N,T}) where {N,T} = Vec{N,T}(origin(c)) + Vec{N,T}(radius(c))
 
-function Base.in(x::AbstractPoint, c::HyperSphere)
+function Base.in(x::Point, c::HyperSphere)
     return norm(origin(c) - x) ≤ radius(c)
 end
 

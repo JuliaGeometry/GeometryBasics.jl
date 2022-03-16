@@ -6,7 +6,6 @@ import Base: *
 
 using Base: @propagate_inbounds
 
-include("mat.jl")
 include("fixed_arrays.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")
