@@ -1,6 +1,6 @@
 module GeometryBasics
 
-using Tables, StructArrays, IterTools, LinearAlgebra
+using IterTools, LinearAlgebra
 using EarCut_jll
 import Base: *
 
@@ -17,7 +17,6 @@ include("primitives/pyramids.jl")
 include("primitives/particles.jl")
 
 include("interfaces.jl")
-include("metadata.jl")
 include("viewtypes.jl")
 include("geometry_primitives.jl")
 include("meshes.jl")
@@ -30,24 +29,19 @@ export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
 export LineString, AbstractPolygon, Polygon, MultiPoint, MultiLineString, MultiPolygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
-export QuadFace, metafree, coordinates, TetrahedronFace
-export TupleView, SimplexFace, Mesh, meta
-export Triangle, TriangleP
+export QuadFace, coordinates, TetrahedronFace
+export TupleView, SimplexFace, Mesh
+export Triangle
 export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
 export OffsetInteger, ZeroIndex, OneIndex, GLIndex
-export FaceView, SimpleFaceView
-export AbstractPoint, PointMeta, PointWithUV
-export PolygonMeta, MultiPointMeta, MultiLineStringMeta, MeshMeta, LineStringMeta,
-       MultiPolygonMeta
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
        texturecoordinates
-export Tesselation, pointmeta, Normal, UV, UVW
+export Tesselation, Normal, UV, UVW
 export AbstractMesh, Mesh
-export MetaT, meta_table
 
 # all the different predefined mesh types
 # Note: meshes can contain arbitrary meta information,
-export AbstractMesh, TriangleMesh, PlainMesh
+export AbstractMesh
 
 # mesh creation functions
 export triangle_mesh, triangle_mesh, uv_mesh

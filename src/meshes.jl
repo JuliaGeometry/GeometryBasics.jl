@@ -1,21 +1,9 @@
-const FaceMesh{Dim,T,Element} = Mesh{Dim,T,Element,<:FaceView{Element}}
+
 const GLTriangleElement = Triangle{3,Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
 
-
-coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
-faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
-
-function texturecoordinates(mesh::AbstractMesh)
-    hasproperty(mesh, :uv) && return mesh.uv
-    hasproperty(mesh, :uvw) && return mesh.uvw
-    return nothing
-end
-
-function normals(mesh::AbstractMesh)
-    hasproperty(mesh, :normals) && return mesh.normals
-    return nothing
-end
+coordinates(mesh::Mesh) = mesh.vertices
+faces(mesh::Mesh) = mesh.connectivity
 
 function decompose_triangulate_fallback(primitive::Meshable; pointtype, facetype)
     positions = decompose(pointtype, primitive)
@@ -168,54 +156,4 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         end
         return Mesh(ps, fs)
     end
-end
-
-"""
-    pointmeta(mesh::Mesh; meta_data...)
-
-Attaches metadata to the coordinates of a mesh
-"""
-function pointmeta(mesh::Mesh; meta_data...)
-    points = coordinates(mesh)
-    attr = attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    foreach(k -> delete!(attr, k), keys(meta_data))
-    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
-end
-
-function pointmeta(mesh::Mesh, uv::UV)
-    return pointmeta(mesh; uv=decompose(uv, mesh))
-end
-
-function pointmeta(mesh::Mesh, normal::Normal)
-    return pointmeta(mesh; normals=decompose(normal, mesh))
-end
-
-"""
-    pop_pointmeta(mesh::Mesh, property::Symbol)
-Remove `property` from point metadata.
-Returns the new mesh, and the property!
-"""
-function pop_pointmeta(mesh::Mesh, property::Symbol)
-    points = coordinates(mesh)
-    attr = attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    m = pop!(attr, property)
-    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
-end
-
-"""
-    facemeta(mesh::Mesh; meta_data...)
-
-Attaches metadata to the faces of a mesh
-"""
-function facemeta(mesh::Mesh; meta_data...)
-    return Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
-end
-
-function attributes(hasmeta::Mesh)
-    return Dict{Symbol,Any}((name => getproperty(hasmeta, name)
-                             for name in propertynames(hasmeta)))
 end
