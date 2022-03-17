@@ -19,8 +19,24 @@ raw(x::Integer) = x
 value(x::OffsetInteger{O,T}) where {O,T} = raw(x) - O
 value(x::Integer) = x
 
-function Base.show(io::IO, oi::OffsetInteger)
-    return print(io, "|$(raw(oi)) (indexes as $(value(oi))|")
+function to_subscript(io::IO, x::Int)
+    if x in 0:9
+        print(io, Char(0x2080+x))
+    elseif x < 0
+        print(io, Char(0x208B)); to_subscript(io, abs(x))
+    else # positive + more than one digit
+        for d in reverse(digits(x))
+            to_subscript(io, d)
+        end
+    end
+end
+
+function Base.show(io::IO, oi::OffsetInteger{O}) where {O}
+    o = O < 0 ? "ₒ₊" : "ₒ₋"
+    print(io, "<$(value(oi))$o")
+    to_subscript(io, abs(O))
+    print(io, ">")
+    return
 end
 
 Base.eltype(::Type{OffsetInteger{O,T}}) where {O,T} = T
@@ -40,7 +56,9 @@ OffsetInteger{O}(x::OffsetInteger) where {O} = OffsetInteger{O,eltype(x)}(x)
 Base.to_index(idx::OffsetInteger) = convert(Int, raw(OneIndex(idx)))
 
 Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:Integer} = IT(value(x))
+Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:OffsetInteger} = IT(value(x))
 Base.convert(::Type{O}, x::Integer) where {O<:OffsetInteger} = O(x)
+
 # basic operators
 for op in (:(-), :abs)
     @eval Base.$op(x::T) where {T<:OffsetInteger} = T($(op)(value(x)))
@@ -56,8 +74,11 @@ end
 
 for op in (:(==), :(>=), :(<=), :(<), :(>), :sub_with_overflow)
     @eval begin
-        @inline function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
+        function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
             return $op(x.i, y.i)
         end
+        Base.$op(x::OffsetInteger, y::OffsetInteger) = $op(value(x), value(y))
+        Base.$op(x::OffsetInteger, y::Integer) = $op(value(x), y)
+        Base.$op(x::Integer, y::OffsetInteger) = $op(x, value(y))
     end
 end

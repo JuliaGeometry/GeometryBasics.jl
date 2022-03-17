@@ -78,7 +78,7 @@ macro fixed_vector(VecT, SuperT)
         end
         Base.convert(::Type{$(VecT)}, x::Tuple) = $(VecT)(x)
 
-        @inline similar_type(::$(VecT){N, T}, n::Integer) where {N, T} = $(VecT){n, T}
+        @inline similar_type(::$(VecT){N, T}, n::Integer) where {N, T} = $(VecT){n}
         @inline similar_type(::$(VecT){N}, ::Type{T}) where {N, T} = $(VecT){N, T}
         @inline similar_type(::$(VecT), n::Integer, ::Type{T}) where {N, T} = $(VecT){n, T}
         @inline similar_type(::$(VecT)) = $(VecT)
@@ -99,7 +99,8 @@ end
 Base.broadcasted(f, a::StaticVector) = similar_type(a)(f.(a.data))
 Base.broadcasted(::typeof(+), a::StaticVector, b::Base.OneTo{Int64}) = similar_type(a)((a.data .+ b))
 Base.broadcasted(f, a::StaticVector, b) = similar_type(a)(f.(a.data, b))
-Base.broadcasted(f, a, b::StaticVector) = similar_type(b)(f.(a, b.data))
+Base.broadcasted(f, a, b::StaticVector{N}) where N = similar_type(b, N)(f.(a, b.data))
+Base.broadcasted(f, a::AbstractArray, b::StaticVector{N}) where N = f.(a, (b,))
 
 Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
 

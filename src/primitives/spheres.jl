@@ -44,10 +44,10 @@ end
 function coordinates(s::Circle, nvertices=64)
     rad = radius(s)
     inner(fi) = Point(rad * sin(fi + pi), rad * cos(fi + pi)) .+ origin(s)
-    return (inner(fi) for fi in LinRange(0, 2pi, nvertices))
+    return [inner(fi) for fi in LinRange(0, 2pi, nvertices)]
 end
 
-function texturecoordinates(s::Circle, nvertices=64)
+function texturecoordinates(::Circle, nvertices=64)
     return coordinates(Circle(Point2f(0.5), 0.5f0), nvertices)
 end
 
@@ -55,18 +55,18 @@ function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices)
     φ = LinRange(0, 2pi, nvertices)
     inner(θ, φ) = Point(cos(φ) * sin(θ), sin(φ) * sin(θ), cos(θ)) .* s.r .+ s.center
-    return ivec((inner(θ, φ) for θ in θ, φ in φ))
+    return [inner(θ, φ) for φ in φ for θ in θ]
 end
 
-function texturecoordinates(s::Sphere, nvertices=24)
+function texturecoordinates(::Sphere, nvertices=24)
     ux = LinRange(0, 1, nvertices)
     return ivec(((φ, θ) for θ in reverse(ux), φ in ux))
 end
 
-function faces(sphere::Sphere, nvertices=24)
+function faces(::Sphere, nvertices=24)
     return faces(Rect(0, 0, 1, 1), (nvertices, nvertices))
 end
 
-function normals(s::Sphere{T}, nvertices=24) where {T}
+function normals(::Sphere{T}, nvertices=24) where {T}
     return coordinates(Sphere(Point{3,T}(0), 1), nvertices)
 end

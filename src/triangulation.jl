@@ -110,10 +110,9 @@ Triangulate a Polygon without hole.
 
 Returns a Vector{`facetype`} defining indexes into `contour`.
 """
-function decompose(::Type{FaceType},
-                   points::AbstractArray{P}) where {P<:Point,FaceType<:AbstractFace}
+function decompose(::Type{F}, points::AbstractVector{<:Point}) where {F<:AbstractFace}
     #= allocate and initialize list of Vertices in polygon =#
-    result = FaceType[]
+    result = F[]
 
     # the algorithm doesn't like closed contours
     contour = if isapprox(last(points), first(points))
@@ -159,7 +158,7 @@ function decompose(::Type{FaceType},
             b = V[v]
             c = V[w]
             #= output Triangle =#
-            push!(result, convert_simplex(FaceType, TriangleFace(a, b, c))...)
+            push!(result, convert_simplex(F, TriangleFace(a, b, c))...)
             #= remove v from remaining polygon =#
             s = v
             t = v + 1

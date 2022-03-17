@@ -27,7 +27,7 @@ include("boundingboxes.jl")
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
-export LineString, AbstractPolygon, Polygon, MultiPoint, MultiLineString, MultiPolygon
+export AbstractPolygon, Polygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
 export QuadFace, coordinates, TetrahedronFace
 export TupleView, SimplexFace, Mesh

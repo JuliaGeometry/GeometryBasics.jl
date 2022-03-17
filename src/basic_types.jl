@@ -159,73 +159,6 @@ function Polytope(::Type{<:NSimplex{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T
 end
 Base.show(io::IO, x::Line) = print(io, "Line(", x[1], " => ", x[2], ")")
 
-"""
-    LineString(points::AbstractVector{<:Point})
-
-A LineString is a geometry of connected line segments
-"""
-struct LineString{Dim,T<:Real,V<:AbstractVector{Line{Dim,T}}}
-    points::V
-end
-
-coordinates(x::LineString) = coordinates(x.points)
-
-Base.copy(x::LineString) = LineString(copy(x.points))
-Base.size(x::LineString) = size(getfield(x, :points))
-Base.getindex(x::LineString, i) = getindex(getfield(x, :points), i)
-
-function LineString(points::AbstractVector{Line{Dim,T}}) where {Dim,T}
-    return LineString{Dim,T,typeof(points)}(points)
-end
-
-"""
-    LineString(points::AbstractVector{<: Point}, skip = 1)
-
-Creates a LineString from a vector of points.
-With `skip == 1`, the default, it will connect the line like this:
-```julia
-points = Point[a, b, c, d]
-linestring = LineString(points)
-@assert linestring == LineString([a => b, b => c, c => d])
-```
-"""
-function LineString(points::AbstractVector{<:Point}, skip=1)
-    return LineString(connect(points, Line, skip))
-end
-
-function LineString(points::AbstractVector{<:Pair{Point{N,T},Point{N,T}}}) where {N, T}
-    return LineString(reinterpret(Line{N,T}, points))
-end
-
-function LineString(points::AbstractVector{<:Point},
-                    faces::AbstractVector{<:LineFace})
-    return LineString(connect(points, faces))
-end
-
-"""
-    LineString(points::AbstractVector{<: Point}, indices::AbstractVector{<: Integer}, skip = 1)
-
-Creates a LineString from a vector of points and an index list.
-With `skip == 1`, the default, it will connect the line like this:
-
-
-```julia
-points = Point[a, b, c, d]; faces = [1, 2, 3, 4]
-linestring = LineString(points, faces)
-@assert linestring == LineString([a => b, b => c, c => d])
-```
-To make a segmented line, set skip to 2
-```julia
-points = Point[a, b, c, d]; faces = [1, 2, 3, 4]
-linestring = LineString(points, faces, 2)
-@assert linestring == LineString([a => b, c => d])
-```
-"""
-function LineString(points::AbstractVector{<:Point},
-                    indices::AbstractVector{<:Integer}, skip=1)
-    faces = connect(indices, LineFace, skip)
-    return LineString(points, faces)
-end
 
 """
     Polygon(exterior::AbstractVector{<:Point})
@@ -264,12 +197,10 @@ end
 
 function Polygon(exterior::AbstractVector{Point{Dim, T}},
                  interior::AbstractVector{<:AbstractVector{Point{Dim, T}}}) where {Dim,T}
-    ext = LineString(exterior)
-    # We need to take extra care for empty interiors, since
     # if we just map over it, it won't infer the element type correctly!
-    int = typeof(ext)[]
-    foreach(x -> push!(int, LineString(x)), interior)
-    return Polygon(ext, int)
+    int = typeof(exterior)[]
+    foreach(x -> push!(int, x), interior)
+    return Polygon(exterior, int)
 end
 
 function coordinates(polygon::Polygon{N,T}) where {N,T}
@@ -283,47 +214,6 @@ function coordinates(polygon::Polygon{N,T}) where {N,T}
         return result
     end
 end
-
-"""
-    MultiPolygon(polygons::AbstractPolygon)
-"""
-struct MultiPolygon{Dim,T<:Real,A<:AbstractVector{<:AbstractPolygon{Dim,T}}}
-    polygons::A
-end
-
-function MultiPolygon(polygons::AbstractVector{<: AbstractPolygon{Dim,T}}) where {Dim,T}
-    return MultiPolygon(polygons)
-end
-
-Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
-Base.size(mp::MultiPolygon) = size(mp.polygons)
-
-struct MultiLineString{Dim,T<:Real,A<:AbstractVector{LineString{Dim,T}}}
-    linestrings::A
-end
-
-function MultiLineString(linestrings::AbstractVector{L}) where {L<:AbstractVector{Line{Dim,T}}} where {Dim,T}
-    return MultiLineString(linestrings)
-end
-
-Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
-Base.size(ms::MultiLineString) = size(ms.linestrings)
-
-"""
-    MultiPoint(points::AbstractVector{<: Point})
-
-A collection of points
-"""
-struct MultiPoint{Dim,T<:Real,A<:AbstractVector{Point{Dim,T}}}
-    points::A
-end
-
-function MultiPoint(points::AbstractVector{Point{Dim,T}}) where {Dim,T}
-    return MultiPoint(points)
-end
-
-Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
-Base.size(mpt::MultiPoint) = size(mpt.points)
 
 """
     AbstractMesh
@@ -379,7 +269,12 @@ end
 
 @inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
 @inline Base.getproperty(mesh::MetaMesh, field::Symbol) = getproperty(getfield(mesh, :meta), field)
-coordinates(mesh::MetaMesh) = coordinates(getfield(mesh, :mesh))
-faces(mesh::MetaMesh) = faces(getfield(mesh, :mesh))
+@inline Base.propertynames(mesh::MetaMesh) = propertynames(getfield(mesh, :meta))
+
+coordinates(mesh::MetaMesh) = coordinates(Mesh(mesh))
+faces(mesh::MetaMesh) = faces(Mesh(mesh))
 normals(mesh::MetaMesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
 texturecoordinates(mesh::MetaMesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
+
+meta(mesh::MetaMesh) = getfield(mesh, :meta)
+Mesh(mesh::MetaMesh) = getfield(mesh, :mesh)

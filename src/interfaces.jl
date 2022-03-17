@@ -53,7 +53,7 @@ For grid based tesselation, you can also use a tuple:
 rect = Rect2(0, 0, 1, 1)
 Tesselation(rect, (5, 5))
 """
-struct Tesselation{Dim,T,Primitive,NGrid}
+struct Tesselation{Dim,T,Primitive,NGrid} <: AbstractGeometry{Dim, T}
     primitive::Primitive
     nvertices::NTuple{NGrid,Int}
 end
@@ -84,11 +84,6 @@ end
 # Dispatch type to make `decompose(UV{Vec2f}, primitive)` work
 # and to pass through tesselation information
 
-# Types that can be converted to a mesh via the functions below
-const Meshable{Dim,T} = Union{Tesselation{Dim,T},Mesh{Dim,T},AbstractPolygon{Dim,T},
-                              GeometryPrimitive{Dim,T},
-                              AbstractVector{Point{Dim,T}}}
-
 struct UV{T} end
 UV(::Type{T}) where {T} = UV{T}()
 UV() = UV(Vec2f)
@@ -99,21 +94,30 @@ struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
 Normal() = Normal(Vec3f)
 
-function decompose(::Type{F}, primitive) where {F<:AbstractFace}
+function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFace}
     f = faces(primitive)
-    f === nothing && return nothing
+    if isnothing(f)
+        if ndims(primitive) == 2
+            # if 2d, we can fallback to Polygon triangulation
+            return decompose(F, Polygon(decompose(Point, primitive)))
+        else
+            return nothing
+        end
+    end
     return collect_with_eltype(F, f)
+end
+
+function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
+    fs = faces(f)
+    isnothing(fs) && error("No faces defined for $(typeof(f))")
+    return collect_with_eltype(F, fs)
 end
 
 function decompose(::Type{P}, primitive) where {P<:Point}
     return collect_with_eltype(P, coordinates(primitive))
 end
 
-function decompose(::Type{Point}, primitive::Meshable{Dim,T}) where {Dim,T}
-    return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
-end
-
-function decompose(::Type{Point}, primitive::LineString{Dim,T}) where {Dim,T}
+function decompose(::Type{Point}, primitive::AbstractGeometry{Dim,T}) where {Dim,T}
     return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
 
@@ -125,10 +129,18 @@ decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)
 
-function decompose(NT::Normal{T}, primitive) where {T}
-    n = normals(primitive)
-    if n === nothing
-        return collect_with_eltype(T, normals(decompose(Point, primitive), faces(primitive), T))
+function decompose(::Normal{T}, primitive) where {T}
+    _n = normals(primitive)
+    if isnothing(_n)
+        # For 3D primitives, we can calculate the normals from the vertices + faces
+        if ndims(primitive) == 3
+            n = normals(decompose(Point, primitive), faces(primitive), T)
+        else
+            points = decompose(Point, primitive)
+            n = (Vec3f(0, 0, 1) for p in points)
+        end
+    else
+        n = _n
     end
     return collect_with_eltype(T, n)
 end
@@ -148,8 +160,7 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
     return collect_with_eltype(T, uv)
 end
 
-function decompose(UVT::Union{UV{T},UVW{T}},
-                   positions::AbstractVector{<:VecTypes}) where {T}
+function decompose(::Union{UV{T},UVW{T}}, positions::AbstractVector{<:VecTypes}) where {T}
     N = length(T)
     positions_nd = decompose(Point{N,eltype(T)}, positions)
     bb = Rect(positions_nd) # Make sure we get this as points
@@ -157,10 +168,4 @@ function decompose(UVT::Union{UV{T},UVW{T}},
     return map(positions_nd) do p
         return T((p .- mini) ./ w)
     end
-end
-
-# Stay backward compatible:
-
-function decompose(::Type{T}, primitive::Meshable, nvertices) where {T}
-    return decompose(T, Tesselation(primitive, nvertices))
 end

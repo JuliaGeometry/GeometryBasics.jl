@@ -9,6 +9,7 @@ end
 ##
 # conversion & decompose
 convert_simplex(::Type{T}, x::T) where {T} = (x,)
+convert_simplex(::Type{Vec{N, T}}, x::Vec{N, T}) where {N, T} = x
 
 function convert_simplex(NFT::Type{NgonFace{N,T1}},
                          f::Union{NgonFace{N,T2}}) where {T1,T2,N}
@@ -113,7 +114,6 @@ end
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
                  ::Type{NormalType}) where {F<:NgonFace,NormalType}
     normals_result = zeros(NormalType, length(vertices))
-    @show NormalType
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
