@@ -95,11 +95,13 @@ const Triangle{Dim,T} = Ngon{Dim,T,3}
 const Triangle3d{T} = Triangle{3,T}
 const GLTriangleElement = Triangle{3,Float32}
 
+faces(x::Ngon{Dim, T, N}) where {Dim, T, N} = [NgonFace{N, Int}(ntuple(identity, N))]
+
 Base.show(io::IO, x::Triangle) = print(io, "Triangle(", join(x, ", "), ")")
 
 const Quadrilateral{Dim,T} = Ngon{Dim,T,4}
 
-Base.show(io::IO, x::Quadrilateral) = print(io, "Quad(", join(x, ", "), ")")
+Base.show(io::IO, x::Quadrilateral) = print(io, "Quadrilateral(", join(x, ", "), ")")
 
 function coordinates(lines::AbstractArray{Line{Dim,T}}) where {Dim,T}
     result = Point{Dim, T}[]
@@ -236,6 +238,7 @@ coordinates(mesh::Mesh) = mesh.vertices
 faces(mesh::Mesh) = mesh.connectivity
 Base.getindex(mesh::Mesh, i::Integer) = mesh.vertices[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
+Base.:(==)(a::Mesh, b::Mesh) = coordinates(a) == coordinates(b) && faces(a) == faces(b)
 
 function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing

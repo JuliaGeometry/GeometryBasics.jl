@@ -92,7 +92,7 @@ end
 
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
-        error("No meshes to merge")
+        return Mesh(Point3f[], GLTriangleFace[])
     elseif length(meshes) == 1
         return meshes[1]
     else

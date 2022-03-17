@@ -1,6 +1,7 @@
 using Test, Random, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
+using StaticArrays
 using GeometryBasics: MetaMesh, add_meta, pop_meta
 
 @testset "GeometryBasics" begin
@@ -316,6 +317,10 @@ end
 
 @testset "Point & Vec type" begin
     include("fixed_arrays.jl")
+end
+
+@testset "Some mesh issues" begin
+    include("meshes.jl")
 end
 
 end
