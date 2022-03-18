@@ -30,14 +30,15 @@ export LineFace, Polytope, Line, NgonFace, convert_simplex
 export AbstractPolygon, Polygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
 export QuadFace, coordinates, TetrahedronFace
-export TupleView, SimplexFace, Mesh
+export TupleView, SimplexFace
 export Triangle
 export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
 export OffsetInteger, ZeroIndex, OneIndex, GLIndex
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
        texturecoordinates
 export Tesselation, Normal, UV, UVW
-export AbstractMesh, Mesh
+export AbstractMesh, Mesh, MetaMesh
+export add_meta, pop_meta
 
 # all the different predefined mesh types
 # Note: meshes can contain arbitrary meta information,

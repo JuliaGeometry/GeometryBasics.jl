@@ -151,3 +151,9 @@ function pop_meta(mesh::MetaMesh, name::Symbol)
     new_meta, value = pop(meta(mesh), Val(name))
     return MetaMesh(mesh, new_meta), value
 end
+
+
+function Base.get(f, mesh::MetaMesh, key::Symbol)
+    hasproperty(mesh, key) && return getproperty(mesh, key)
+    return f()
+end
