@@ -177,8 +177,8 @@ split(b::Rect, axis, value::Number) = _split(b, axis, value)
 function _split(b::H, axis, value) where {H<:Rect}
     bmin = minimum(b)
     bmax = maximum(b)
-    b1max = setindex(bmax, value, axis)
-    b2min = setindex(bmin, value, axis)
+    b1max = Base.setindex(bmax, value, axis)
+    b2min = Base.setindex(bmin, value, axis)
 
     return H(bmin, b1max - bmin), H(b2min, bmax - b2min)
 end

@@ -9,7 +9,7 @@ function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
     T = promote_type(T1, T2)
     v1, v2 = a
     v3, v4 = b
-    MT = Mat{2,2,T,4}
+    MT = Mat{2,2,T}
     p0 = zero(Point2{T})
 
     verticalA = v1[1] == v2[1]
