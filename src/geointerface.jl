@@ -1,14 +1,14 @@
 # Implementation of trait based interface from https://github.com/JuliaGeo/GeoInterface.jl/
 
-GeoInterface.isgeometry(::AbstractGeometry) = true
-GeoInterface.isgeometry(::AbstractFace) = true
-GeoInterface.isgeometry(::AbstractPoint) = true
-GeoInterface.isgeometry(::AbstractVector{<:AbstractGeometry}) = true
-GeoInterface.isgeometry(::AbstractVector{<:AbstractPoint}) = true
-GeoInterface.isgeometry(::AbstractVector{<:LineString}) = true
-GeoInterface.isgeometry(::AbstractVector{<:AbstractPolygon}) = true
-GeoInterface.isgeometry(::AbstractVector{<:AbstractFace}) = true
-GeoInterface.isgeometry(::Mesh) = true
+GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
+GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
+GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractGeometry}}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPoint}}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<:LineString}}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPolygon}}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractFace}}) = true
+GeoInterface.isgeometry(::Type{<:Mesh}) = true
 
 GeoInterface.geomtrait(::Point) = GeoInterface.PointTrait()
 GeoInterface.geomtrait(::Line) = GeoInterface.LineTrait()
