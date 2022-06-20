@@ -30,13 +30,15 @@ GeoInterface.getcoord(::GeoInterface.PointTrait, g::Point, i::Int) = g[i]
 GeoInterface.ngeom(::GeoInterface.LineTrait, g::Line) = length(g)
 GeoInterface.getgeom(::GeoInterface.LineTrait, g::Line, i::Int) = g[i]
 
-GeoInterface.ngeom(::GeoInterface.LineStringTrait, g::LineString) = length(g)
+GeoInterface.ngeom(::GeoInterface.LineStringTrait, g::LineString) = length(g) + 1  # n line segments + 1
 function GeoInterface.getgeom(::GeoInterface.LineStringTrait, g::LineString, i::Int)
-    return coordinates(g)[i]
+    return GeometryBasics.coordinates(g)[i]
 end
 
 GeoInterface.ngeom(::GeoInterface.PolygonTrait, g::Polygon) = length(g.interiors) + 1  # +1 for exterior
-function GeoInterface.getgeom(::GeoInterface.PolygonTrait, g::Polygon, i::Int)
+function GeoInterface.getgeom(::GeoInterface.PolygonTrait,
+                              g::Polygon,
+                              i::Int)::typeof(g.exterior)
     return i > 1 ? g.interiors[i - 1] : g.exterior
 end
 
@@ -66,9 +68,12 @@ function GeoInterface.ngeom(::GeoInterface.AbstractGeometryTrait,
                             ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
     return N
 end
-GeoInterface.ngeom(::PolygonTrait, ::Ngon) = 1  # can't have any holes
-GeoInterface.getgeom(::PolygonTrait, g::Ngon, _) = LineString(g.points)
+GeoInterface.ngeom(::GeoInterface.PolygonTrait, ::Ngon) = 1  # can't have any holes
+GeoInterface.getgeom(::GeoInterface.PolygonTrait, g::Ngon, _) = LineString(g.points)
 
-GeoInterface.ncoord(::PolyhedralSurfaceTrait, ::Mesh{Dim,T,E,V} where {Dim,T,E,V}) = Dim
-GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
-GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
+function GeoInterface.ncoord(::GeoInterface.PolyhedralSurfaceTrait,
+                             ::Mesh{Dim,T,E,V} where {Dim,T,E,V})
+    return Dim
+end
+GeoInterface.ngeom(::GeoInterface.PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
+GeoInterface.getgeom(::GeoInterface.PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]

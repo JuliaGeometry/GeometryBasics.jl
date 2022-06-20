@@ -57,7 +57,6 @@ Fixed Size Polygon, e.g.
 - ...
 """
 struct Ngon{Dim,T<:Real,N,Point<:AbstractPoint{Dim,T}} <: AbstractPolygon{Dim,T}
-
     points::SVector{N,Point}
 end
 
@@ -137,7 +136,6 @@ It applies to infinite dimensions. The structure of this type is designed
 to allow embedding in higher-order spaces by parameterizing on `T`.
 """
 struct Simplex{Dim,T<:Real,N,Point<:AbstractPoint{Dim,T}} <: Polytope{Dim,T}
-
     points::SVector{N,Point}
 end
 
@@ -328,7 +326,6 @@ Base.size(mp::MultiPolygon) = size(mp.polygons)
 
 struct MultiLineString{Dim,T<:Real,Element<:LineString{Dim,T},A<:AbstractVector{Element}} <:
        AbstractVector{Element}
-
     linestrings::A
 end
 
@@ -347,7 +344,6 @@ A collection of points
 """
 struct MultiPoint{Dim,T<:Real,P<:AbstractPoint{Dim,T},A<:AbstractVector{P}} <:
        AbstractVector{P}
-
     points::A
 end
 
