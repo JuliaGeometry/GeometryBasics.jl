@@ -94,3 +94,7 @@ function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Rea
         error("Dim 1 or 2 must be equal to the point dimension!")
     end
 end
+
+function connect(elements::AbstractVector, faces::AbstractVector{<: AbstractFace})
+    return [elements[i] for f in faces for i in f]
+end
