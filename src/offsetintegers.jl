@@ -5,7 +5,7 @@ OffsetInteger type mainly for indexing.
 * `O` - The offset relative to Julia arrays. This helps reduce copying when
 communicating with 0-indexed systems such as OpenGL.
 """
-struct OffsetInteger{O,T<:Integer}
+struct OffsetInteger{O,T<:Integer} <: Integer
     i::T
     OffsetInteger{O,T}(x::Integer) where {O,T<:Integer} = new{O,T}(T(x + O))
 end
@@ -82,3 +82,13 @@ for op in (:(==), :(>=), :(<=), :(<), :(>), :sub_with_overflow)
         Base.$op(x::Integer, y::OffsetInteger) = $op(x, value(y))
     end
 end
+
+Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
+
+function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
+                           ::Type{OffsetInteger{O2,T2}}) where {O1,O2,T1<:Integer,
+                                                                T2<:Integer}
+    return OffsetInteger{pure_max(O1, O2),promote_type(T1, T2)}
+end
+
+Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2

@@ -23,8 +23,8 @@ abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
     return Polytope(P, F)(map(i-> points[i], face.data))
 end
 
-@propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Vec, F <: AbstractFace}
-    return map(i-> points[i], face.data)
+@propagate_inbounds function Base.getindex(elements::AbstractVector, face::F) where {F <: AbstractFace}
+    return map(i-> elements[i], face.data)
 end
 
 @fixed_vector SimplexFace AbstractSimplexFace

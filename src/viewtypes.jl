@@ -56,11 +56,6 @@ function TupleView{N,M}(x::AbstractVector{T}; connect=false) where {T,N,M}
     return TupleView{NTuple{N,T},N,M,typeof(x)}(x, connect)
 end
 
-function connected_line(points::AbstractVector{<:Point{N}},
-                                skip=N) where {N}
-    return connect(points, Line, skip)
-end
-
 """
     connect(points::AbstractVector{<: Point}, P::Type{<: Polytope{N}}, skip::Int = N)
 
@@ -83,7 +78,7 @@ end
 
 function connect(indices::AbstractVector{T}, P::Type{<:AbstractFace{N}},
                          skip::Int=N) where {T <: Integer, N}
-    return map(Face(P, T), TupleView{N, skip}(indices))
+    return collect(reinterpret(Face(P, T), TupleView{N, skip}(indices)))
 end
 
 function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Real, N}

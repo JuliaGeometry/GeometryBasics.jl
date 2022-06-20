@@ -107,6 +107,20 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
     end
 end
 
+function Base.merge(meshes::AbstractVector{T}) where T <: MetaMesh
+    isempty(meshes) && return T(Point3f[], GLTriangleFace[])
+    big_mesh = merge(map(Mesh, meshes))
+    big_meta = deepcopy(meta(meshes[1]))
+    for mesh in Iterators.drop(meshes, 1)
+        mm = meta(mesh)
+        for (k, v) in pairs(mm)
+            append!(big_meta[k], v)
+        end
+    end
+    return MetaMesh(big_mesh, big_meta)
+end
+
+
 function map_coordinates(f, mesh::Mesh)
     result = copy(mesh)
     map_coordinates!(f, result)
