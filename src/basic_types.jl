@@ -270,8 +270,8 @@ function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Abstr
     MetaMesh(Mesh(points, faces), values(meta))
 end
 
-function MetaMesh(m::AbstractMesh; meta...)
-    MetaMesh(m, values(meta))
+function MetaMesh(m::AbstractMesh; kw...)
+    MetaMesh(m, merge(meta(m), values(kw)))
 end
 
 @inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
@@ -283,5 +283,6 @@ faces(mesh::MetaMesh) = faces(Mesh(mesh))
 normals(mesh::MetaMesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
 texturecoordinates(mesh::MetaMesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 
+meta(@nospecialize(m)) = NamedTuple()
 meta(mesh::MetaMesh) = getfield(mesh, :meta)
 Mesh(mesh::MetaMesh) = getfield(mesh, :mesh)

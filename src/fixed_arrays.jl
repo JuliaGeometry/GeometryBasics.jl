@@ -195,6 +195,7 @@ Base.:(+)(a::Vec{N}, b::Point{N}) where {N} = Point{N}(a.data .+ b.data)
 
 const VecTypes{N,T} = Union{StaticVector{N,T}, NTuple{N,T}}
 const Vecf{N} = Vec{N, Float32}
+const PointT{T} = Point{N,T} where N
 const Pointf{N} = Point{N,Float32}
 Base.isnan(p::Union{Point,Vec}) = any(x -> isnan(x), p)
 
