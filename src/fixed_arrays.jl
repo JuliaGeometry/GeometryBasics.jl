@@ -123,9 +123,9 @@ end
 
 Base.:(-)(a::StaticVector) = (-).(a)
 
-import Base: *, +, -
+import Base: *, +, -, /
 
-for op in [:*, :+, :-]
+for op in [:*, :+, :-, :/]
     @eval begin
         ($op)(a::StaticVector, b::StaticVector) = Base.broadcasted($(op), a, b)
         ($op)(a::Number, b::StaticVector) = Base.broadcasted($(op), a, b)
