@@ -28,6 +28,9 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
     return Mesh(positions, f)
 end
 
+const SimpleMesh{N, T, FT} = Mesh{N, T, Vector{Point{N, T}}, Vector{FT}}
+const TriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
+
 """
     mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
          normaltype=nothing)
@@ -38,11 +41,11 @@ function mesh(polygon::AbstractVector{P}; pointtype=P) where {P<:Point{2}}
     return mesh(Polygon(polygon); pointtype=pointtype)
 end
 
-function triangle_mesh(primitive::AbstractGeometry{N}) where {N}
+function triangle_mesh(primitive::AbstractGeometry{N})::TriangleMesh{N} where {N}
     return mesh(primitive; pointtype=Point{N, Float32})
 end
 
-function triangle_mesh(primitive::AbstractVector{<: Point})
+function triangle_mesh(primitive::AbstractVector{<: Point2})::TriangleMesh{2}
     return mesh(Polygon(primitive))
 end
 

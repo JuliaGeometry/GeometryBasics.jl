@@ -141,7 +141,7 @@ function decompose(::Normal{T}, primitive) where {T}
             n = normals(decompose(Point, primitive), faces(primitive), T)
         else
             points = decompose(Point, primitive)
-            n = (Vec3f(0, 0, 1) for p in points)
+            n = [T(0, 0, 1) for p in points]
         end
     else
         n = _n
