@@ -174,3 +174,30 @@ function Base.get(f, mesh::MetaMesh, key::Symbol)
     hasproperty(mesh, key) && return getproperty(mesh, key)
     return f()
 end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "Mesh{$N, $T, $(FT)}")
+    println(io, "    vertices: ", length(coordinates(mesh)))
+    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
+end
+
+function Base.show(io::IO, mesh::Mesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    print(io, "Mesh{$N, $T, $(FT)}(...)")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::MetaMesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "MetaMesh{$N, $T, $(FT)}")
+    println(io, "    vertices: ", length(coordinates(mesh)))
+    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
+    for (k, v) in pairs(meta(mesh))
+        println(io, "    ", k, ": ", length(v), " $(eltype(v))")
+    end
+end
+
+function Base.show(io::IO, mesh::MetaMesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "MetaMesh{$N, $T, $(FT)}($(join(keys(meta(mesh)), ", ")))")
+end

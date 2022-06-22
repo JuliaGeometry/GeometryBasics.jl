@@ -271,7 +271,7 @@ function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Abstr
 end
 
 function MetaMesh(m::AbstractMesh; kw...)
-    MetaMesh(m, merge(meta(m), values(kw)))
+    MetaMesh(Mesh(m), merge(meta(m), values(kw)))
 end
 
 @inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
