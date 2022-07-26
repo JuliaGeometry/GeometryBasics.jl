@@ -721,3 +721,8 @@ using Aqua
 Aqua.test_all(GeometryBasics; ambiguities=false)
 
 end  # testset "GeometryBasics"
+
+@info "Running JET..."
+
+using JET
+display(JET.report_package(GeometryBasics))
