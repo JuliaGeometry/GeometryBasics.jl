@@ -64,7 +64,7 @@ export height, origin, radius, width, widths, xwidth, yheight
 export HyperSphere, Circle, Sphere
 export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f
-export before, during, isinside, isoutside, meets, overlaps, intersects, finishes
+export before, during, meets, overlaps, intersects, finishes
 export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
