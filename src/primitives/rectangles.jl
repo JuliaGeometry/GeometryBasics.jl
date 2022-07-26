@@ -48,7 +48,7 @@ function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
-function RectT{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
+function RectT{T}(v1::VecTypes{N}, v2::VecTypes{N}) where {N,T}
     return if T <: Integer
         Rect{N,T}(round.(T, v1), round.(T, v2))
     else
@@ -56,8 +56,8 @@ function RectT{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
     end
 end
 
-function Rect{N}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
-    T = promote_type(T1, T2)
+function Rect{N}(v1::VecTypes{N}, v2::VecTypes{N}) where {N}
+    T = promote_type(eltype(v1), eltype(v2))
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
