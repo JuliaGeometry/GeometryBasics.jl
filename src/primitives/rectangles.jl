@@ -512,7 +512,7 @@ Base.isequal(b1::Rect, b2::Rect) = b1 == b2
 
 centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
 centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
-centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
+centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
 # Rect2 decomposition
