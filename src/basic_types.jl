@@ -3,7 +3,7 @@ Abstract Geometry in R{Dim} with Number type T
 """
 abstract type AbstractGeometry{Dim,T<:Number} end
 abstract type GeometryPrimitive{Dim,T} <: AbstractGeometry{Dim,T} end
-Base.ndims(x::AbstractGeometry{Dim}) where {Dim} = Dim
+Base.ndims(::AbstractGeometry{Dim}) where {Dim} = Dim
 
 """
 Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
@@ -62,9 +62,10 @@ end
 
 const NNgon{N} = Ngon{Dim,T,N,P} where {Dim,T,P}
 
-function (::Type{<:NNgon{N}})(points::Vararg{P,N}) where {P<:AbstractPoint{Dim,T},
-                                                          N} where {Dim,T}
-    return Ngon{Dim,T,N,P}(SVector(points))
+function (::Type{<:NNgon{N1}})(p0::P, points::Vararg{P,N2}) where {P<:AbstractPoint{Dim,T},
+                                                          N1, N2} where {Dim,T}
+    @assert N1 == N2+1
+    return Ngon{Dim,T,N1,P}(SVector(p0, points...))
 end
 Base.show(io::IO, x::NNgon{N}) where {N} = print(io, "Ngon{$N}(", join(x, ", "), ")")
 
@@ -100,12 +101,12 @@ const Triangle{Dim,T} = TriangleP{Dim,T,Point{Dim,T}}
 const Triangle3d{T} = Triangle{3,T}
 
 Base.show(io::IO, x::TriangleP) = print(io, "Triangle(", join(x, ", "), ")")
-Base.summary(io::IO, x::Type{<:TriangleP}) = print(io, "Triangle")
+Base.summary(io::IO, ::Type{<:TriangleP}) = print(io, "Triangle")
 
 const Quadrilateral{Dim,T} = Ngon{Dim,T,4,P} where {P<:AbstractPoint{Dim,T}}
 
 Base.show(io::IO, x::Quadrilateral) = print(io, "Quad(", join(x, ", "), ")")
-Base.summary(io::IO, x::Type{<:Quadrilateral}) = print(io, "Quad")
+Base.summary(io::IO, ::Type{<:Quadrilateral}) = print(io, "Quad")
 
 function coordinates(lines::AbstractArray{LineP{Dim,T,PointType}}) where {Dim,T,PointType}
     return if lines isa Base.ReinterpretArray
@@ -147,9 +148,10 @@ Base.show(io::IO, x::TetrahedronP) = print(io, "Tetrahedron(", join(x, ", "), ")
 
 coordinates(x::Simplex) = x.points
 
-function (::Type{<:NSimplex{N}})(points::Vararg{P,N}) where {P<:AbstractPoint{Dim,T},
-                                                             N} where {Dim,T}
-    return Simplex{Dim,T,N,P}(SVector(points))
+function (::Type{<:NSimplex{N1}})(p0::P, points::Vararg{P,N2}) where {P<:AbstractPoint{Dim,T},
+                                                             N1, N2} where {Dim,T}
+    @assert N1 == N2+1
+    return Simplex{Dim,T,N1,P}(SVector(p0, points...))
 end
 
 # Base Array interface

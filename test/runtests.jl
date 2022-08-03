@@ -720,4 +720,9 @@ end
     include("geointerface.jl")
 end
 
+using Aqua
+# Aqua tests
+# Intervals brings a bunch of ambiquities unfortunately
+Aqua.test_all(GeometryBasics; ambiguities=false)
+
 end  # testset "GeometryBasics"
