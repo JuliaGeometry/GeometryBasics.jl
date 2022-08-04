@@ -45,3 +45,57 @@ end
     mesh = triangle_mesh(Sphere(Point3f(0), 1))
     @test testgeometry(mesh)
 end
+
+@testset "Convert" begin
+    # convert GeoJSON geometry types to GeometryBasics via the GeoInterface
+    point_str = """{"type":"Point","coordinates":[30.1,10.1]}"""
+    point_3d_str = """{"type":"Point","coordinates":[30.1,10.1,5.1]}"""
+    linestring_str = """{"type":"LineString","coordinates":[[30.1,10.1],[10.1,30.1],[40.1,40.1]]}"""
+    polygon_str = """{"type":"Polygon","coordinates":[[[30.1,10.1],[40.1,40.1],[20.1,40.1],[10.1,20.1],[30.1,10.1]]]}"""
+    polygon_hole_str = """{"type":"Polygon","coordinates":[[[35.1,10.1],[45.1,45.1],[15.1,40.1],[10.1,20.1],[35.1,10.1]],[[20.1,30.1],[35.1,35.1],[30.1,20.1],[20.1,30.1]]]}"""
+    multipoint_str = """{"type":"MultiPoint","coordinates":[[10.1,40.1],[40.1,30.1],[20.1,20.1],[30.1,10.1]]}"""
+    multilinestring_str = """{"type":"MultiLineString","coordinates":[[[10.1,10.1],[20.1,20.1],[10.1,40.1]],[[40.1,40.1],[30.1,30.1],[40.1,20.1],[30.1,10.1]]]}"""
+    multipolygon_str = """{"type":"MultiPolygon","coordinates":[[[[30.1,20.1],[45.1,40.1],[10.1,40.1],[30.1,20.1]]],[[[15.1,5.1],[40.1,10.1],[10.1,20.1],[5.1,10.1],[15.1,5.1]]]]}"""
+    multipolygon_hole_str = """{"type":"MultiPolygon","coordinates":[[[[40.1,40.1],[20.1,45.1],[45.1,30.1],[40.1,40.1]]],[[[20.1,35.1],[10.1,30.1],[10.1,10.1],[30.1,5.1],[45.1,20.1],[20.1,35.1]],[[30.1,20.1],[20.1,15.1],[20.1,25.1],[30.1,20.1]]]]}"""
+
+    point_json = GeoJSON.read(point_str)
+    point_3d_json = GeoJSON.read(point_3d_str)
+    linestring_json = GeoJSON.read(linestring_str)
+    polygon_json = GeoJSON.read(polygon_str)
+    polygon_hole_json = GeoJSON.read(polygon_hole_str)
+    multipoint_json = GeoJSON.read(multipoint_str)
+    multilinestring_json = GeoJSON.read(multilinestring_str)
+    multipolygon_json = GeoJSON.read(multipolygon_str)
+    multipolygon_hole_json = GeoJSON.read(multipolygon_hole_str)
+
+    point_gb = GeoInterface.convert(Point, point_json)
+    point_3d_gb = GeoInterface.convert(Point, point_3d_json)
+    linestring_gb = GeoInterface.convert(LineString, linestring_json)
+    polygon_gb = GeoInterface.convert(Polygon, polygon_json)
+    polygon_hole_gb = GeoInterface.convert(Polygon, polygon_hole_json)
+    multipoint_gb = GeoInterface.convert(MultiPoint, multipoint_json)
+    multilinestring_gb = GeoInterface.convert(MultiLineString, multilinestring_json)
+    multipolygon_gb = GeoInterface.convert(MultiPolygon, multipolygon_json)
+    multipolygon_hole_gb = GeoInterface.convert(MultiPolygon, multipolygon_hole_json)
+
+    @test point_gb === Point{2, Float64}(30.1, 10.1)
+    @test point_3d_gb === Point{3, Float64}(30.1, 10.1, 5.1)
+    @test linestring_gb isa LineString
+    @test length(linestring_gb) == 2
+    @test eltype(linestring_gb) == Line{2, Float64}
+    @test polygon_gb isa Polygon
+    @test isempty(polygon_gb.interiors)
+    @test polygon_hole_gb isa Polygon
+    @test length(polygon_hole_gb.interiors) == 1
+    @test multipoint_gb isa MultiPoint
+    @test length(multipoint_gb) == 4
+    @test multipoint_gb[4] === Point{2, Float64}(30.1, 10.1)
+    @test multilinestring_gb isa MultiLineString
+    @test length(multilinestring_gb) == 2
+    @test multipolygon_gb isa MultiPolygon
+    @test length(multipolygon_gb) == 2
+    @test multipolygon_hole_gb isa MultiPolygon
+    @test length(multipolygon_hole_gb) == 2
+    @test length(multipolygon_hole_gb[1].interiors) == 0
+    @test length(multipolygon_hole_gb[2].interiors) == 1
+end

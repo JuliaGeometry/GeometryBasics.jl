@@ -3,6 +3,7 @@ using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: attributes
 using GeoInterface
+using GeoJSON
 
 @testset "GeometryBasics" begin
 

@@ -77,3 +77,39 @@ function GeoInterface.ncoord(::PolyhedralSurfaceTrait,
 end
 GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
 GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
+
+function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
+    dim = Int(ncoord(geom))
+    return Point{dim}(GeoInterface.coordinates(geom))
+end
+
+function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
+    dim = Int(ncoord(geom))
+    return LineString([Point{dim}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+end
+
+function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
+    t = LineStringTrait()
+    exterior = GeoInterface.convert(LineString, t, GeoInterface.getexterior(geom))
+    if GeoInterface.nhole(geom) == 0
+        return Polygon(exterior)
+    else
+        interiors = GeoInterface.convert.(LineString, Ref(t), GeoInterface.gethole(geom))
+        return Polygon(exterior, interiors)
+    end
+end
+
+function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
+    dim = Int(ncoord(geom))
+    return MultiPoint([Point{dim}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+end
+
+function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)
+    t = LineStringTrait()
+    return MultiLineString([GeoInterface.convert(LineString, t, l) for l in getgeom(geom)])
+end
+
+function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geom)
+    t = PolygonTrait()
+    return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
+end
