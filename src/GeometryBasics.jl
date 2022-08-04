@@ -1,7 +1,7 @@
 module GeometryBasics
 
 using StaticArrays, Tables, StructArrays, IterTools, LinearAlgebra
-using GeoInterface: GeoInterface
+using GeoInterface
 using EarCut_jll
 
 using Base: @propagate_inbounds
