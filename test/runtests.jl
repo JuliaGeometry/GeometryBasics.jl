@@ -2,6 +2,8 @@ using Test, Random, StructArrays, Tables, StaticArrays, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: attributes
+using GeoInterface
+using GeoJSON
 
 @testset "GeometryBasics" begin
 
@@ -713,6 +715,10 @@ end
 
 @testset "Point & Vec type" begin
     include("fixed_arrays.jl")
+end
+
+@testset "GeoInterface" begin
+    include("geointerface.jl")
 end
 
 using Aqua

@@ -1,6 +1,7 @@
 module GeometryBasics
 
 using StaticArrays, Tables, StructArrays, IterTools, LinearAlgebra
+using GeoInterface
 using EarCut_jll
 
 using Base: @propagate_inbounds
@@ -25,6 +26,7 @@ include("lines.jl")
 include("boundingboxes.jl")
 
 include("deprecated.jl")
+include("geointerface.jl")
 
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
