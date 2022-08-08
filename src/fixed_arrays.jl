@@ -158,6 +158,7 @@ function unit(::Type{T}, i::Integer) where {T <: StaticVector}
 end
 
 Base.zero(::Type{V}) where {V <:StaticVector} = V(0)
+Base.zero(::V) where {V <:StaticVector} = zero(V)
 
 function Base.:(==)(a::StaticVector{N}, b::StaticVector{N}) where N
     for i in 1:N
