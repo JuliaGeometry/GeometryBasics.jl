@@ -48,7 +48,7 @@ function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
-function RectT{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
+function RectT{T}(v1::VecTypes{N}, v2::VecTypes{N}) where {N,T}
     return if T <: Integer
         Rect{N,T}(round.(T, v1), round.(T, v2))
     else
@@ -56,8 +56,8 @@ function RectT{T}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T,T1,T2}
     end
 end
 
-function Rect{N}(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
-    T = promote_type(T1, T2)
+function Rect{N}(v1::VecTypes{N}, v2::VecTypes{N}) where {N}
+    T = promote_type(eltype(v1), eltype(v2))
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
 
@@ -67,7 +67,7 @@ end
 ```
 Rect(vals::Number...)
 ```
-Rect constructor for indidually specified intervals.
+Rect constructor for individually specified intervals.
 e.g. Rect(0,0,1,2) has origin == Vec(0,0) and
 width == Vec(1,2)
 """
@@ -512,7 +512,7 @@ Base.isequal(b1::Rect, b2::Rect) = b1 == b2
 
 centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
 centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
-centered(R::Type{Rect}) where {N} = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
+centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
 # Rect2 decomposition

@@ -77,7 +77,7 @@ end
 Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
-function volume(triangle::Triangle) where {VT,FT}
+function volume(triangle::Triangle)
     v1, v2, v3 = triangle
     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
@@ -89,7 +89,7 @@ end
 Calculate the signed volume of all tetrahedra. Be sure the orientation of your
 surface is right.
 """
-function volume(mesh::Mesh) where {VT,FT}
+function volume(mesh::Mesh)
     return sum(volume, mesh)
 end
 

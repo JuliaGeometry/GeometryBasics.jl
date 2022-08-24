@@ -1,8 +1,9 @@
 using Test, Random, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
-using StaticArrays
 using GeometryBasics: MetaMesh, add_meta, pop_meta
+using GeoInterface
+using GeoJSON
 
 @testset "GeometryBasics" begin
 @testset "algorithms" begin
@@ -323,4 +324,13 @@ end
     include("meshes.jl")
 end
 
+@testset "GeoInterface" begin
+    include("geointerface.jl")
 end
+
+using Aqua
+# Aqua tests
+# Intervals brings a bunch of ambiquities unfortunately
+Aqua.test_all(GeometryBasics; ambiguities=false)
+
+end  # testset "GeometryBasics"

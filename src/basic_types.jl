@@ -222,6 +222,53 @@ function coordinates(polygon::Polygon{N,T}) where {N,T}
 end
 
 """
+    MultiPolygon(polygons::AbstractPolygon)
+"""
+struct MultiPolygon{Dim,T<:Real,Element<:AbstractPolygon{Dim,T},
+                    A<:AbstractVector{Element}} <: AbstractVector{Element}
+    polygons::A
+end
+
+function MultiPolygon(polygons::AbstractVector{P};
+                      kw...) where {P<:AbstractPolygon{Dim,T}} where {Dim,T}
+    return MultiPolygon(meta(polygons; kw...))
+end
+
+Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
+Base.size(mp::MultiPolygon) = size(mp.polygons)
+
+struct MultiLineString{Dim,T<:Real,Element<:LineString{Dim,T},A<:AbstractVector{Element}} <:
+       AbstractVector{Element}
+    linestrings::A
+end
+
+function MultiLineString(linestrings::AbstractVector{L};
+                         kw...) where {L<:AbstractVector{LineP{Dim,T,P}}} where {Dim,T,P}
+    return MultiLineString(meta(linestrings; kw...))
+end
+
+Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
+Base.size(ms::MultiLineString) = size(ms.linestrings)
+
+"""
+    MultiPoint(points::AbstractVector{AbstractPoint})
+
+A collection of points
+"""
+struct MultiPoint{Dim,T<:Real,P<:AbstractPoint{Dim,T},A<:AbstractVector{P}} <:
+       AbstractVector{P}
+    points::A
+end
+
+function MultiPoint(points::AbstractVector{P};
+                    kw...) where {P<:AbstractPoint{Dim,T}} where {Dim,T}
+    return MultiPoint(meta(points; kw...))
+end
+
+Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
+Base.size(mpt::MultiPoint) = size(mpt.points)
+
+"""
     AbstractMesh
 
 An abstract mesh is a collection of Polytope elements (Simplices / Ngons).

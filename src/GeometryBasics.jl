@@ -1,6 +1,7 @@
 module GeometryBasics
 
 using IterTools, LinearAlgebra
+using GeoInterface
 using EarCut_jll
 import Base: *
 
@@ -24,6 +25,8 @@ include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
 
+include("geointerface.jl")
+
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
@@ -40,6 +43,7 @@ export Tesselation, Normal, UV, UVW
 export AbstractMesh, Mesh, MetaMesh
 export add_meta, pop_meta
 
+
 # all the different predefined mesh types
 # Note: meshes can contain arbitrary meta information,
 export AbstractMesh
@@ -48,11 +52,11 @@ export AbstractMesh
 export triangle_mesh, triangle_mesh, uv_mesh
 export uv_mesh, normal_mesh, uv_normal_mesh
 
-export height, origin, radius, width, widths, xwidth, yheight
+export height, origin, radius, width, widths
 export HyperSphere, Circle, Sphere
 export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f
-export before, during, isinside, isoutside, meets, overlaps, intersects, finishes
+export before, during, meets, overlaps, intersects, finishes
 export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
