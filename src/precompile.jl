@@ -16,7 +16,7 @@ function _precompile_()
     @warnpcfail precompile(normal_mesh, (Tesselation{3,Float32,Cylinder{3,Float32},1},))
     @warnpcfail precompile(normal_mesh, (Tesselation{3,Float32,HyperSphere{3,Float32},1},))
     @warnpcfail precompile(normal_mesh, (HyperSphere{3,Float32},))
-    @warnpcfail precompile(Tuple{typeof(*),SMatrix{4, 4, Float32, 16},HyperRectangle{3, Float32}})   # time: 0.11091917
+    @warnpcfail precompile(Tuple{typeof(*),Mat{4, 4, Float32, 16},HyperRectangle{3, Float32}})   # time: 0.11091917
     @warnpcfail precompile(Tuple{typeof(coordinates),HyperRectangle{2, Float32},Tuple{Int64, Int64}})   # time: 0.08693867
     @warnpcfail precompile(union, (HyperRectangle{3, Float32}, HyperRectangle{3, Float32}))
     @warnpcfail precompile(Tuple{typeof(decompose),Type{Point{2, Float32}},HyperRectangle{2, Float32}})   # time: 0.026609203

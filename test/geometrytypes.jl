@@ -1,4 +1,4 @@
-using Test, GeometryBasics
+using Test, GeometryBasicsCore
 
 @testset "Cylinder" begin
     @testset "constructors" begin
@@ -29,7 +29,6 @@ using Test, GeometryBasics
     end
 
     @testset "decompose" begin
-
         m = GeometryBasics.normal_mesh(Sphere(Point3f(0), 1f0))
         @test decompose_uv(m) isa Vector{Vec2f}
 

@@ -17,7 +17,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Calculate the area of one triangle.
 """
-function area(vertices::AbstractVector{<:AbstractPoint{3,VT}},
+function GeometryBasicsCore.area(vertices::AbstractVector{<:AbstractPoint{3,VT}},
               face::TriangleFace{FT}) where {VT,FT}
     v1, v2, v3 = vertices[face]
     return 0.5 * norm(orthogonal_vector(v1, v2, v3))
@@ -28,7 +28,7 @@ end
 
 Calculate the area of all triangles.
 """
-function area(vertices::AbstractVector{<:AbstractPoint{3,VT}},
+function GeometryBasicsCore.area(vertices::AbstractVector{<:AbstractPoint{3,VT}},
               faces::AbstractVector{TriangleFace{FT}}) where {VT,FT}
     return sum(x -> area(vertices, x), faces)
 end
@@ -41,7 +41,7 @@ Calculate the area of a polygon.
 For 2D points, the oriented area is returned (negative when the points are
 oriented clockwise).
 """
-function area(contour::AbstractVector{<:AbstractPoint{2,T}}) where {T}
+function GeometryBasicsCore.area(contour::AbstractVector{<:AbstractPoint{2,T}}) where {T}
     length(contour) < 3 && return zero(T)
     A = zero(T)
     p = lastindex(contour)
@@ -52,7 +52,7 @@ function area(contour::AbstractVector{<:AbstractPoint{2,T}}) where {T}
     return A * T(0.5)
 end
 
-function area(contour::AbstractVector{<:AbstractPoint{3,T}}) where {T}
+function GeometryBasicsCore.area(contour::AbstractVector{<:AbstractPoint{3,T}}) where {T}
     A = zero(eltype(contour))
     o = first(contour)
     for i in (firstindex(contour) + 1):(lastindex(contour) - 1)
@@ -111,7 +111,7 @@ Triangulate a Polygon without hole.
 
 Returns a Vector{`facetype`} defining indexes into `contour`.
 """
-function decompose(::Type{FaceType},
+function GeometryBasicsCore.decompose(::Type{FaceType},
                    points::AbstractArray{P}) where {P<:AbstractPoint,FaceType<:AbstractFace}
     #= allocate and initialize list of Vertices in polygon =#
     result = FaceType[]
@@ -217,7 +217,7 @@ best_earcut_eltype(::Type{Int64}) = Int64
 best_earcut_eltype(::Type{Int32}) = Int32
 best_earcut_eltype(::Type{<:Integer}) = Int64
 
-function faces(polygon::Polygon{Dim,T}) where {Dim,T}
+function GeometryBasicsCore.faces(polygon::Polygon{Dim,T}) where {Dim,T}
     PT = Point{Dim,best_earcut_eltype(T)}
     points = [decompose(PT, polygon.exterior)]
     foreach(x -> push!(points, decompose(PT, x)), polygon.interiors)

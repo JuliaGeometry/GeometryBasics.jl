@@ -1,19 +1,3 @@
-const FaceMesh{Dim,T,Element} = Mesh{Dim,T,Element,<:FaceView{Element}}
-
-coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
-faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
-
-function texturecoordinates(mesh::AbstractMesh)
-    hasproperty(mesh, :uv) && return mesh.uv
-    hasproperty(mesh, :uvw) && return mesh.uvw
-    return nothing
-end
-
-function normals(mesh::AbstractMesh)
-    hasproperty(mesh, :normals) && return mesh.normals
-    return nothing
-end
-
 const GLTriangleElement = Triangle{3,Float32}
 const GLTriangleFace = TriangleFace{GLIndex}
 const PointWithUV{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:uv,),Tuple{Vec{2,T}}}

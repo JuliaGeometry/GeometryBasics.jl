@@ -1,4 +1,4 @@
-using Test
+using Test, GeometryBasicsCore
 
 @testset "conversion" begin
     @test convert(Point, (2, 3)) === Point(2, 3)
