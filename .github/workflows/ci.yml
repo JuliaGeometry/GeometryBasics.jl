@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - master
+defaults:
+  run:
+    shell: bash
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -15,34 +18,28 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"
-          - "1"
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-latest
-        arch:
-          - x64
+          - '1.6'  # lowest declared `julia` compat in `Project.toml`
+          - '1'
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        arch: [x64]
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v1
+      - uses: julia-actions/cache@v1
+      - name: Test GeometryBasicsCore
+        run: |
+          julia --color=yes --project=@. -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GeometryBasicsCore")))
+            Pkg.test("GeometryBasicsCore")
+          '
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-runtest@latest
+      - uses: julia-actions/julia-processcoverage@latest
+      - uses: codecov/codecov-action@v3
         with:
           file: lcov.info
   docs:
@@ -51,15 +48,17 @@ jobs:
     env:
       JULIA_PKG_SERVER: ""
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@latest
         with:
-          version: "1.7"
+          version: '1'
       - run: |
           julia --project=docs -e '
             using Pkg
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GeometryBasicsCore")))
             Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
+            Pkg.instantiate()
+          '
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
