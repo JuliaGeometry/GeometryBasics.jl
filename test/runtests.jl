@@ -190,54 +190,6 @@ end
         @test GeometryBasics.meta(multipoly) == (name = pnames, value = numbers, category = bin)
     end
 
-    @testset "MetaT{Point}" begin
-        p = Point(1.1, 2.2)
-        @test p isa AbstractVector{Float64}
-        pm = MetaT(Point(1.1, 2.2); a=1, b=2)
-        p1 = Point(2.2, 3.6)
-        p2 = [p, p1]
-        @test coordinates(p2) == p2
-        @test pm.meta === (a=1, b=2)
-        @test pm.main === p
-        @test propertynames(pm) == (:main, :a, :b)
-        @test GeometryBasics.metafree(pm) == p
-        @test GeometryBasics.meta(pm) == (a = 1, b = 2)
-    end
-
-    @testset "MetaT{MultiPoint}" begin
-        p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
-        @test p isa AbstractVector
-        mpm = MetaT(MultiPoint(p); a=1, b=2)
-        @test coordinates(mpm.main) == Point{2, Float64}[(x, x+1) for x in 1:5]
-        @test mpm.meta === (a=1, b=2)
-        @test mpm.main == p
-        @test propertynames(mpm) == (:main, :a, :b)
-        @test GeometryBasics.metafree(mpm) == p
-        @test GeometryBasics.meta(mpm) == (a = 1, b = 2)
-    end
-
-    @testset "MetaT{LineString}" begin
-        linestring = MetaT(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
-        @test linestring isa MetaT
-        @test linestring.meta === (a = 1, b = 2)
-        @test propertynames(linestring) == (:main, :a, :b)
-        @test GeometryBasics.metafree(linestring) == LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
-        @test GeometryBasics.meta(linestring) == (a = 1, b = 2)
-    end
-
-    @testset "MetaT{MultiLineString}" begin
-        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
-        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
-        multilinestring = MultiLineString([linestring1, linestring2])
-        multilinestringmeta = MetaT(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
-        @test multilinestringmeta isa MetaT
-        @test multilinestringmeta.meta === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
-        @test multilinestringmeta.main == multilinestring
-        @test propertynames(multilinestringmeta) == (:main, :boundingbox)
-        @test GeometryBasics.metafree(multilinestringmeta) == multilinestring
-        @test GeometryBasics.meta(multilinestringmeta) == (boundingbox = GeometryBasics.HyperRectangle{2,Float64}([1.0, 1.0], [2.0, 2.0]),)
-    end
-
     #=
     So mesh works differently for MetaT
     since `MetaT{Point}` not subtyped to `AbstractPoint`
@@ -466,7 +418,6 @@ end
     @test coordinates(m) isa Vector{Point3f}
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end
-
 
 @testset "MetaT and heterogeneous data" begin
     ls = [LineString([Point(i, (i+1)^2/6), Point(i*0.86,i+5), Point(i/3, i/7)]) for i in 1:10]

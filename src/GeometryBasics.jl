@@ -1,20 +1,19 @@
 module GeometryBasics
 
+using Base: @propagate_inbounds
+
 using Reexport
 @reexport using GeometryBasicsCore
 import GeometryBasicsCore: AbstractMesh, AbstractSimplexFace, AbstractNgonFace
-import GeometryBasicsCore: VecTypes, Meshable, FaceMesh, FaceView, Ngon
+import GeometryBasicsCore: VecTypes, Meshable, FaceMesh, Ngon, MetaType, MetaFree
 
-using Tables, StructArrays, IterTools, LinearAlgebra
+using Tables, StructArrays, LinearAlgebra
 using GeoInterface
 using EarCut_jll
-
-using Base: @propagate_inbounds
 
 include("metadata.jl")
 include("meshes.jl")
 include("triangulation.jl")
-
 include("geointerface.jl")
 
 Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
@@ -35,11 +34,10 @@ Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
     end
 end
 
-export meta, metafree
-export FaceView, SimpleFaceView, PointMeta, PointWithUV
+# types
+export PointMeta, PointWithUV
 export PolygonMeta, MultiPointMeta, MultiLineStringMeta, MeshMeta, LineStringMeta, MultiPolygonMeta
 export GLTriangleFace, GLUVMesh3D, GLNormalMesh2D
-export MetaT, meta_table, pointmeta
 
 # all the different predefined mesh types
 # Note: meshes can contain arbitrary meta information,
@@ -49,11 +47,9 @@ export NormalMesh, GLNormalMesh, GLNormalMesh2D, GLNormalMesh3D
 export NormalUVMesh, GLNormalUVMesh, GLNormalUVMesh2D, GLNormalUVMesh3D
 export NormalUVWMesh, GLNormalUVWMesh, GLNormalUVWMesh2D, GLNormalUVWMesh3D
 
-# mesh creation functions
+# methods
 export triangle_mesh, uv_mesh, normal_mesh, uv_normal_mesh
-
-export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
-export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
+export meta_table, pointmeta
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")

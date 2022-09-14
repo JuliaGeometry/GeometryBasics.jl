@@ -272,3 +272,12 @@ function attributes(hasmeta::Mesh)
     return Dict{Symbol,Any}((name => getproperty(hasmeta, name)
                              for name in propertynames(hasmeta)))
 end
+
+function Base.getproperty(mesh::Mesh, name::Symbol)
+    if name === :position
+        # a mesh always has position defined by coordinates...
+        return metafree(coordinates(mesh))
+    else
+        return getproperty(getfield(mesh, :simplices), name)
+    end
+end

@@ -193,6 +193,60 @@ end
     end
 end
 
+@testset "metadata" begin
+    @testset "MetaT{Point}" begin
+        p = Point(1.1, 2.2)
+        @test p isa AbstractVector{Float64}
+        pm = MetaT(Point(1.1, 2.2); a=1, b=2)
+        p1 = Point(2.2, 3.6)
+        p2 = [p, p1]
+        @test coordinates(p2) == p2
+        @test pm.meta === (a=1, b=2)
+        @test pm.main === p
+        @test propertynames(pm) == (:main, :a, :b)
+        @test metafree(pm) == p
+        @test meta(pm) == (a = 1, b = 2)
+    end
+
+    @testset "MetaT{MultiPoint}" begin
+        p = collect(Point{2, Float64}(x, x+1) for x in 1:5)
+        @test p isa AbstractVector
+        mpm = MetaT(MultiPoint(p); a=1, b=2)
+        @test coordinates(mpm.main) == Point{2, Float64}[(x, x+1) for x in 1:5]
+        @test mpm.meta === (a=1, b=2)
+        @test mpm.main == p
+        @test propertynames(mpm) == (:main, :a, :b)
+        @test metafree(mpm) == p
+        @test meta(mpm) == (a = 1, b = 2)
+    end
+
+    @testset "MetaT{LineString}" begin
+        linestring = MetaT(LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)]), a = 1, b = 2)
+        @test linestring isa MetaT
+        @test linestring.meta === (a = 1, b = 2)
+        @test propertynames(linestring) == (:main, :a, :b)
+        @test metafree(linestring) == LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        @test meta(linestring) == (a = 1, b = 2)
+    end
+
+    @testset "MetaT{MultiLineString}" begin
+        linestring1 = LineString(Point{2, Int}[(10, 10), (20, 20), (10, 40)])
+        linestring2 = LineString(Point{2, Int}[(40, 40), (30, 30), (40, 20), (30, 10)])
+        multilinestring = MultiLineString([linestring1, linestring2])
+        multilinestringmeta = MetaT(MultiLineString([linestring1, linestring2]); boundingbox = Rect(1.0, 1.0, 2.0, 2.0))
+        @test multilinestringmeta isa MetaT
+        @test multilinestringmeta.meta === (boundingbox = Rect(1.0, 1.0, 2.0, 2.0),)
+        @test multilinestringmeta.main == multilinestring
+        @test propertynames(multilinestringmeta) == (:main, :boundingbox)
+        @test metafree(multilinestringmeta) == multilinestring
+        @test meta(multilinestringmeta) == (boundingbox = HyperRectangle{2,Float64}([1.0, 1.0], [2.0, 2.0]),)
+    end
+end
+
 @testset "Point & Vec type" begin
     include("fixed_arrays.jl")
+end
+
+@testset "Tests from GeometryTypes" begin
+    include("geometrytypes.jl")
 end

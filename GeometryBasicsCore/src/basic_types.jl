@@ -375,15 +375,6 @@ struct Mesh{Dim,T<:Number,Element<:Polytope{Dim,T},V<:AbstractVector{Element}} <
     simplices::V # usually a FaceView, to connect a set of points via a set of faces.
 end
 
-function Base.getproperty(mesh::Mesh, name::Symbol)
-    if name === :position
-        # a mesh always has position defined by coordinates...
-        return metafree(coordinates(mesh))
-    else
-        return getproperty(getfield(mesh, :simplices), name)
-    end
-end
-
 function Base.propertynames(mesh::Mesh)
     names = propertynames(getfield(mesh, :simplices))
     if :position in names
