@@ -1,4 +1,3 @@
-using Test
 
 @testset "Faces" begin
     @test convert_simplex(GLTriangleFace, QuadFace{Int}(1, 2, 3, 4)) ==
@@ -36,8 +35,8 @@ end
     @test decompose(Point3f, Tesselation(s, (2, 3))) ≈ positions
 
     FT = TriangleFace{Int}
-    faces = FT[(1, 2, 4), (1, 4, 3), (3, 4, 6), (3, 6, 5)]
-    @test faces == decompose(FT, Tesselation(s, (2, 3)))
+    faces_vec = FT[(1, 2, 4), (1, 4, 3), (3, 4, 6), (3, 6, 5)]
+    @test faces_vec == decompose(FT, Tesselation(s, (2, 3)))
 
     v1 = Point{3,Float64}(1, 2, 3)
     v2 = Point{3,Float64}(4, 5, 6)
@@ -59,15 +58,15 @@ end
 
     @test decompose(Point3{Float64}, Tesselation(s, 8)) ≈ positions
 
-    faces = TriangleFace{Int}[(3, 2, 1), (4, 2, 3), (5, 4, 3), (6, 4, 5), (7, 6, 5),
-                              (8, 6, 7), (1, 8, 7), (2, 8, 1), (3, 1, 9), (2, 4, 10),
-                              (5, 3, 9), (4, 6, 10), (7, 5, 9), (6, 8, 10), (1, 7, 9),
-                              (8, 2, 10)]
-    @test faces == decompose(TriangleFace{Int}, Tesselation(s, 8))
+    faces_tri = TriangleFace{Int}[(3, 2, 1), (4, 2, 3), (5, 4, 3), (6, 4, 5), (7, 6, 5),
+                                  (8, 6, 7), (1, 8, 7), (2, 8, 1), (3, 1, 9), (2, 4, 10),
+                                  (5, 3, 9), (4, 6, 10), (7, 5, 9), (6, 8, 10), (1, 7, 9),
+                                  (8, 2, 10)]
+    @test faces_tri == decompose(TriangleFace{Int}, Tesselation(s, 8))
 
     m = triangle_mesh(Tesselation(s, 8))
 
-    @test faces(m) == faces
+    @test faces(m) == faces_tri
     @test coordinates(m) ≈ positions
     m = normal_mesh(s)# just test that it works without explicit resolution parameter
     @test m isa GLNormalMesh

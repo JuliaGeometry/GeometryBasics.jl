@@ -5,8 +5,6 @@ using LinearAlgebra
 using GeoInterface
 using GeoJSON
 
-@testset "GeometryBasics" begin
-
 @testset "algorithms" begin
     cube = Rect(Vec3f(-0.5), Vec3f(1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
@@ -50,7 +48,7 @@ end
             @test coordinates(mesh).stress === stress
             @test coordinates(mesh).normals === normals
             @test coordinates(mesh).normals === normals
-            @test GeometryBasics.faces(mesh) === tfaces
+            @test faces(mesh) === tfaces
             @test propertynames(coordinates(mesh)) == (:position, :normals, :stress)
 
         end
@@ -77,11 +75,11 @@ end
             markers = Cint[-1, -2, 0, 0, 0, 0]
             # attach some additional information to our faces!
             mesh = Mesh(points, meta(facets, markers = markers))
-            @test hasproperty(GeometryBasics.faces(mesh), :markers)
+            @test hasproperty(faces(mesh), :markers)
             # test with === to assert we're not doing any copies
-            @test GeometryBasics.faces(mesh).markers === markers
+            @test faces(mesh).markers === markers
             @test coordinates(mesh) === points
-            @test metafree(GeometryBasics.faces(mesh)) === facets
+            @test metafree(faces(mesh)) === facets
 
         end
 
@@ -208,59 +206,46 @@ end
             @test hasproperty(mesh, :normals)
             @test mesh.stress == stress
             @test mesh.normals == normals
-            @test GeometryBasics.faces(mesh.main) == tfaces
+            @test faces(mesh.main) == tfaces
             @test propertynames(mesh) == (:main, :normals, :stress)
         end
     end
 end
 
-@testset "matrix non-copy point views" begin
-    # point in row
-    points = [1 2; 1 4; 66 77]
-    comparison = [Point(1, 2), Point(1, 4), Point(66, 77)]
-    @test connect(points, Point{2}) == comparison
-    # point in column
-    points = [1 1 66; 2 4 77]
-    # huh, reinterpret array doesn't seem to like `==`
-    @test all(((a,b),)-> a==b, zip(connect(points, Point{2}), comparison))
-end
+@testset "Mesh constructors" begin
+    numbers = [1, 2, 3, 4, 5, 6]
+    points = connect(numbers, Point{2})
 
-@testset "constructors" begin
-    @testset "Mesh" begin
-        numbers = [1, 2, 3, 4, 5, 6]
-        points = connect(numbers, Point{2})
+    mesh = Mesh(points, [1,2,3])
+    @test mesh == [Triangle(points...)]
 
-        mesh = Mesh(points, [1,2,3])
-        @test mesh == [Triangle(points...)]
+    x = Point{3}(1.0)
+    mesh = Mesh([x], [TriangleFace(1, 1, 1)])
+    @test mesh == [Triangle(x, x, x)]
 
-        x = Point{3}(1.0)
-        mesh = Mesh([x], [TriangleFace(1, 1, 1)])
-        @test mesh == [Triangle(x, x, x)]
+    points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
+    sfaces = connect([1, 2, 3, 4], SimplexFace{4})
+    mesh = Mesh(points, sfaces)
+    @test mesh == [Tetrahedron(points...)]
 
-        points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
-        faces = connect([1, 2, 3, 4], SimplexFace{4})
-        mesh = Mesh(points, faces)
-        @test mesh == [Tetrahedron(points...)]
+    points = rand(Point3f, 8)
+    tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
+    normals = rand(Vec3f, 8)
+    uv = rand(Vec2f, 8)
+    mesh = Mesh(points, tfaces)
+    meshuv = Mesh(meta(points; uv=uv), tfaces)
+    meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
 
-        points = rand(Point3f, 8)
-        tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
-        normals = rand(Vec3f, 8)
-        uv = rand(Vec2f, 8)
-        mesh = Mesh(points, tfaces)
-        meshuv = Mesh(meta(points; uv=uv), tfaces)
-        meshuvnormal = Mesh(meta(points; normals=normals, uv=uv), tfaces)
+    @test mesh isa GLPlainMesh
+    @test meshuv isa GLUVMesh3D
+    @test meshuvnormal isa GLNormalUVMesh3D
 
-        @test mesh isa GLPlainMesh
-        @test meshuv isa GLUVMesh3D
-        @test meshuvnormal isa GLNormalUVMesh3D
+    t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
+    m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
+    m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
+    @test faces(m2) isa Vector{QuadFace{GLIndex}}
+    @test GeometryBasics.coordinates(m2) isa Vector{Point3f}
 
-        t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
-        m = GeometryBasics.mesh(t, pointtype=Point3f, facetype=QuadFace{Int})
-        m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
-        @test GeometryBasics.faces(m2) isa Vector{QuadFace{GLIndex}}
-        @test GeometryBasics.coordinates(m2) isa Vector{Point3f}
-
-    end
 end
 
 @testset "decompose/triangulation" begin
@@ -326,6 +311,17 @@ end
     poly_ext_int = Polygon(ls_ext, [ls_int1, ls_int2])
     @test decompose(Point{2, Int}, poly_ext) == pts_ext
     @test decompose(Point{2, Int}, poly_ext_int) == [pts_ext..., pts_int1..., pts_int2...]
+end
+
+@testset "matrix non-copy point views" begin
+    # point in row
+    points = [1 2; 1 4; 66 77]
+    comparison = [Point(1, 2), Point(1, 4), Point(66, 77)]
+    @test connect(points, Point{2}) == comparison
+    # point in column
+    points = [1 1 66; 2 4 77]
+    # huh, reinterpret array doesn't seem to like `==`
+    @test all(((a,b),)-> a==b, zip(connect(points, Point{2}), comparison))
 end
 
 @testset "mesh" begin
@@ -400,7 +396,7 @@ end
     m = GeometryBasics.mesh(s)
     @test m isa Mesh{3, Float64}
     @test coordinates(m) isa Vector{Point{3, Float64}}
-    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
+    @test faces(m) isa Vector{GLTriangleFace}
     # Check, that decompose isn't making a copy for matching eltype
     @test coordinates(m) === decompose(Point{3, Float64}, m)
 
@@ -416,7 +412,7 @@ end
     m = GeometryBasics.mesh(s, pointtype=Point3f)
     @test m isa Mesh{3, Float32}
     @test coordinates(m) isa Vector{Point3f}
-    @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
+    @test faces(m) isa Vector{GLTriangleFace}
 end
 
 @testset "MetaT and heterogeneous data" begin
@@ -469,7 +465,7 @@ end
     )
 end
 
-@testset "Tests from GeometryTypes" begin
+@testset "tests from GeometryTypes" begin
     include("geometrytypes.jl")
 end
 
@@ -481,5 +477,3 @@ using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
 Aqua.test_all(GeometryBasics; ambiguities=false)
-
-end  # testset "GeometryBasics"

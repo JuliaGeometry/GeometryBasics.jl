@@ -48,4 +48,9 @@ export self_intersections, split_intersections
 export decompose, decompose_uv, decompose_normals
 export meta, metafree
 
+if Base.VERSION >= v"1.4.2"
+    include("precompile.jl")
+    _precompile_()
+end
+
 end

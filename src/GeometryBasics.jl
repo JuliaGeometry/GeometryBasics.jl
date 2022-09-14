@@ -6,37 +6,21 @@ using Reexport
 @reexport using GeometryBasicsCore
 import GeometryBasicsCore: AbstractMesh, AbstractSimplexFace, AbstractNgonFace
 import GeometryBasicsCore: VecTypes, Meshable, FaceMesh, Ngon, MetaType, MetaFree
+import GeometryBasicsCore: orthogonal_vector, getnamestypes
 
 using Tables, StructArrays, LinearAlgebra
-using GeoInterface
-using EarCut_jll
+using GeoInterface, EarCut_jll
 
+include("core.jl")
 include("metadata.jl")
 include("meshes.jl")
 include("triangulation.jl")
 include("geointerface.jl")
 
-Tables.schema(mesh::Mesh) = Tables.schema(getfield(mesh, :simplices))
-Tables.schema(faceview::FaceView) = Tables.schema(getfield(faceview, :elements))
-
-@inline function GeometryBasicsCore.connect(points::AbstractMatrix{T},
-                         P::Type{<:AbstractPoint{N}}) where {T <: Real,N}
-    return if size(points, 1) === N
-        return reinterpret(Point{N,T}, points)
-    elseif size(points, 2) === N
-        seglen = size(points, 1)
-        columns = ntuple(N) do i
-            return view(points, ((i - 1) * seglen + 1):(i * seglen))
-        end
-        return StructArray{Point{N,T}}(columns)
-    else
-        error("Dim 1 or 2 must be equal to the point dimension!")
-    end
-end
-
 # types
 export PointMeta, PointWithUV
-export PolygonMeta, MultiPointMeta, MultiLineStringMeta, MeshMeta, LineStringMeta, MultiPolygonMeta
+export PolygonMeta, MultiPointMeta, MultiLineStringMeta
+export MeshMeta, LineStringMeta, MultiPolygonMeta
 export GLTriangleFace, GLUVMesh3D, GLNormalMesh2D
 
 # all the different predefined mesh types

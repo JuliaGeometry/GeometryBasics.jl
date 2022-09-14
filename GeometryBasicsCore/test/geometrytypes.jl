@@ -1,5 +1,3 @@
-using Test, GeometryBasicsCore
-
 @testset "Cylinder" begin
     @testset "constructors" begin
         o, extr, r = Point2f(1, 2), Point2f(3, 4), 5.0f0
