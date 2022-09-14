@@ -5,6 +5,8 @@ using LinearAlgebra
 using GeoInterface
 using GeoJSON
 
+@testset "GeometryBasics" begin
+
 @testset "algorithms" begin
     cube = Rect(Vec3f(-0.5), Vec3f(1))
     cube_faces = decompose(TriangleFace{Int}, faces(cube))
@@ -477,3 +479,5 @@ using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
 Aqua.test_all(GeometryBasics; ambiguities=false)
+
+end  # testset
