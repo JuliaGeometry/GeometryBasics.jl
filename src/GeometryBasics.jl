@@ -30,7 +30,8 @@ include("geointerface.jl")
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
 export LineFace, Polytope, Line, NgonFace, convert_simplex
-export AbstractPolygon, Polygon
+export LineString, MultiLineString, MultiPoint
+export AbstractPolygon, Polygon, MultiPolygon
 export Simplex, connect, Triangle, NSimplex, Tetrahedron
 export QuadFace, coordinates, TetrahedronFace
 export TupleView, SimplexFace

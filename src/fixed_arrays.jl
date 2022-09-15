@@ -56,19 +56,20 @@ macro fixed_vector(VecT, SuperT)
         $(VecT)(x::NTuple{N, T}) where {N, T} = $(VecT){N,T}(x)
         $(VecT){N}(x::NTuple{N, T}) where {N, T} = $(VecT){N,T}(x)
 
-        $(VecT)(x::Vararg{<:Any,N}) where {N} = $(VecT){N}(x)
+        $(VecT)(x::Vararg{Any,N}) where {N} = $(VecT){N}(x)
         $(VecT)(x::Vararg{T,N}) where {T,N} = $(VecT){N,T}(x)
 
-        $(VecT){N}(x::Vararg{<:Any,N}) where {N} = $(VecT){N}(x)
+        $(VecT){N}(x::Vararg{Any,N}) where {N} = $(VecT){N}(x)
         $(VecT){N}(x::Vararg{T,N}) where {T,N} = $(VecT){N,T}(x)
 
-        $(VecT){N, T}(x::Vararg{<:Any,N}) where {T,N} = $(VecT){N,T}(x)
+        $(VecT){N, T}(x::Vararg{Any,N}) where {T,N} = $(VecT){N,T}(x)
         $(VecT){N, T1}(x::Vararg{T2,N}) where {T1,T2,N} = $(VecT){N, T1}(x)
 
         Base.convert(::Type{$(VecT){N,T}}, x) where {N,T} = $(VecT){N,T}(x)
         Base.convert(::Type{$(VecT){N}}, x) where {N} = $(VecT){N}(x)
         Base.convert(::Type{$(VecT){N}}, x::$(VecT){N}) where {N} = x
         Base.convert(::Type{$(VecT){N,T}}, x::$(VecT){N,T}) where {N,T} = x
+
 
         function Base.convert(::Type{$(VecT){N,T}}, x::NTuple{N,T}) where {N,T}
             return $(VecT){N,T}(x)
@@ -80,7 +81,7 @@ macro fixed_vector(VecT, SuperT)
 
         @inline similar_type(::$(VecT){N, T}, n::Integer) where {N, T} = $(VecT){n}
         @inline similar_type(::$(VecT){N}, ::Type{T}) where {N, T} = $(VecT){N, T}
-        @inline similar_type(::$(VecT), n::Integer, ::Type{T}) where {N, T} = $(VecT){n, T}
+        @inline similar_type(::$(VecT), n::Integer, ::Type{T}) where {T} = $(VecT){n, T}
         @inline similar_type(::$(VecT)) = $(VecT)
 
         function Base.broadcasted(f, a::$(VecT), b::$(VecT))

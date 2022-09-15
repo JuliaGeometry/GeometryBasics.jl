@@ -24,7 +24,8 @@ end
 
 @testset "Ambiguous NgonFace constructors" begin
     # https://github.com/JuliaGeometry/GeometryBasics.jl/issues/151
-    t = TriangleFace(SA[0.4, 0.2, 0.55])
+    # Currently no StaticVector support
+    # t = TriangleFace(SA[0.4, 0.2, 0.55])
 end
 
 @testset "Merge empty vector of meshes" begin

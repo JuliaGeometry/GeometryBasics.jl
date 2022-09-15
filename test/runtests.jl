@@ -52,7 +52,7 @@ end
        m_meta = MetaMesh(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
        @test m_meta.boundingbox === Rect(1.0, 1.0, 2.0, 2.0)
        @test propertynames(m_meta) == (:boundingbox,)
-   end
+    end
 end
 
 @testset "view" begin
@@ -220,7 +220,7 @@ end
     m_normal = add_meta(m, normals = decompose_normals(m))
     @test hasproperty(m_normal, :uv)
     @test coordinates(m) === coordinates(m_normal)
-    @test decompose_normals(m) == normals(m_normal)
+    @test decompose_normals(m) == GeometryBasics.normals(m_normal)
     # uv stays untouched, since we don't specify the element type in normalmesh
     @test m.uv === m_normal.uv
 end
@@ -331,6 +331,7 @@ end
 using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
-Aqua.test_all(GeometryBasics; ambiguities=false)
+# seems like we also run into https://github.com/JuliaTesting/Aqua.jl/issues/86
+Aqua.test_all(GeometryBasics; ambiguities=false, unbound_args=false)
 
 end  # testset "GeometryBasics"
