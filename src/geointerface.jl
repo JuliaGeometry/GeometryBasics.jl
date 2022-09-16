@@ -80,12 +80,12 @@ GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
 
 function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
     dim = Int(ncoord(geom))
-    return Point{dim}(GeoInterface.coordinates(geom))
+    return Point{dim, Float64}(GeoInterface.coordinates(geom))
 end
 
 function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
     dim = Int(ncoord(geom))
-    return LineString([Point{dim}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+    return LineString([Point{dim, Float64}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
 end
 
 function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
@@ -101,7 +101,7 @@ end
 
 function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
     dim = Int(ncoord(geom))
-    return MultiPoint([Point{dim}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+    return MultiPoint([Point{dim, Float64}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
 end
 
 function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)
