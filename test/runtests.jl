@@ -113,12 +113,6 @@ end
 end
 
 @testset "constructors" begin
-    @testset "Polygon" begin
-        points = connect([1, 2, 3, 4, 5, 6], Point{2})
-        polygon = Polygon(points)
-        @test polygon == Polygon(points)
-    end
-
     @testset "Mesh" begin
         numbers = [1, 2, 3, 4, 5, 6]
         points = connect(numbers, Point{2})

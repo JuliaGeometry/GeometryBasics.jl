@@ -526,8 +526,7 @@ end
 
 function coordinates(rect::Rect2, nvertices=(2, 2))
     mini, maxi = extrema(rect)
-    xrange, yrange = LinRange.(mini, maxi, nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+    return [mini, Point(mini[1], maxi[2]), maxi, Point(maxi[1], mini[2])]
 end
 
 function texturecoordinates(rect::Rect2, nvertices=(2, 2))
