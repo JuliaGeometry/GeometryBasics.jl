@@ -24,7 +24,7 @@
     @test testgeometry(multilinestring)
     @test GeoInterface.coordinates(multilinestring) ==
           [[[10, 10], [20, 20], [10, 40]], [[10, 10], [20, 20], [10, 40]]]
-    @test ncoord(linestring) == 2
+    @test ncoord(multilinestring) == 2
 
     poly = Polygon(rand(Point{2,Float32}, 5), [rand(Point{2,Float32}, 5)])
     @test testgeometry(poly)
