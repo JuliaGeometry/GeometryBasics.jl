@@ -14,6 +14,7 @@
     linestring = LineString(Point{2,Int}[(10, 10), (20, 20), (10, 40)])
     @test testgeometry(linestring)
     @test ngeom(linestring) == 3
+    @test ncoord(linestring) == 2
     @test getgeom(linestring, 1) == Point(10, 10)
     @test getgeom(linestring, 2) == Point(20, 20)
     @test getgeom(linestring, 3) == Point(10, 40)
@@ -23,6 +24,7 @@
     @test testgeometry(multilinestring)
     @test GeoInterface.coordinates(multilinestring) ==
           [[[10, 10], [20, 20], [10, 40]], [[10, 10], [20, 20], [10, 40]]]
+    @test ncoord(multilinestring) == 2
 
     poly = Polygon(rand(Point{2,Float32}, 5), [rand(Point{2,Float32}, 5)])
     @test testgeometry(poly)
