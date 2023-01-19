@@ -124,3 +124,36 @@ function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geo
     t = PolygonTrait()
     return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
 end
+
+
+# Implementations for and overloads of various GeoInterface optional functions
+
+function GeoInterface.extent(::GeoInterface.AbstractGeometryTrait, a::Union{GeometryBasics.AbstractGeometry, GeometryBasics.GeometryPrimitive, AbstractVector{<: GeometryBasics.AbstractGeometry}})
+    bbox = Rect(a)
+    return if ndims(bbox) == 1
+        GeoInterface.Extents.Extent(X = (minimum(bbox), maximum(bbox)))
+    elseif ndims(bbox) == 2
+        xmin, ymin = minimum(bbox)
+        xmax, ymax = maximum(bbox)
+        GeoInterface.Extents.Extent(X = (xmin, xmax), Y = (ymin, ymax))
+    else # ndims ≥ 3
+        xmin, ymin, zmin = minimum(bbox)
+        xmax, ymax, zmax = maximum(bbox)
+        GeoInterface.Extents.Extent(X = (xmin, xmax), Y = (ymin, ymax), Z = (zmin, zmax))
+    end
+end
+
+# quick and dirty conversions from GeoInterface's returned Extent back to Rect
+function Rect{2, T}(ext::GeoInterface.Extents.Extent{(:X, :Y)}) where {T}
+    xmin, xmax = ext.X
+    ymin, ymax = ext.Y
+    return Rect{2, T}(xmin, ymin, xmax - xmin, ymax - ymin)
+end
+
+function Rect{3, T}(ext::GeoInterface.Extents.Extent{(:X, :Y, :Z)}) where {T}
+    xmin, xmax = ext.X
+    ymin, ymax = ext.Y
+    zmin, zmax = ext.Z
+    return Rect{3, T}(xmin, ymin, zmin, xmax - xmin, ymax - ymin, zmax - zmin)
+end
+
