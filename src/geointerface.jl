@@ -159,3 +159,62 @@ function Rect{3, T}(ext::GeoInterface.Extents.Extent{(:X, :Y, :Z)}) where {T}
     return Rect{3, T}(xmin, ymin, zmin, xmax - xmin, ymax - ymin, zmax - zmin)
 end
 
+function signed_area(points::AbstractVector{<: Point{2, T}}) where {T}
+    area = sum((p[i][1] * (p[i+1][2] - p[i][2]) for i in 1:(length(points)-1))) / 2.0  
+    area += p[end]
+end
+
+function signed_area(ls::GeometryBasics.LineString)
+    coords = GeometryBasics.decompose(Point2f, ls)
+    return signed_area(coords)
+end
+
+function signed_area(poly::GeometryBasics.Polygon{2})
+    area = abs(signed_area(poly.exterior))
+    for hole in poly.interiors
+        area -= abs(signed_area(hole))
+    end
+    return area
+end
+
+signed_area(mp::MultiPolygon) = sum(signed_area.(mp.polygons))
+
+function centroid(poly::GeometryBasics.Polygon{2, T}) where T
+    exterior_points = decompose(Point2f, poly.exterior)
+    exterior_centroid = mean(exterior_points)
+    exterior_area = signed_area(exterior_points)
+
+    total_area = exterior_area
+    interior_numerator = Point{2, T}(0)
+    for interior in poly.interiors
+        interior_points = decompose(Point2f, interior)
+        interior_centroid = mean(interior_points)
+        interior_area = signed_area(interior_points)
+        total_area += interior_area
+        interior_numerator += interior_centroid * interior_area
+    end
+
+    return (exterior_centroid * exterior_area - interior_numerator) / total_area
+        
+end
+
+function centroid(multipoly::MultiPolygon)
+
+    centroids = centroid.(multipoly.polygons)
+
+    areas = signed_area.(multipoly.polygons)
+    areas ./= sum(areas)
+
+    return sum(centroids .* areas) / sum(areas)
+
+end
+
+
+function centroid(rect::Rect{N, T}) where {N, T}
+    return Point{N, T}(rect.origin .- rect.widths ./ 2)
+end
+
+function distance(poly::Polygon{N, T1}, point::Point{N, T2}) where {N, T1, T2}
+    FinalType = promote_type(T1, T2)
+
+end
