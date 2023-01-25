@@ -125,6 +125,8 @@ function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geo
     return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
 end
 
+GeoInterface.centroid(::Union{GeoInterface.MultiPolygonTrait, GeoInterface.PolygonTrait}, geom) = centroid(geom)
+
 
 # Implementations for and overloads of various GeoInterface optional functions
 
