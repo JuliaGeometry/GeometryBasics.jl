@@ -125,7 +125,7 @@ function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geo
     return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
 end
 
-GeoInterface.centroid(::Union{GeoInterface.MultiPolygonTrait, GeoInterface.PolygonTrait}, geom) = centroid(geom)
+GeoInterface.centroid(::Union{GeoInterface.MultiPolygonTrait, GeoInterface.PolygonTrait}, geom::Union{AbstractGeometry, MultiPolygon, MultiLineString}) = centroid(geom)
 
 
 # Implementations for and overloads of various GeoInterface optional functions
@@ -159,14 +159,17 @@ function Rect{3, T}(ext::GeoInterface.Extents.Extent{(:X, :Y, :Z)}) where {T}
     return Rect{3, T}(xmin, ymin, zmin, xmax - xmin, ymax - ymin, zmax - zmin)
 end
 
+function signed_area(a::Point{2, T}, b::Point{2, T}, c::Point{2, T}) where T
+    return ((b[1] - a[1]) * (c[2] - a[2]) - (c[1] - a[1]) * (b[2] - a[2])) / 2
+end
+
 function signed_area(points::AbstractVector{<: Point{2, T}}) where {T}
-    area = sum((p[i][1] * (p[i+1][2] - p[i][2]) for i in 1:(length(points)-1))) / 2.0  
-    area += p[end]
+    area = sum((points[i][1] * points[i+1][2] - points[i][2] * points[i+1][1] for i in 1:(length(points)-1))) / 2.0
 end
 
 function signed_area(ls::GeometryBasics.LineString)
-    coords = GeometryBasics.decompose(Point2f, ls)
-    return signed_area(coords)
+    # coords = GeometryBasics.decompose(Point2f, ls)
+    return sum((p1[1] * p2[2] - p1[2] * p2[1] for (p1, p2) in ls)) / 2.0#signed_area(coords)
 end
 
 function signed_area(poly::GeometryBasics.Polygon{2})
@@ -179,16 +182,35 @@ end
 
 signed_area(mp::MultiPolygon) = sum(signed_area.(mp.polygons))
 
+function centroid(ls::LineString{2, T}) where T
+    centroid = Point{2, T}(0)
+    total_area = T(0)
+    if length(ls) == 1
+        return sum(ls[1])/2
+    end
+
+    p0 = ls[1][1]
+
+    for i in 1:(length(ls)-1)
+        p1 = ls[i][2]
+        p2 = ls[i+1][2]
+        area = signed_area(p0, p1, p2)
+        centroid = centroid .+ Point{2, T}((p0[1] + p1[1] + p2[1])/3, (p0[2] + p1[2] + p2[2])/3) * area
+        total_area += area
+    end
+    return centroid ./ total_area
+end
+
 function centroid(poly::GeometryBasics.Polygon{2, T}) where T
     exterior_points = decompose(Point2f, poly.exterior)
-    exterior_centroid = mean(exterior_points)
-    exterior_area = signed_area(exterior_points)
+    exterior_centroid = centroid(poly.exterior)
+    exterior_area = signed_area(poly.exterior)
 
     total_area = exterior_area
     interior_numerator = Point{2, T}(0)
     for interior in poly.interiors
         interior_points = decompose(Point2f, interior)
-        interior_centroid = mean(interior_points)
+        interior_centroid = centroid(interior)
         interior_area = signed_area(interior_points)
         total_area += interior_area
         interior_numerator += interior_centroid * interior_area
@@ -214,7 +236,57 @@ function centroid(rect::Rect{N, T}) where {N, T}
     return Point{N, T}(rect.origin .- rect.widths ./ 2)
 end
 
-function distance(poly::Polygon{N, T1}, point::Point{N, T2}) where {N, T1, T2}
-    FinalType = promote_type(T1, T2)
+# function distance(poly::Polygon{N, T1}, point::Point{N, T2}) where {N, T1, T2}
+#     FinalType = promote_type(T1, T2)
+# end
+
+function contains(ls::GeometryBasics.LineString{2, T1}, point::Point{2, T2}) where {T1, T2}
+
+    # the original C code from https://wrfranklin.org/Research/Short_Notes/pnpoly.html
+    # int pnpoly(int npol, float *xp, float *yp, float x, float y)
+    # {
+    #   i = 1
+    #   j = 1
+    #   c = false
+    #   for (i = 0, j = npol-1; i < npol; j = i++) {
+    #     if ((((yp[i]<=y) && (y<yp[j])) ||
+    #          ((yp[j]<=y) && (y<yp[i]))) &&
+    #         (x < (xp[j] - xp[i]) * (y - yp[i]) / (yp[j] - yp[i]) + xp[i]))
+
+    #       c = !c;
+    #   }
+    #   return c;
+
+    # }
+
+    x, y = point
+
+    c = false
+    for (p1, p2) in ls
+        if ((p1[2] ≤ y && y < p2[2]) ||
+            (p2[2] ≤ y && y < p1[2])) &&
+            (x < (p2[1] - p1[1]) * (y - p1[2]) / (p2[2] - p1[2]) + p1[1])
+            c = !c
+        end
+    end
+
+    return c
 
 end
+
+function contains(poly::Polygon{2, T1}, point::Point{2, T2}) where {T1, T2}
+    c = contains(poly.exterior, point)
+    for interior in poly.interiors
+        if contains(interior, point)
+            c = false # if hole contains point, then point is not contained in poly.
+            break
+        end
+    end
+    return c
+end
+
+contains(mp::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = any((contains(poly, point) for poly in polygons))
+
+GeoInterface.contains(::GeoInterface.LineStringTrait, ::GeoInterface.PointTrait, ls::LineString{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(ls, point)
+GeoInterface.contains(::GeoInterface.PolygonTrait, ::GeoInterface.PointTrait, poly::Polygon{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(poly, point)
+GeoInterface.contains(::GeoInterface.MultiPolygonTrait, ::GeoInterface.PointTrait, multipoly::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(multipoly, point)
