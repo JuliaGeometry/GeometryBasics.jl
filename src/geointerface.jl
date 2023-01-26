@@ -433,5 +433,90 @@ contains(mp::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = any((con
 #                         Distance                         #
 ############################################################
 
-# coming soon!
+# GeoInterface.distance is defined based on GDAL etc, which state that
+# the distance between a point within a polygon and that polygon is 0.
+function GeoInterface.distance(::Union{MultiPolygonTrait, PolygonTrait}, ::PointTrait, poly, point)
+    dist = signed_distance(poly, point)
+    if dist < 0.0
+        return 0.0
+    else
+        return dist
+    end
+end
 
+__euclid_distance(x0, y0, x1, y1) = sqrt((x1-x0)^2 + (y1-y0)^2)
+
+"""
+    _distance(p0::Point{2, T}, p1::Point{2, T}, p2::Point{2, T})
+
+Distance from p0 to the line segment formed by p1 and p2.  Implementation from Turf.jl.
+"""
+function _distance(p0::Point{2, T}, p1::Point{2, T}, p2::Point{2, T}) where T
+    x0, y0 = p0
+    x1, y1 = p1
+    x2, y2 = p2
+
+    if x1 < x2
+        xfirst, yfirst = x1, y1
+        xlast, ylast = x2, y2
+    else
+        xfirst, yfirst = x2, y2
+        xlast, ylast = x1, y1
+    end
+    
+    v = (xlast - xfirst, ylast - yfirst)
+    w = (x0 - xfirst, y0 - yfirst)
+
+    c1 = sum(w .* v)
+    if c1 <= 0
+        return __euclid_distance(x0, y0, xfirst, yfirst)
+    end
+
+    c2 = sum(v .* v)
+
+    if c2 <= c1
+        return __euclid_distance(x0, y0, xlast, ylast)
+    end
+
+    b2 = c1 / c2
+
+    return __euclid_distance(x0, y0, xfirst + (b2 * v[1]), yfirst + (b2 * v[2]))
+end
+
+
+function _distance(linestring::LineString{2, T1}, xy::Point{2, T2}) where {T1, T2}
+    mindist = typemax(Float64)
+
+    for (p1, p2) in linestring
+        newdist = _distance(xy, p1, p2) 
+        if newdist < mindist
+            mindist = newdist
+        end
+    end
+
+    return mindist
+end
+
+function signed_distance(::GeoInterface.PolygonTrait, poly::Polygon{2, T1}, point::Point{2, T2}) where {T1, T2}
+
+    mindist = _distance(poly.exterior, point)
+
+    @inbounds for hole in poly.interiors
+        newdist = _distance(hole, point)
+        if newdist < mindist
+            mindist = newdist
+        end
+    end
+
+    if contains(poly, point)
+        return mindist
+    else
+        return -mindist
+    end
+end
+
+function signed_distance(multipoly::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2}
+    distances = signed_distance.(multipoly.polygons, point)
+    min_val, min_ind = findmin(distances)
+    return max_val
+end
