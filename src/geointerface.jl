@@ -1,5 +1,9 @@
 # Implementation of trait based interface from https://github.com/JuliaGeo/GeoInterface.jl/
 
+################################################################################
+#                         GeoInterface geometry traits                         #
+################################################################################
+
 GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
 GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
@@ -24,20 +28,42 @@ GeoInterface.geomtrait(::Simplex{Dim,T,1}) where {Dim,T} = PointTrait()
 GeoInterface.geomtrait(::Simplex{Dim,T,2}) where {Dim,T} = LineStringTrait()
 GeoInterface.geomtrait(::Simplex{Dim,T,3}) where {Dim,T} = PolygonTrait()
 
-# GeoInterface calls this method in `GeoInterface.convert(GeometryBasics, ...)`
-geointerface_geomtype(::GeoInterface.PointTrait) = Point
-geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
-geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
-geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
-geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
-geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
-geointerface_geomtype(::GeoInterface.PolyhedralSurfaceTrait) = AbstractMesh
+GeoInterface.geomtrait(::HyperRectangle) = PolygonTrait()
+
+################################################################################
+#                      GeoInterface basic implementation                       #
+################################################################################
+
+############################################################
+#                 PointTrait (Point{N, T})                 #
+############################################################
 
 GeoInterface.ncoord(::PointTrait, g::Point) = length(g)
 GeoInterface.getcoord(::PointTrait, g::Point, i::Int) = g[i]
 
+# Fast implementations for GeoInterface.x, y, z
+GeoInterface.x(::PointTrait, g::Point{N, T}) where {N, T} = g[1]
+GeoInterface.y(::PointTrait, g::Point{N, T}) where {N, T} = g[2]
+GeoInterface.z(::PointTrait, g::Point{N, T}) where {N, T} = g[3]
+
+############################################################
+#                     MultiPointTrait                      #
+############################################################
+
+GeoInterface.ngeom(::MultiPointTrait, g::MultiPoint) = length(g)
+GeoInterface.getgeom(::MultiPointTrait, g::MultiPoint, i::Int) = g[i]
+
+############################################################
+#                        LineTrait                         #
+############################################################
+
 GeoInterface.ngeom(::LineTrait, g::Line) = length(g)
 GeoInterface.getgeom(::LineTrait, g::Line, i::Int) = g[i]
+
+
+############################################################
+#                     LineStringTrait                      #
+############################################################
 
 GeoInterface.ngeom(::LineStringTrait, g::LineString) = length(g) + 1  # n line segments + 1
 GeoInterface.ncoord(::LineStringTrait, g::LineString{Dim}) where {Dim} = Dim
@@ -45,15 +71,11 @@ function GeoInterface.getgeom(::LineStringTrait, g::LineString, i::Int)
     return GeometryBasics.coordinates(g)[i]
 end
 
-GeoInterface.ngeom(::PolygonTrait, g::Polygon) = length(g.interiors) + 1  # +1 for exterior
-function GeoInterface.getgeom(::PolygonTrait,
-                              g::Polygon,
-                              i::Int)::typeof(g.exterior)
-    return i > 1 ? g.interiors[i - 1] : g.exterior
-end
+GeoInterface.isclosed(::LineStringTrait, geom::LineString) = geom[1][1] == geom[end][2]
 
-GeoInterface.ngeom(::MultiPointTrait, g::MultiPoint) = length(g)
-GeoInterface.getgeom(::MultiPointTrait, g::MultiPoint, i::Int) = g[i]
+############################################################
+#                   MultiLineStringTrait                   #
+############################################################
 
 function GeoInterface.ngeom(::MultiLineStringTrait, g::MultiLineString)
     return length(g)
@@ -64,8 +86,41 @@ function GeoInterface.getgeom(::MultiLineStringTrait, g::MultiLineString,
 end
 GeoInterface.ncoord(::MultiLineStringTrait, g::MultiLineString{Dim}) where {Dim} = Dim
 
+############################################################
+#                       PolygonTrait                       #
+############################################################
+
+GeoInterface.ngeom(::PolygonTrait, g::Polygon) = length(g.interiors) + 1  # +1 for exterior
+function GeoInterface.getgeom(::PolygonTrait,
+                              g::Polygon,
+                              i::Int)::typeof(g.exterior)
+    return i > 1 ? g.interiors[i - 1] : g.exterior
+end
+
+GeoInterface.ngeom(::PolygonTrait, ::Ngon) = 1  # can't have any holes
+GeoInterface.getgeom(::PolygonTrait, g::Ngon, _) = LineString(g.points)
+
+############################################################
+#                    MultiPolygonTrait                     #
+############################################################
+
 GeoInterface.ngeom(::MultiPolygonTrait, g::MultiPolygon) = length(g)
 GeoInterface.getgeom(::MultiPolygonTrait, g::MultiPolygon, i::Int) = g[i]
+
+############################################################
+#            PolyhedralSurfaceTrait (Mesh{...})            #
+############################################################
+
+function GeoInterface.ncoord(::PolyhedralSurfaceTrait,
+                             ::Mesh{Dim,T,E,V} where {Dim,T,E,V})
+    return Dim
+end
+GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
+GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
+
+############################################################
+#                 Generic implementations                  #
+############################################################
 
 function GeoInterface.ncoord(::AbstractGeometryTrait,
                              ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
@@ -79,15 +134,27 @@ function GeoInterface.ngeom(::AbstractGeometryTrait,
                             ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
     return N
 end
-GeoInterface.ngeom(::PolygonTrait, ::Ngon) = 1  # can't have any holes
-GeoInterface.getgeom(::PolygonTrait, g::Ngon, _) = LineString(g.points)
 
-function GeoInterface.ncoord(::PolyhedralSurfaceTrait,
-                             ::Mesh{Dim,T,E,V} where {Dim,T,E,V})
-    return Dim
-end
-GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
-GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
+################################################################################
+#         Conversions from GeoInterface types to GeometryBasics types          #
+################################################################################
+
+############################################################
+#   GeoInterface geointerface_geomtype (for conversion)    #
+############################################################
+
+# GeoInterface calls this method in `GeoInterface.convert(GeometryBasics, ...)`
+geointerface_geomtype(::GeoInterface.PointTrait) = Point
+geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
+geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
+geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
+geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
+geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
+geointerface_geomtype(::GeoInterface.PolyhedralSurfaceTrait) = AbstractMesh
+
+############################################################
+#             GeoInterface.convert definitions             #
+############################################################
 
 function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
     dim = Int(ncoord(geom))
@@ -125,10 +192,13 @@ function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geo
     return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
 end
 
-GeoInterface.centroid(::Union{GeoInterface.MultiPolygonTrait, GeoInterface.PolygonTrait}, geom::Union{AbstractGeometry, MultiPolygon, MultiLineString}) = centroid(geom)
+################################################################################
+#                          GeoInterface optional API                           #
+################################################################################
 
-
-# Implementations for and overloads of various GeoInterface optional functions
+############################################################
+#                          Extent                          #
+############################################################
 
 function GeoInterface.extent(::GeoInterface.AbstractGeometryTrait, a::Union{GeometryBasics.AbstractGeometry, GeometryBasics.GeometryPrimitive, AbstractVector{<: GeometryBasics.AbstractGeometry}})
     bbox = Rect(a)
@@ -159,6 +229,17 @@ function Rect{3, T}(ext::GeoInterface.Extents.Extent{(:X, :Y, :Z)}) where {T}
     return Rect{3, T}(xmin, ymin, zmin, xmax - xmin, ymax - ymin, zmax - zmin)
 end
 
+############################################################
+#                           Area                           #
+############################################################
+
+GeoInterface.area(::PolygonTrait, poly::Polygon{2, T}) where T = abs(signed_area(poly))
+GeoInterface.area(::MultiPolygonTrait, multipoly::MultiPolygon{2, T}) where T = sum(abs.(signed_area.(multipoly.polygons)))
+
+########################################
+#            Implementation            #
+########################################
+
 function signed_area(a::Point{2, T}, b::Point{2, T}, c::Point{2, T}) where T
     return ((b[1] - a[1]) * (c[2] - a[2]) - (c[1] - a[1]) * (b[2] - a[2])) / 2
 end
@@ -180,7 +261,21 @@ function signed_area(poly::GeometryBasics.Polygon{2})
     return area
 end
 
+# WARNING: this may not do what you expect, since it's
+# sensitive to winding order.  Use GeoInterface.area instead.
 signed_area(mp::MultiPolygon) = sum(signed_area.(mp.polygons))
+
+
+############################################################
+#                         Centroid                         #
+############################################################
+
+
+GeoInterface.centroid(::Union{GeoInterface.MultiPolygonTrait, GeoInterface.PolygonTrait}, geom::Union{AbstractGeometry, MultiPolygon, Vector{<: AbstractGeometry}}) = centroid(geom)
+
+########################################
+#            Implementation            #
+########################################
 
 function centroid(ls::LineString{2, T}) where T
     centroid = Point{2, T}(0)
@@ -236,9 +331,42 @@ function centroid(rect::Rect{N, T}) where {N, T}
     return Point{N, T}(rect.origin .- rect.widths ./ 2)
 end
 
-# function distance(poly::Polygon{N, T1}, point::Point{N, T2}) where {N, T1, T2}
-#     FinalType = promote_type(T1, T2)
-# end
+function centroid(sphere::HyperSphere{N, T}) where {N, T}
+    return sphere.center
+end
+
+############################################################
+#                         Contains                         #
+############################################################
+
+
+function GeoInterface.contains(
+    ::Union{GeoInterface.LineStringTrait, GeoInterface.PolygonTrait, GeoInterface.MultiPolygonTrait}, 
+    ::GeoInterface.PointTrait, 
+    geom::Union{LineString{2, T1}, Polygon{2, T1}, MultiPolygon{2, T1}}, 
+    point::Point{2, T2}
+    ) where {T1, T2} 
+
+    contains(ls, point)
+
+end
+
+########################################
+#            Implementation            #
+########################################
+
+# test if point B is on the line defined by A and C
+function is_on_line(A::Point2, B::Point2, C::Point2)
+   # if AC is vertical
+   if (A[1] == C[1]) 
+        return B[1] == C[1]
+   # if AC is horizontal
+   elseif (A[2] == C[2]) 
+        return B[2] == C[2]
+   end
+   # match the gradients
+   return (A[1] - C[1])*(A[2] - C[2]) == (C[1] - B[1])*(C[2] - B[2])
+end
 
 function contains(ls::GeometryBasics.LineString{2, T1}, point::Point{2, T2}) where {T1, T2}
 
@@ -258,11 +386,17 @@ function contains(ls::GeometryBasics.LineString{2, T1}, point::Point{2, T2}) whe
     #   return c;
 
     # }
-
     x, y = point
 
     c = false
-    for (p1, p2) in ls
+    @inbounds for (p1, p2) in ls
+        # handle vertex and edge cases
+        if p1 == point || p2 == point
+            return true
+        elseif (p1[1] < x < p2[1] && p1[2] < y < p2[2]) || (p2[1] < x < p1[1] && p2[2] < y < p1[2]) # point is in bbox of line
+            return is_on_line(p1, point, p2)
+        end
+        # Hormann-Agathos ray casting method
         if ((p1[2] ≤ y && y < p2[2]) ||
             (p2[2] ≤ y && y < p1[2])) &&
             (x < (p2[1] - p1[1]) * (y - p1[2]) / (p2[2] - p1[2]) + p1[1])
@@ -285,8 +419,13 @@ function contains(poly::Polygon{2, T1}, point::Point{2, T2}) where {T1, T2}
     return c
 end
 
-contains(mp::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = any((contains(poly, point) for poly in polygons))
+# TODOs: implement contains for mesh, 
 
-GeoInterface.contains(::GeoInterface.LineStringTrait, ::GeoInterface.PointTrait, ls::LineString{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(ls, point)
-GeoInterface.contains(::GeoInterface.PolygonTrait, ::GeoInterface.PointTrait, poly::Polygon{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(poly, point)
-GeoInterface.contains(::GeoInterface.MultiPolygonTrait, ::GeoInterface.PointTrait, multipoly::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = contains(multipoly, point)
+contains(mp::MultiPolygon{2, T1}, point::Point{2, T2}) where {T1, T2} = any((contains(poly, point) for poly in mp.polygons))
+
+############################################################
+#                         Distance                         #
+############################################################
+
+# coming soon!
+
