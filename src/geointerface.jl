@@ -20,6 +20,15 @@ GeoInterface.geomtrait(::MultiPolygon) = MultiPolygonTrait()
 GeoInterface.geomtrait(::Ngon) = PolygonTrait()
 GeoInterface.geomtrait(::AbstractMesh) = PolyhedralSurfaceTrait()
 
+# GeoInterface calls this method in `GeoInterface.convert(GeometryBasics, ...)`
+geointerface_geomtype(::GeoInterface.PointTrait) = Point
+geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
+geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
+geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
+geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
+geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
+geointerface_geomtype(::GeoInterface.PolyhedralSurfaceTrait) = Mesh
+
 GeoInterface.geomtrait(::Simplex{Dim,T,1}) where {Dim,T} = PointTrait()
 GeoInterface.geomtrait(::Simplex{Dim,T,2}) where {Dim,T} = LineStringTrait()
 GeoInterface.geomtrait(::Simplex{Dim,T,3}) where {Dim,T} = PolygonTrait()
