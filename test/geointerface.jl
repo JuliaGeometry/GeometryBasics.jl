@@ -14,6 +14,7 @@
     linestring = LineString(Point{2,Int}[(10, 10), (20, 20), (10, 40)])
     @test testgeometry(linestring)
     @test ngeom(linestring) == 3
+    @test ncoord(linestring) == 2
     @test getgeom(linestring, 1) == Point(10, 10)
     @test getgeom(linestring, 2) == Point(20, 20)
     @test getgeom(linestring, 3) == Point(10, 40)
@@ -23,6 +24,7 @@
     @test testgeometry(multilinestring)
     @test GeoInterface.coordinates(multilinestring) ==
           [[[10, 10], [20, 20], [10, 40]], [[10, 10], [20, 20], [10, 40]]]
+    @test ncoord(multilinestring) == 2
 
     poly = Polygon(rand(Point{2,Float32}, 5), [rand(Point{2,Float32}, 5)])
     @test testgeometry(poly)
@@ -68,15 +70,15 @@ end
     multipolygon_json = GeoJSON.read(multipolygon_str)
     multipolygon_hole_json = GeoJSON.read(multipolygon_hole_str)
 
-    point_gb = GeoInterface.convert(Point, point_json)
-    point_3d_gb = GeoInterface.convert(Point, point_3d_json)
-    linestring_gb = GeoInterface.convert(LineString, linestring_json)
-    polygon_gb = GeoInterface.convert(Polygon, polygon_json)
-    polygon_hole_gb = GeoInterface.convert(Polygon, polygon_hole_json)
-    multipoint_gb = GeoInterface.convert(MultiPoint, multipoint_json)
-    multilinestring_gb = GeoInterface.convert(MultiLineString, multilinestring_json)
-    multipolygon_gb = GeoInterface.convert(MultiPolygon, multipolygon_json)
-    multipolygon_hole_gb = GeoInterface.convert(MultiPolygon, multipolygon_hole_json)
+    point_gb = GeoInterface.convert(GeometryBasics, point_json)
+    point_3d_gb = GeoInterface.convert(GeometryBasics, point_3d_json)
+    linestring_gb = GeoInterface.convert(GeometryBasics, linestring_json)
+    polygon_gb = GeoInterface.convert(GeometryBasics, polygon_json)
+    polygon_hole_gb = GeoInterface.convert(GeometryBasics, polygon_hole_json)
+    multipoint_gb = GeoInterface.convert(GeometryBasics, multipoint_json)
+    multilinestring_gb = GeoInterface.convert(GeometryBasics, multilinestring_json)
+    multipolygon_gb = GeoInterface.convert(GeometryBasics, multipolygon_json)
+    multipolygon_hole_gb = GeoInterface.convert(GeometryBasics, multipolygon_hole_json)
 
     @test point_gb === Point{2, Float64}(30.1, 10.1)
     @test point_3d_gb === Point{3, Float64}(30.1, 10.1, 5.1)
