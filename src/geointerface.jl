@@ -60,8 +60,7 @@ GeoInterface.getgeom(::MultiPointTrait, g::MultiPoint, i::Int) = g[i]
 function GeoInterface.ngeom(::MultiLineStringTrait, g::MultiLineString)
     return length(g)
 end
-function GeoInterface.getgeom(::MultiLineStringTrait, g::MultiLineString,
-                              i::Int)
+function GeoInterface.getgeom(::MultiLineStringTrait, g::MultiLineString, i::Int)
     return g[i]
 end
 GeoInterface.ncoord(::MultiLineStringTrait, g::MultiLineString{Dim}) where {Dim} = Dim
@@ -123,7 +122,7 @@ function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
     if GeoInterface.nhole(geom) == 0
         return Polygon(exterior)
     else
-        interiors = GeoInterface.convert.(LineString, Ref(t), GeoInterface.gethole(geom))
+        interiors = map(h -> GeoInterface.convert(LineString, t, h), GeoInterface.gethole(geom))
         return Polygon(exterior, interiors)
     end
 end
@@ -143,10 +142,10 @@ end
 
 function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)
     t = LineStringTrait()
-    return MultiLineString([GeoInterface.convert(LineString, t, l) for l in getgeom(geom)])
+    return MultiLineString(map(l -> GeoInterface.convert(LineString, t, l), getgeom(geom)))
 end
 
 function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geom)
     t = PolygonTrait()
-    return MultiPolygon([GeoInterface.convert(Polygon, t, poly) for poly in getgeom(geom)])
+    return MultiPolygon(map(poly -> GeoInterface.convert(Polygon, t, poly), getgeom(geom)))
 end
