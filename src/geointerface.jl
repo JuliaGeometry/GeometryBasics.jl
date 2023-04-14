@@ -3,12 +3,7 @@
 GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
 GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
-GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractGeometry}}) = true
-GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPoint}}) = true
-GeoInterface.isgeometry(::Type{<:AbstractVector{<:LineString}}) = true
-GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPolygon}}) = true
-GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractFace}}) = true
-GeoInterface.isgeometry(::Type{<:Mesh}) = true
+GeoInterface.isgeometry(::Type{<:AbstractMesh}) = true
 
 GeoInterface.geomtrait(::Point) = PointTrait()
 GeoInterface.geomtrait(::Line) = LineTrait()
