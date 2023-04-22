@@ -1,17 +1,27 @@
 @testset "Basic types" begin
     point = Point(2, 3)
+    @test geomtrait(point) isa PointTrait
     @test testgeometry(point)
     @test ncoord(point) == 2
     @test getcoord(point, 2) == 3
     @test GeoInterface.coordinates(point) == [2, 3]
 
+    line = Line(Point(2, 3), Point(4, 5))
+    @test geomtrait(line) isa LineTrait
+    @test testgeometry(line)
+    @test ngeom(line) == 2
+    @test getgeom(line, 2) == Point(4, 5)
+    @test GeoInterface.coordinates(line) == [[2, 3], [4, 5]]
+
     mp = MultiPoint([point, point])
+    @test geomtrait(mp) isa MultiPointTrait
     @test testgeometry(mp)
     @test ngeom(mp) == 2
     @test getgeom(mp, 2) == point
     @test GeoInterface.coordinates(mp) == [[2, 3], [2, 3]]
 
     linestring = LineString(Point{2,Int}[(10, 10), (20, 20), (10, 40)])
+    @test geomtrait(linestring) isa LineStringTrait
     @test testgeometry(linestring)
     @test ngeom(linestring) == 3
     @test ncoord(linestring) == 2
@@ -21,22 +31,26 @@
     @test GeoInterface.coordinates(linestring) == [[10, 10], [20, 20], [10, 40]]
 
     multilinestring = MultiLineString([linestring, linestring])
+    @test geomtrait(multilinestring) isa MultiLineStringTrait
     @test testgeometry(multilinestring)
     @test GeoInterface.coordinates(multilinestring) ==
           [[[10, 10], [20, 20], [10, 40]], [[10, 10], [20, 20], [10, 40]]]
     @test ncoord(multilinestring) == 2
 
     poly = Polygon(rand(Point{2,Float32}, 5), [rand(Point{2,Float32}, 5)])
+    @test geomtrait(poly) isa PolygonTrait
     @test testgeometry(poly)
     @test length(GeoInterface.coordinates(poly)) == 2
     @test length(GeoInterface.coordinates(poly)[1]) == 5
 
     triangle = Triangle(point, point, point)
+    @test geomtrait(triangle) isa PolygonTrait # ?? should it be a Triangle trait
     @test testgeometry(triangle)
     @test length(GeoInterface.coordinates(triangle)) == 1
     @test length(GeoInterface.coordinates(triangle)[1]) == 3
 
     polys = MultiPolygon([poly, poly])
+    @test geomtrait(polys) isa MultiPolygonTrait
     @test testgeometry(polys)
     @test length(GeoInterface.coordinates(polys)) == 2
     @test length(GeoInterface.coordinates(polys)[1]) == 2
