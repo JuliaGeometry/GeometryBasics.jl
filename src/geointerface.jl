@@ -4,6 +4,12 @@ GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
 GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
 GeoInterface.isgeometry(::Type{<:AbstractMesh}) = true
+GeoInterface.isgeometry(::Type{<:AbstractLineString}) = true
+GeoInterface.isgeometry(::Type{<:AbstractPolygon}) = true
+GeoInterface.isgeometry(::Type{<:MultiPoint}) = true
+GeoInterface.isgeometry(::Type{<:MultiLineString}) = true
+GeoInterface.isgeometry(::Type{<:MultiPolygon}) = true
+GeoInterface.isgeometry(::Type{<:Mesh}) = true
 
 GeoInterface.geomtrait(::Point) = PointTrait()
 GeoInterface.geomtrait(::Line) = LineTrait()
@@ -18,6 +24,7 @@ GeoInterface.geomtrait(::AbstractMesh) = PolyhedralSurfaceTrait()
 # GeoInterface calls this method in `GeoInterface.convert(GeometryBasics, ...)`
 geointerface_geomtype(::GeoInterface.PointTrait) = Point
 geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
+geointerface_geomtype(::GeoInterface.LineTrait) = Line
 geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
 geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
 geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
