@@ -4,8 +4,8 @@ GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
 GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
 GeoInterface.isgeometry(::Type{<:AbstractMesh}) = true
-GeoInterface.isgeometry(::Type{<:AbstractLineString}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPolygon}) = true
+GeoInterface.isgeometry(::Type{<:LineString}) = true
 GeoInterface.isgeometry(::Type{<:MultiPoint}) = true
 GeoInterface.isgeometry(::Type{<:MultiLineString}) = true
 GeoInterface.isgeometry(::Type{<:MultiPolygon}) = true
@@ -92,13 +92,29 @@ GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::AbstractMesh) = length(g)
 GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::AbstractMesh, i) = g[i]
 
 function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
-    dim = Int(ncoord(geom))
-    return Point{dim, Float64}(GeoInterface.coordinates(geom))
+    x, y = GeoInterface.x(geom), GeoInterface.y(geom)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(geom)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return Point{3,T}(x, y, z)
+    else
+        GeoInterface.x(geom), GeoInterface.y(geom)
+        T = promote_type(typeof(x), typeof(y))
+        return Point{2,T}(x, y)
+    end
 end
 
 function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
-    dim = Int(ncoord(geom))
-    return LineString([Point{dim, Float64}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+    g1 = getgeom(geom, 1)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return LineString([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return LineString([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+    end
 end
 
 function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
@@ -113,8 +129,16 @@ function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
 end
 
 function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
-    dim = Int(ncoord(geom))
-    return MultiPoint([Point{dim, Float64}(GeoInterface.coordinates(p)) for p in getgeom(geom)])
+    g1 = getgeom(geom, 1)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return MultiPoint([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return MultiPoint([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+    end
 end
 
 function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)

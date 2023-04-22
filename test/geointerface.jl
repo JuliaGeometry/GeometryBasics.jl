@@ -93,19 +93,19 @@ end
     multilinestring_gb = GeoInterface.convert(GeometryBasics, multilinestring_json)
     multipolygon_gb = GeoInterface.convert(GeometryBasics, multipolygon_json)
     multipolygon_hole_gb = GeoInterface.convert(GeometryBasics, multipolygon_hole_json)
-
-    @test point_gb === Point{2, Float64}(30.1, 10.1)
-    @test point_3d_gb === Point{3, Float64}(30.1, 10.1, 5.1)
+    
+    @test point_gb === Point{2,Float32}(30.1, 10.1)
+    @test point_3d_gb === Point{3,Float32}(30.1, 10.1, 5.1)
     @test linestring_gb isa LineString
     @test length(linestring_gb) == 2
-    @test eltype(linestring_gb) == Line{2, Float64}
+    @test eltype(linestring_gb) == Line{2,Float32}
     @test polygon_gb isa Polygon
     @test isempty(polygon_gb.interiors)
     @test polygon_hole_gb isa Polygon
     @test length(polygon_hole_gb.interiors) == 1
     @test multipoint_gb isa MultiPoint
     @test length(multipoint_gb) == 4
-    @test multipoint_gb[4] === Point{2, Float64}(30.1, 10.1)
+    @test multipoint_gb[4] === Point{2,Float32}(30.1, 10.1)
     @test multilinestring_gb isa MultiLineString
     @test length(multilinestring_gb) == 2
     @test multipolygon_gb isa MultiPolygon
