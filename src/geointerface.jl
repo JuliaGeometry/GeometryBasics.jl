@@ -5,6 +5,7 @@ GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
 GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractGeometry}}) = true
 GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPoint}}) = true
+GeoInterface.isgeometry(::Type{<:AbstractVector{<: AbstractVector{<: AbstractPoint}}}) = true
 GeoInterface.isgeometry(::Type{<:AbstractVector{<:LineString}}) = true
 GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractPolygon}}) = true
 GeoInterface.isgeometry(::Type{<:AbstractVector{<:AbstractFace}}) = true
@@ -12,10 +13,12 @@ GeoInterface.isgeometry(::Type{<:Mesh}) = true
 
 GeoInterface.geomtrait(::Point) = PointTrait()
 GeoInterface.geomtrait(::Line) = LineTrait()
+GeoInterface.geomtrait(::AbstractVector{<: AbstractPoint}) = LineStringTrait()
 GeoInterface.geomtrait(::LineString) = LineStringTrait()
 GeoInterface.geomtrait(::Polygon) = PolygonTrait()
 GeoInterface.geomtrait(::MultiPoint) = MultiPointTrait()
 GeoInterface.geomtrait(::MultiLineString) = MultiLineStringTrait()
+GeoInterface.geomtrait(::AbstractVector{<: AbstractVector{<: AbstractPoint}}) = MultiLineStringTrait()
 GeoInterface.geomtrait(::MultiPolygon) = MultiPolygonTrait()
 GeoInterface.geomtrait(::Ngon) = PolygonTrait()
 GeoInterface.geomtrait(::AbstractMesh) = PolyhedralSurfaceTrait()
@@ -45,6 +48,17 @@ function GeoInterface.getgeom(::LineStringTrait, g::LineString, i::Int)
     return GeometryBasics.coordinates(g)[i]
 end
 
+
+GeoInterface.ngeom(::GeoInterface.LineStringTrait, p::AbstractVector{<: AbstractPoint}) = length(p)
+GeoInterface.ncoord(::GeoInterface.LineStringTrait, p::AbstractVector{<: AbstractPoint{N}}) where {N} = N
+
+GeoInterface.getgeom(::GeoInterface.LineStringTrait, p::AbstractVector{<: AbstractPoint}) = p       # iterator form
+GeoInterface.getgeom(::GeoInterface.LineStringTrait, p::AbstractVector{<: AbstractPoint}, i) = p[i] # get single point
+GeoInterface.getpoint(p::AbstractVector{<: AbstractPoint}) = p
+GeoInterface.getpoint(p::AbstractVector{<: AbstractPoint}, i) = p[i]
+GeoInterface.getlinestring(p::AbstractVector{<: AbstractPoint}) = (p,)
+
+
 GeoInterface.ngeom(::PolygonTrait, g::Polygon) = length(g.interiors) + 1  # +1 for exterior
 function GeoInterface.getgeom(::PolygonTrait,
                               g::Polygon,
@@ -63,6 +77,17 @@ function GeoInterface.getgeom(::MultiLineStringTrait, g::MultiLineString,
     return g[i]
 end
 GeoInterface.ncoord(::MultiLineStringTrait, g::MultiLineString{Dim}) where {Dim} = Dim
+
+GeoInterface.geomtrait(::AbstractVector{<: AbstractVector{<: AbstractPoint}}) = GeoInterface.MultiLineStringTrait()
+GeoInterface.ngeom(::GeoInterface.MultiLineStringTrait, p::AbstractVector{<: AbstractVector{<: AbstractPoint}}) = length(p)
+GeoInterface.ncoord(::GeoInterface.MultiLineStringTrait, p::AbstractVector{<: AbstractVector{<: AbstractPoint{N}}}) where N = N
+
+GeoInterface.getlinestring(p::AbstractVector{<: AbstractVector{<: AbstractPoint}}) = p # iterator form
+GeoInterface.getlinestring(p::AbstractVector{<: AbstractVector{<: AbstractPoint}}, i) = p[i] # single geometry form
+
+GeoInterface.getgeom(::GeoInterface.MultiLineStringTrait, p::AbstractVector{<: AbstractVector{<: AbstractPoint}}) = p
+GeoInterface.getgeom(::GeoInterface.MultiLineStringTrait, p::AbstractVector{<: AbstractVector{<: AbstractPoint}}, i) = p[i]
+
 
 GeoInterface.ngeom(::MultiPolygonTrait, g::MultiPolygon) = length(g)
 GeoInterface.getgeom(::MultiPolygonTrait, g::MultiPolygon, i::Int) = g[i]
