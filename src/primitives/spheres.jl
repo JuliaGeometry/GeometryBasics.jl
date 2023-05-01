@@ -70,3 +70,5 @@ end
 function normals(s::Sphere{T}, nvertices=24) where {T}
     return coordinates(Sphere(Point{3,T}(0), 1), nvertices)
 end
+
+Base.convert(::Type{HST}, r::HyperSphere{N}) where {N, HST <: HyperSphere{N}} = HST(r.center, r.r)

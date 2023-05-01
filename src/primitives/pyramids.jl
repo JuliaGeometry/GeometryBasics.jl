@@ -25,3 +25,5 @@ end
 function faces(::Pyramid)
     return (TriangleFace(triangle) for triangle in TupleView{3}(1:18))
 end
+
+Base.convert(::Type{<: Pyramid}, c::Pyramid) = Pyramid(c.middle, c.length, c.width)

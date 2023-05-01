@@ -105,3 +105,5 @@ function faces(c::Cylinder{3}, facets=30)
     end
     return indexes
 end
+
+Base.convert(::Type{CT}, c::Cylinder{N}) where {N, CT <: Cylinder{N}} = CT(c.origin, c.extremity, c.r)
