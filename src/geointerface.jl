@@ -149,3 +149,8 @@ function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geo
     t = PolygonTrait()
     return MultiPolygon(map(poly -> GeoInterface.convert(Polygon, t, poly), getgeom(geom)))
 end
+
+function Extents.extent(rect::Rect2)
+    (xmin, ymin), (xmax, ymax) = extrema(rect)
+    return Extents.Extent(X=(xmin, xmax), Y=(ymin, ymax))
+end

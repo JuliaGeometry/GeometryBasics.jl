@@ -4,6 +4,7 @@ using LinearAlgebra
 using GeometryBasics: attributes
 using GeoInterface
 using GeoJSON
+using Extents
 
 @testset "GeometryBasics" begin
 

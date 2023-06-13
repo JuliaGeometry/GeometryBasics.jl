@@ -115,3 +115,10 @@ end
     @test length(multipolygon_hole_gb[1].interiors) == 0
     @test length(multipolygon_hole_gb[2].interiors) == 1
 end
+
+@testset "Extent" begin
+    rect = Rect2f(Vec2f(0), Vec2f(1.0))
+    ext = extent(rect)
+    @test ext.X == (0.0f0, 1.0f0)
+    @test ext.Y == (0.0f0, 1.0f0)
+end
