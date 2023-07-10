@@ -175,6 +175,14 @@ function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
     return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
+function triangle_mesh(primitive::TriangleMesh{N}; nvertices=nothing) where {N}
+    if nvertices !== nothing
+        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
+        return mesh(Tesselation(primitive, nvertices); pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+    end
+    return primitive
+end
+
 function uv_mesh(primitive::Meshable{N,T}) where {N,T}
     return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
 end
