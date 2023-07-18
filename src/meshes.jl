@@ -167,6 +167,18 @@ function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
     return Mesh(positions, faces)
 end
 
+pointtype(x::Mesh) = eltype(decompose(Point, x))
+facetype(x::Mesh) = eltype(faces(x))
+
+function triangle_mesh(primitive::Mesh{N}) where {N}
+    # already target type:
+    if pointtype(primitive) === Point{N,Float32} && GLTriangleFace === facetype(primitive)
+        return primitive
+    else
+        return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+    end
+end
+
 function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
     if nvertices !== nothing
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
