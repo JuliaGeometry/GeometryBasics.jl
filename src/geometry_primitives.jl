@@ -74,11 +74,12 @@ collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
 
 function collect_with_eltype(::Type{T}, iter) where {T}
+    isempty(iter) && return T[]
     # We need to get `eltype` information from `iter`, it seems to be `Any`
     # most of the time so the eltype checks here don't actually work
     l = if Base.IteratorSize(iter) isa Union{Base.HasShape,Base.HasLength}
         if Base.IteratorEltype(iter) isa Base.HasEltype && isconcretetype(eltype(iter))
-            # Work out the exact length 
+            # Work out the exact length
             length(convert_simplex(T, first(iter))) * length(iter)
         else
             # We know it is at least the length of iter,
