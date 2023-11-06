@@ -10,6 +10,7 @@ include("fixed_arrays.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")
 
+include("primitives/polytopes.jl")
 include("primitives/rectangles.jl")
 include("primitives/spheres.jl")
 include("primitives/cylinders.jl")

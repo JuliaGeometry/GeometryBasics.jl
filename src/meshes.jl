@@ -1,3 +1,60 @@
+
+"""
+Mesh <: AbstractMesh{Element}
+The concrete AbstractMesh type.
+"""
+struct Mesh{Dim, T<:Number, V<:AbstractVector{Point{Dim, T}}, C <: AbstractVector{<: AbstractFace}} <: AbstractMesh{Dim, T}
+    vertices::V
+    connectivity::C
+end
+coordinates(mesh::Mesh) = mesh.vertices
+faces(mesh::Mesh) = mesh.connectivity
+Base.getindex(mesh::Mesh, i::Integer) = mesh.vertices[mesh.connectivity[i]]
+Base.length(mesh::Mesh) = length(mesh.connectivity)
+Base.:(==)(a::Mesh, b::Mesh) = coordinates(a) == coordinates(b) && faces(a) == faces(b)
+
+function Base.iterate(mesh::Mesh, i=1)
+    return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
+end
+
+function Mesh(points::AbstractVector{Point{Dim, T}},
+          faces::AbstractVector{<:AbstractFace}) where {Dim, T}
+    return Mesh{Dim, T, }(points, faces)
+end
+
+function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
+          facetype=TriangleFace, skip=1)
+    return Mesh(points, connect(faces, facetype, skip))
+end
+
+struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}, Names, Types} <: AbstractMesh{Dim, T}
+    mesh::M
+    meta::NamedTuple{Names, Types}
+    function MetaMesh(mesh::AbstractMesh{Dim, T}, meta::NamedTuple{Names, Types}) where {Dim, T, Names, Types}
+        new{Dim, T, typeof(mesh), Names, Types}(mesh, meta)
+    end
+end
+
+function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; meta...)
+    MetaMesh(Mesh(points, faces), values(meta))
+end
+
+function MetaMesh(m::AbstractMesh; meta...)
+    MetaMesh(m, values(meta))
+end
+
+@inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
+@inline Base.getproperty(mesh::MetaMesh, field::Symbol) = getproperty(getfield(mesh, :meta), field)
+@inline Base.propertynames(mesh::MetaMesh) = propertynames(getfield(mesh, :meta))
+
+coordinates(mesh::MetaMesh) = coordinates(Mesh(mesh))
+faces(mesh::MetaMesh) = faces(Mesh(mesh))
+normals(mesh::MetaMesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
+texturecoordinates(mesh::MetaMesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
+
+meta(mesh::MetaMesh) = getfield(mesh, :meta)
+Mesh(mesh::MetaMesh) = getfield(mesh, :mesh)
+
 """
     mesh(primitive::GeometryPrimitive;
          pointtype=Point, facetype=GLTriangle,
@@ -74,7 +131,7 @@ end
 Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
-function volume(triangle::Triangle) where {VT,FT}
+function volume(triangle::Triangle)
     v1, v2, v3 = triangle
     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
@@ -86,7 +143,7 @@ end
 Calculate the signed volume of all tetrahedra. Be sure the orientation of your
 surface is right.
 """
-function volume(mesh::Mesh) where {VT,FT}
+function volume(mesh::Mesh)
     return sum(volume, mesh)
 end
 
@@ -151,7 +208,6 @@ function pop_meta(mesh::MetaMesh, name::Symbol)
     new_meta, value = pop(meta(mesh), Val(name))
     return MetaMesh(mesh, new_meta), value
 end
-
 
 function Base.get(f, mesh::MetaMesh, key::Symbol)
     hasproperty(mesh, key) && return getproperty(mesh, key)
