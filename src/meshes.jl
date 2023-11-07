@@ -45,8 +45,25 @@ function triangle_mesh(primitive::AbstractGeometry{N})::TriangleMesh{N} where {N
     return mesh(primitive; pointtype=Point{N, Float32})
 end
 
-function triangle_mesh(primitive::AbstractVector{<: Point2})::TriangleMesh{2}
-    return mesh(Polygon(primitive))
+
+pointtype(x::Mesh) = eltype(decompose(Point, x))
+facetype(x::Mesh) = eltype(faces(x))
+
+function triangle_mesh(primitive::Mesh{N}) where {N}
+    # already target type:
+    if pointtype(primitive) === Point{N,Float32} && GLTriangleFace === facetype(primitive)
+        return primitive
+    else
+        return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+    end
+end
+
+function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+    if nvertices !== nothing
+        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
+        primitive = Tesselation(primitive, nvertices)
+    end
+    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
 function uv_mesh(primitive::AbstractGeometry{N,T}) where {N,T}
@@ -99,12 +116,17 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
     elseif length(meshes) == 1
         return meshes[1]
     else
-        m1 = meshes[1]
-        ps = copy(coordinates(m1))
-        fs = copy(faces(m1))
+        ps = reduce(vcat, coordinates.(meshes))
+        fs = reduce(vcat, faces.(meshes))
+        idx = length(faces(meshes[1]))
+        offset = length(coordinates(meshes[1]))
         for mesh in Iterators.drop(meshes, 1)
-            append!(fs, map(f -> f .+ length(ps), faces(mesh)))
-            append!(ps, coordinates(mesh))
+            N = length(faces(mesh))
+            for i = idx .+ (1:N)
+                fs[i] = fs[i] .+ offset
+            end
+            idx += N
+            offset += length(coordinates(mesh))
         end
         return Mesh(ps, fs)
     end

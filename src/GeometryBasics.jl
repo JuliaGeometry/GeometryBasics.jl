@@ -2,6 +2,7 @@ module GeometryBasics
 
 using IterTools, LinearAlgebra
 using GeoInterface
+import Extents
 using EarCut_jll
 import Base: *
 

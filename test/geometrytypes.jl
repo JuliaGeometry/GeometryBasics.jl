@@ -73,7 +73,7 @@ using Test, GeometryBasics
         @test faces == decompose(TriangleFace{Int}, Tesselation(s, 8))
 
         m = triangle_mesh(Tesselation(s, 8))
-
+        @test m === triangle_mesh(m)
         @test GeometryBasics.faces(m) == faces
         @test GeometryBasics.coordinates(m) ≈ positions
         m = normal_mesh(s)# just test that it works without explicit resolution parameter
