@@ -9,6 +9,7 @@ end
 ##
 # conversion & decompose
 convert_simplex(::Type{T}, x::T) where {T} = (x,)
+convert_simplex(::Type{Vec{N, T}}, x::Vec{N, T}) where {N, T} = x
 
 function convert_simplex(NFT::Type{NgonFace{N,T1}},
                          f::Union{NgonFace{N,T2}}) where {T1,T2,N}
@@ -110,8 +111,8 @@ end
 The unnormalized normal of three vertices.
 """
 function orthogonal_vector(v1, v2, v3)
-    a = v2 - v1
-    b = v3 - v1
+    a = v2 .- v1
+    b = v3 .- v1
     return cross(a, b)
 end
 
@@ -123,21 +124,21 @@ normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
 ```
 Compute all vertex normals.
 """
-function normals(vertices::AbstractVector{<:AbstractPoint{3,T}}, faces::AbstractVector{F};
+function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
                  normaltype=Vec{3,T}) where {T,F<:NgonFace}
     return normals(vertices, faces, normaltype)
 end
 
-function normals(vertices::AbstractVector{<:AbstractPoint{3,T}}, faces::AbstractVector{F},
-                 ::Type{N}) where {T,F<:NgonFace,N}
-    normals_result = zeros(N, length(vertices))
+function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
+                 ::Type{NormalType}) where {F<:NgonFace,NormalType}
+    normals_result = zeros(NormalType, length(vertices))
     for face in faces
-        v = metafree.(vertices[face])
+        v = vertices[face]
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(v[1], v[2], v[3])
         for i in 1:length(F)
             fi = face[i]
-            normals_result[fi] = normals_result[fi] + n
+            normals_result[fi] = normals_result[fi] .+ n
         end
     end
     normals_result .= normalize.(normals_result)
