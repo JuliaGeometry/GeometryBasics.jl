@@ -727,6 +727,6 @@ end
 using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
-Aqua.test_all(GeometryBasics; ambiguities=false, deps_compat=false)
+Aqua.test_all(GeometryBasics; ambiguities=false)
 
 end  # testset "GeometryBasics"
