@@ -19,6 +19,6 @@ The following functions can be called on an [`AbstractMesh`](@ref) to access its
 
 * [`faces`](@ref)
 * [`coordinates`](@ref)
-* [`texturecoordinates`](@ref)
+* `texturecoordinates`
 * [`normals`](@ref)
 
