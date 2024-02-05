@@ -1,0 +1,164 @@
+module GeometryBasicsGeoInterfaceExt
+
+using GeoInterface, GeometryBasics
+
+import GeometryBasics: geointerface_geomtype
+
+# Implementation of trait based interface from https://github.com/JuliaGeo/GeoInterface.jl/
+
+GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
+GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
+GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
+GeoInterface.isgeometry(::Type{<:AbstractMesh}) = true
+GeoInterface.isgeometry(::Type{<:AbstractPolygon}) = true
+GeoInterface.isgeometry(::Type{<:LineString}) = true
+GeoInterface.isgeometry(::Type{<:MultiPoint}) = true
+GeoInterface.isgeometry(::Type{<:MultiLineString}) = true
+GeoInterface.isgeometry(::Type{<:MultiPolygon}) = true
+GeoInterface.isgeometry(::Type{<:Mesh}) = true
+
+GeoInterface.geomtrait(::Point) = PointTrait()
+GeoInterface.geomtrait(::Line) = LineTrait()
+GeoInterface.geomtrait(::LineString) = LineStringTrait()
+GeoInterface.geomtrait(::Polygon) = PolygonTrait()
+GeoInterface.geomtrait(::MultiPoint) = MultiPointTrait()
+GeoInterface.geomtrait(::MultiLineString) = MultiLineStringTrait()
+GeoInterface.geomtrait(::MultiPolygon) = MultiPolygonTrait()
+GeoInterface.geomtrait(::GeometryBasics.Ngon) = PolygonTrait()
+GeoInterface.geomtrait(::AbstractMesh) = PolyhedralSurfaceTrait()
+
+# GeoInterface calls this method in `GeoInterface.convert(GeometryBasics, ...)`
+geointerface_geomtype(::GeoInterface.PointTrait) = Point
+geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
+geointerface_geomtype(::GeoInterface.LineTrait) = Line
+geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
+geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
+geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
+geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
+geointerface_geomtype(::GeoInterface.PolyhedralSurfaceTrait) = Mesh
+
+GeoInterface.geomtrait(::GeometryBasics.Simplex{Dim,T,1}) where {Dim,T} = PointTrait()
+GeoInterface.geomtrait(::GeometryBasics.Simplex{Dim,T,2}) where {Dim,T} = LineStringTrait()
+GeoInterface.geomtrait(::GeometryBasics.Simplex{Dim,T,3}) where {Dim,T} = PolygonTrait()
+
+GeoInterface.ncoord(::PointTrait, g::GeometryBasics.Point) = length(g)
+GeoInterface.getcoord(::PointTrait, g::GeometryBasics.Point, i::Int) = g[i]
+
+GeoInterface.ngeom(::LineTrait, g::GeometryBasics.Line) = length(g)
+GeoInterface.getgeom(::LineTrait, g::GeometryBasics.Line, i::Int) = g[i]
+
+GeoInterface.ngeom(::LineStringTrait, g::GeometryBasics.LineString) = length(g) + 1  # n line segments + 1
+GeoInterface.ncoord(::LineStringTrait, g::GeometryBasics.LineString{Dim}) where {Dim} = Dim
+function GeoInterface.getgeom(::LineStringTrait, g::GeometryBasics.LineString, i::Int)
+    return GeometryBasics.coordinates(g)[i]
+end
+
+GeoInterface.ngeom(::PolygonTrait, g::GeometryBasics.Polygon) = length(g.interiors) + 1  # +1 for exterior
+function GeoInterface.getgeom(::PolygonTrait,
+                              g::GeometryBasics.Polygon,
+                              i::Int)::typeof(g.exterior)
+    return i > 1 ? g.interiors[i - 1] : g.exterior
+end
+
+GeoInterface.ngeom(::MultiPointTrait, g::GeometryBasics.MultiPoint) = length(g)
+GeoInterface.getgeom(::MultiPointTrait, g::GeometryBasics.MultiPoint, i::Int) = g[i]
+
+function GeoInterface.ngeom(::MultiLineStringTrait, g::GeometryBasics.MultiLineString)
+    return length(g)
+end
+function GeoInterface.getgeom(::MultiLineStringTrait, g::GeometryBasics.MultiLineString, i::Int)
+    return g[i]
+end
+GeoInterface.ncoord(::MultiLineStringTrait, g::GeometryBasics.MultiLineString{Dim}) where {Dim} = Dim
+
+GeoInterface.ngeom(::MultiPolygonTrait, g::GeometryBasics.MultiPolygon) = length(g)
+GeoInterface.getgeom(::MultiPolygonTrait, g::GeometryBasics.MultiPolygon, i::Int) = g[i]
+
+function GeoInterface.ncoord(::AbstractGeometryTrait,
+                             ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
+    return Dim
+end
+function GeoInterface.ncoord(::AbstractGeometryTrait,
+                             ::AbstractGeometry{Dim,T}) where {Dim,T}
+    return Dim
+end
+function GeoInterface.ngeom(::AbstractGeometryTrait,
+                            ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
+    return N
+end
+GeoInterface.ngeom(::PolygonTrait, ::GeometryBasics.Ngon) = 1  # can't have any holes
+GeoInterface.getgeom(::PolygonTrait, g::GeometryBasics.Ngon, _) = LineString(g.points)
+
+function GeoInterface.ncoord(::PolyhedralSurfaceTrait,
+                             ::Mesh{Dim,T,E,V} where {Dim,T,E,V})
+    return Dim
+end
+GeoInterface.ngeom(::PolyhedralSurfaceTrait, g::GeometryBasics.AbstractMesh) = length(g)
+GeoInterface.getgeom(::PolyhedralSurfaceTrait, g::GeometryBasics.AbstractMesh, i) = g[i]
+
+function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
+    x, y = GeoInterface.x(geom), GeoInterface.y(geom)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(geom)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return Point{3,T}(x, y, z)
+    else
+        GeoInterface.x(geom), GeoInterface.y(geom)
+        T = promote_type(typeof(x), typeof(y))
+        return Point{2,T}(x, y)
+    end
+end
+
+function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
+    g1 = getgeom(geom, 1)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return LineString([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return LineString([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+    end
+end
+
+function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
+    t = LineStringTrait()
+    exterior = GeoInterface.convert(LineString, t, GeoInterface.getexterior(geom))
+    if GeoInterface.nhole(geom) == 0
+        return Polygon(exterior)
+    else
+        interiors = map(h -> GeoInterface.convert(LineString, t, h), GeoInterface.gethole(geom))
+        return Polygon(exterior, interiors)
+    end
+end
+
+function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
+    g1 = getgeom(geom, 1)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return MultiPoint([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return MultiPoint([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+    end
+end
+
+function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)
+    t = LineStringTrait()
+    return MultiLineString(map(l -> GeoInterface.convert(LineString, t, l), getgeom(geom)))
+end
+
+function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geom)
+    t = PolygonTrait()
+    return MultiPolygon(map(poly -> GeoInterface.convert(Polygon, t, poly), getgeom(geom)))
+end
+
+function GeometryBasics.Extents.extent(rect::Rect2)
+    (xmin, ymin), (xmax, ymax) = extrema(rect)
+    return GeometryBasics.Extents.Extent(X=(xmin, xmax), Y=(ymin, ymax))
+end
+
+end
