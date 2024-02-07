@@ -4,6 +4,7 @@ using LinearAlgebra
 using GeometryBasics: attributes
 using GeoInterface
 using GeoJSON
+using Extents
 
 @testset "GeometryBasics" begin
 
@@ -457,6 +458,8 @@ end
 end
 
 @testset "decompose/triangulation" begin
+    @test isempty(decompose(Vec3f, []))
+    @test decompose(Vec3f, []) isa Vector{Vec3f}
     primitive = Sphere(Point3f(0), 1)
     @test ndims(primitive) === 3
     mesh = triangle_mesh(primitive)
