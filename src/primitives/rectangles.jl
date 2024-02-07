@@ -15,7 +15,7 @@ end
 # Constructors & typealiases
 
 """
-    Rect{N,T} = RectT{T,N} = HyperRectangle{N,T}
+    const Rect{N,T} = HyperRectangle{N,T}
 
 A rectangle in N dimensions, formally the cartesian product of intervals. See also [`HyperRectangle`](@ref). Its aliases are
 
