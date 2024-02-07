@@ -15,7 +15,7 @@ end
 # Constructors & typealiases
 
 """
-    const Rect{N,T} = HyperRectangle{N,T}
+    Rect{N,T} = RectT{T,N} = HyperRectangle{N,T}
 
 A rectangle in N dimensions, formally the cartesian product of intervals. See also [`HyperRectangle`](@ref). Its aliases are
 
@@ -24,8 +24,6 @@ A rectangle in N dimensions, formally the cartesian product of intervals. See al
 |`N`(dim)|`Rect{N,T}`|`Rectf{N}`|`Recti{N}`|
 |`2`     |`Rect2{T}` |`Rect2f`  |`Rect2i`  |
 |`3`     |`Rect3{T}` |`Rect3f`  |`Rect3i`  |
-
-In addition, `RectT{T} = Rect{N,T} where {N}` denotes a rectangle of eltype `T` in any dimensions.
 """
 Rect, Rect2, Rect3, RectT, Rectf, Rect2f, Rect3f, Recti, Rect2i, Rect3i
 
