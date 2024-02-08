@@ -17,8 +17,9 @@ end
 A `Cylinder2` or `Cylinder3` is a 2D/3D cylinder defined by its origin point,
 its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
 """
-const Cylinder2{T} = Cylinder{2,T}
-const Cylinder3{T} = Cylinder{3,T}
+Cylinder2, Cylinder3
+
+@alias(Cylinder,2:3)
 
 origin(c::Cylinder{N,T}) where {N,T} = c.origin
 extremity(c::Cylinder{N,T}) where {N,T} = c.extremity

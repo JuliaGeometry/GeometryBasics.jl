@@ -31,17 +31,8 @@ There is an additional unexported alias `RectT` that simply reverses the order o
 Rect, Rect2, Rect3, RectT, Rectf, Rect2f, Rect3f, Recti, Rect2i, Rect3i
 
 const Rect{N,T} = HyperRectangle{N,T}
-const Rect2{T} = Rect{2,T}
-const Rect3{T} = Rect{3,T}
 const RectT{T} = Rect{N,T} where {N}
-
-const Rectf{N} = Rect{N,Float32}
-const Rect2f = Rect2{Float32}
-const Rect3f = Rect3{Float32}
-
-const Recti{N} = HyperRectangle{N,Int}
-const Rect2i = Rect2{Int}
-const Rect3i = Rect3{Int}
+@alias(Rect,2:3,Int,Float32)
 
 Rect() = Rect{2,Float32}()
 
