@@ -7,6 +7,8 @@ using EarCut_jll
 
 using Base: @propagate_inbounds
 
+include("utils.jl")
+
 include("fixed_arrays.jl")
 include("offsetintegers.jl")
 include("basic_types.jl")

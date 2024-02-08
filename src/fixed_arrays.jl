@@ -121,21 +121,12 @@ abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
 
 const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
-const Vecf{N} = Vec{N,Float32}
-const Pointf{N} = Point{N,Float32}
 Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
 
+@alias(Point,1:4,Float32)
+@alias(Vec,1:4,Float32)
+
 for i in 1:4
-    for T in [:Point, :Vec]
-        name = Symbol("$T$i")
-        namef = Symbol("$T$(i)f")
-        @eval begin
-            const $name = $T{$i}
-            const $namef = $T{$i,Float32}
-            export $name
-            export $namef
-        end
-    end
     name = Symbol("Mat$i")
     namef = Symbol("Mat$(i)f")
     @eval begin
