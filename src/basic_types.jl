@@ -24,7 +24,7 @@ abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
 Face index, connecting points to form a simplex
 """
 
-@fixed_vector SimplexFace AbstractSimplexFace
+@fixed_vector SimplexFace = AbstractSimplexFace
 const TetrahedronFace{T} = SimplexFace{4,T}
 Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 
@@ -32,7 +32,7 @@ Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 Face index, connecting points to form an Ngon
 """
 
-@fixed_vector NgonFace AbstractNgonFace
+@fixed_vector NgonFace = AbstractNgonFace
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}
 const QuadFace{T} = NgonFace{4,T}
