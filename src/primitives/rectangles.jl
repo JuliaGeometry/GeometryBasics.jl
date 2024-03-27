@@ -174,6 +174,9 @@ function Rect3f(x::Tuple{Tuple{<:Number,<:Number,<:Number},
     return Rect3f(Vec3f(x[1]...), Vec3f(x[2]...))
 end
 
+# allow auto-conversion between different eltypes
+Base.convert(::Type{Rect{N, T}}, r::Rect{N}) where {N, T} = Rect{N, T}(r)
+
 origin(prim::Rect) = prim.origin
 Base.maximum(prim::Rect) = origin(prim) + widths(prim)
 Base.minimum(prim::Rect) = origin(prim)
