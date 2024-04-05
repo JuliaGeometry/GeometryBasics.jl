@@ -123,7 +123,9 @@ const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf{N} = Vec{N,Float32}
 const Pointf{N} = Point{N,Float32}
-Base.isnan(p::Union{AbstractPoint,Vec}) = any(x -> isnan(x), p)
+Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
+Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
+Base.isfinite(p::Union{AbstractPoint,Vec}) = any(isfinite, p)
 
 for i in 1:4
     for T in [:Point, :Vec]
