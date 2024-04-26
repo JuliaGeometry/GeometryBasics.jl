@@ -6,7 +6,9 @@ function unit(::Type{T}, i::Integer) where {T <: StaticVector}
     return T(tup)
 end
 
-macro fixed_vector(name, parent)
+macro fixed_vector(name_parent)
+    @assert name_parent.head == :(=)
+    name, parent = name_parent.args
     expr = quote
         struct $(name){S,T} <: $(parent){S,T}
             data::NTuple{S,T}
@@ -116,37 +118,46 @@ macro fixed_vector(name, parent)
 end
 
 abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
-@fixed_vector Point AbstractPoint
-@fixed_vector Vec StaticVector
+
+@fixed_vector Point = AbstractPoint
+@fixed_vector Vec = StaticVector
+
+
 
 const Mat = SMatrix
 const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf{N} = Vec{N,Float32}
 const Pointf{N} = Point{N,Float32}
+    
 Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
 Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
 Base.isfinite(p::Union{AbstractPoint,Vec}) = all(isfinite, p)
 
-for i in 1:4
-    for T in [:Point, :Vec]
-        name = Symbol("$T$i")
-        namef = Symbol("$T$(i)f")
-        @eval begin
-            const $name = $T{$i}
-            const $namef = $T{$i,Float32}
-            export $name
-            export $namef
+## Generate aliases
+## As a text file instead of eval/macro, to not confuse code linter
+
+#=
+open(joinpath(@__DIR__, "generated-aliases.jl"), "w") do io
+    for i in 1:4
+        for T in [:Point, :Vec, :Mat]
+            namei = "$T$i"
+            res = T == :Mat ? "Mat{$i,$i,T,$(i * i)}" : "$T{$i,T}"
+            println(io, "const $(namei){T} = $res")
+            println(io, "export $namei")
+            for (postfix, t) in ["d" => Float64, "f" => Float32, "i" => Int, "ui" => UInt]
+                namep = "$T$i$postfix"
+                println(io, "const $(namep) = $(namei){$t}")
+                println(io, "export $namep")
+                # mnamep = "$(mname)$postfix"
+                # println(io, "const $mnamep = $mname{$t}")
+                # println(io, "export $mnamep")
+            end
         end
     end
-    name = Symbol("Mat$i")
-    namef = Symbol("Mat$(i)f")
-    @eval begin
-        const $name{T} = $Mat{$i,$i,T,$(i * i)}
-        const $namef = $name{Float32}
-        export $name
-        export $namef
-    end
 end
+=#
+
+include("generated-aliases.jl")
 
 export Mat, Vec, Point, unit
 export Vecf, Pointf
