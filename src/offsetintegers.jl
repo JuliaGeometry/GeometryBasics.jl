@@ -1,4 +1,3 @@
-
 """
     OffsetInteger{O, T}
 
@@ -20,8 +19,24 @@ raw(x::Integer) = x
 value(x::OffsetInteger{O,T}) where {O,T} = raw(x) - O
 value(x::Integer) = x
 
-function show(io::IO, oi::OffsetInteger)
-    return print(io, "|$(raw(oi)) (indexes as $(value(oi))|")
+function to_subscript(io::IO, x::Int)
+    if x in 0:9
+        print(io, Char(0x2080+x))
+    elseif x < 0
+        print(io, Char(0x208B)); to_subscript(io, abs(x))
+    else # positive + more than one digit
+        for d in reverse(digits(x))
+            to_subscript(io, d)
+        end
+    end
+end
+
+function Base.show(io::IO, oi::OffsetInteger{O}) where {O}
+    o = O < 0 ? "ₒ₊" : "ₒ₋"
+    print(io, "<$(value(oi))$o")
+    to_subscript(io, abs(O))
+    print(io, ">")
+    return
 end
 
 Base.eltype(::Type{OffsetInteger{O,T}}) where {O,T} = T
@@ -37,21 +52,12 @@ OffsetInteger{O}(x::OffsetInteger) where {O} = OffsetInteger{O,eltype(x)}(x)
 # This constructor has a massive method invalidation as a consequence,
 # and doesn't seem to be needed, so let's remove it!
 
-Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:Integer} = IT(value(x))
-
-Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
-
-function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
-                           ::Type{OffsetInteger{O2,T2}}) where {O1,O2,T1<:Integer,
-                                                                T2<:Integer}
-    return OffsetInteger{pure_max(O1, O2),promote_type(T1, T2)}
-end
-
-Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
-
 # Need to convert to Int here because of: https://github.com/JuliaLang/julia/issues/35038
-Base.to_index(I::OffsetInteger) = convert(Int, raw(OneIndex(I)))
-Base.to_index(I::OffsetInteger{0}) = convert(Int, raw(I))
+Base.to_index(idx::OffsetInteger) = convert(Int, raw(OneIndex(idx)))
+
+Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:Integer} = IT(value(x))
+Base.convert(::Type{IT}, x::OffsetInteger) where {IT<:OffsetInteger} = IT(value(x))
+Base.convert(::Type{O}, x::Integer) where {O<:OffsetInteger} = O(x)
 
 # basic operators
 for op in (:(-), :abs)
@@ -68,8 +74,21 @@ end
 
 for op in (:(==), :(>=), :(<=), :(<), :(>), :sub_with_overflow)
     @eval begin
-        @inline function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
+        function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
             return $op(x.i, y.i)
         end
+        Base.$op(x::OffsetInteger, y::OffsetInteger) = $op(value(x), value(y))
+        Base.$op(x::OffsetInteger, y::Integer) = $op(value(x), y)
+        Base.$op(x::Integer, y::OffsetInteger) = $op(x, value(y))
     end
 end
+
+Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
+
+function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
+                           ::Type{OffsetInteger{O2,T2}}) where {O1,O2,T1<:Integer,
+                                                                T2<:Integer}
+    return OffsetInteger{pure_max(O1, O2),promote_type(T1, T2)}
+end
+
+Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2

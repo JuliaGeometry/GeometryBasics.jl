@@ -199,8 +199,8 @@ split(b::Rect, axis, value::Number) = _split(b, axis, value)
 function _split(b::H, axis, value) where {H<:Rect}
     bmin = minimum(b)
     bmax = maximum(b)
-    b1max = setindex(bmax, value, axis)
-    b2min = setindex(bmin, value, axis)
+    b1max = Base.setindex(bmax, value, axis)
+    b2min = Base.setindex(bmin, value, axis)
 
     return H(bmin, b1max - bmin), H(b2min, bmax - b2min)
 end
@@ -548,8 +548,7 @@ end
 
 function coordinates(rect::Rect2, nvertices=(2, 2))
     mini, maxi = extrema(rect)
-    xrange, yrange = LinRange.(mini, maxi, nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+    return [mini, Point(mini[1], maxi[2]), maxi, Point(maxi[1], mini[2])]
 end
 
 function texturecoordinates(rect::Rect2, nvertices=(2, 2))

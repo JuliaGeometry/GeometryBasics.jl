@@ -5,7 +5,7 @@ end
 """
 Construct a HyperRectangle enclosing all points.
 """
-function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:AbstractPoint}
+function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     N2, T2 = length(PT), eltype(PT)
     @assert N1 >= N2
     vmin = Point{N2,T2}(typemax(T2))

@@ -1,102 +1,3 @@
-const FaceMesh{Dim,T,Element} = Mesh{Dim,T,Element,<:FaceView{Element}}
-
-coordinates(mesh::FaceMesh) = coordinates(getfield(mesh, :simplices))
-faces(mesh::FaceMesh) = faces(getfield(mesh, :simplices))
-
-function texturecoordinates(mesh::AbstractMesh)
-    hasproperty(mesh, :uv) && return mesh.uv
-    hasproperty(mesh, :uvw) && return mesh.uvw
-    return nothing
-end
-
-function normals(mesh::AbstractMesh)
-    hasproperty(mesh, :normals) && return mesh.normals
-    return nothing
-end
-
-const GLTriangleElement = Triangle{3,Float32}
-const GLTriangleFace = TriangleFace{GLIndex}
-const PointWithUV{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:uv,),Tuple{Vec{2,T}}}
-const PointWithNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals,),Tuple{Vec{3,T}}}
-const PointWithUVNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uv),
-                                           Tuple{Vec{3,T},Vec{2,T}}}
-const PointWithUVWNormal{Dim,T} = PointMeta{Dim,T,Point{Dim,T},(:normals, :uvw),
-                                            Tuple{Vec{3,T},Vec{3,T}}}
-
-"""
-    TriangleMesh{Dim, T, PointType}
-
-Abstract Mesh with triangle elements of eltype `T`.
-"""
-const TriangleMesh{Dim,T,PointType} = AbstractMesh{TriangleP{Dim,T,PointType}}
-
-"""
-    PlainMesh{Dim, T}
-
-Triangle mesh with no meta information (just points + triangle faces)
-"""
-const PlainMesh{Dim,T} = TriangleMesh{Dim,T,Point{Dim,T}}
-const GLPlainMesh{Dim} = PlainMesh{Dim,Float32}
-const GLPlainMesh2D = GLPlainMesh{2}
-const GLPlainMesh3D = GLPlainMesh{3}
-
-"""
-    UVMesh{Dim, T}
-
-PlainMesh with texture coordinates meta at each point.
-`uvmesh.uv isa AbstractVector{Vec2f}`
-"""
-const UVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUV{Dim,T}}
-const GLUVMesh{Dim} = UVMesh{Dim,Float32}
-const GLUVMesh2D = UVMesh{2}
-const GLUVMesh3D = UVMesh{3}
-
-"""
-    NormalMesh{Dim, T}
-
-PlainMesh with normals meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-"""
-const NormalMesh{Dim,T} = TriangleMesh{Dim,T,PointWithNormal{Dim,T}}
-const GLNormalMesh{Dim} = NormalMesh{Dim,Float32}
-const GLNormalMesh2D = GLNormalMesh{2}
-const GLNormalMesh3D = GLNormalMesh{3}
-
-"""
-    NormalUVMesh{Dim, T}
-
-PlainMesh with normals and uv meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-`normalmesh.uv isa AbstractVector{Vec2f}`
-"""
-const NormalUVMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVNormal{Dim,T}}
-const GLNormalUVMesh{Dim} = NormalUVMesh{Dim,Float32}
-const GLNormalUVMesh2D = GLNormalUVMesh{2}
-const GLNormalUVMesh3D = GLNormalUVMesh{3}
-
-"""
-    NormalUVWMesh{Dim, T}
-
-PlainMesh with normals and uvw (texture coordinates in 3D) meta at each point.
-`normalmesh.normals isa AbstractVector{Vec3f}`
-`normalmesh.uvw isa AbstractVector{Vec3f}`
-"""
-const NormalUVWMesh{Dim,T} = TriangleMesh{Dim,T,PointWithUVWNormal{Dim,T}}
-const GLNormalUVWMesh{Dim} = NormalUVWMesh{Dim,Float32}
-const GLNormalUVWMesh2D = GLNormalUVWMesh{2}
-const GLNormalUVWMesh3D = GLNormalUVWMesh{3}
-
-function decompose_triangulate_fallback(primitive::Meshable; pointtype, facetype)
-    positions = decompose(pointtype, primitive)
-    faces = decompose(facetype, primitive)
-    # If faces returns nothing for primitive, we try to triangulate!
-    if faces === nothing
-        # triangulation.jl
-        faces = decompose(facetype, positions)
-    end
-    return positions, faces
-end
-
 """
     mesh(primitive::GeometryPrimitive;
          pointtype=Point, facetype=GLTriangle,
@@ -110,37 +11,25 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::Meshable; pointtype=Point, facetype=GLTriangleFace, uv=nothing,
-              normaltype=nothing)
-
-    positions, faces = decompose_triangulate_fallback(primitive; pointtype=pointtype, facetype=facetype)
-
-    # We want to preserve any existing attributes!
-    attrs = attributes(primitive)
-    # Make sure this doesn't contain position, we'll add position explicitely via meta!
-    delete!(attrs, :position)
-
-    if uv !== nothing
-        # this may overwrite an existing :uv, but will only create a copy
-        # if it has a different eltype, otherwise it should replace it
-        # with exactly the same instance - which is what we want here
-        attrs[:uv] = decompose(UV(uv), primitive)
-    end
-
-    if normaltype !== nothing
-        primitive_normals = normals(primitive)
-        if primitive_normals !== nothing
-            attrs[:normals] = decompose(normaltype, primitive_normals)
+function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace)
+    positions = decompose(pointtype, primitive)
+    _f = faces(primitive)
+    # If faces returns nothing for primitive, we try to triangulate!
+    if isnothing(_f)
+        if eltype(positions) <: Point2
+            # triangulation.jl
+            f = decompose(facetype, positions)
         else
-            # Normals not implemented for primitive, so we calculate them!
-            n = normals(positions, faces; normaltype=normaltype)
-            if n !== nothing # ok jeez, this is a 2d mesh which cant have normals
-                attrs[:normals] = n
-            end
+            error("No triangulation for $(typeof(primitive))")
         end
+    else
+        f = decompose(facetype, _f)
     end
-    return Mesh(meta(positions; attrs...), faces)
+    return Mesh(positions, f)
 end
+
+const SimpleMesh{N, T, FT} = Mesh{N, T, Vector{Point{N, T}}, Vector{FT}}
+const TriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
 
 """
     mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
@@ -148,24 +37,14 @@ end
 
 Create a mesh from a polygon given as a vector of points, using triangulation.
 """
-function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
-              normaltype=nothing) where {P<:AbstractPoint{2}}
-
-    return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype,
-                normaltype=normaltype)
+function mesh(polygon::AbstractVector{P}; pointtype=P) where {P<:Point{2}}
+    return mesh(Polygon(polygon); pointtype=pointtype)
 end
 
-function mesh(polygon::AbstractPolygon{Dim,T}; pointtype=Point{Dim,T},
-              facetype=GLTriangleFace, normaltype=nothing) where {Dim,T}
-
-    positions, faces = decompose_triangulate_fallback(polygon; pointtype=pointtype, facetype=facetype)
-
-    if normaltype !== nothing
-        n = normals(positions, faces; normaltype=normaltype)
-        positions = meta(positions; normals=n)
-    end
-    return Mesh(positions, faces)
+function triangle_mesh(primitive::AbstractGeometry{N})::TriangleMesh{N} where {N}
+    return mesh(primitive; pointtype=Point{N, Float32})
 end
+
 
 pointtype(x::Mesh) = eltype(decompose(Point, x))
 facetype(x::Mesh) = eltype(faces(x))
@@ -187,29 +66,26 @@ function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
     return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
-function uv_mesh(primitive::Meshable{N,T}) where {N,T}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, facetype=GLTriangleFace)
+function uv_mesh(primitive::AbstractGeometry{N,T}) where {N,T}
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (uv=decompose_uv(primitive),))
 end
 
-function uv_normal_mesh(primitive::Meshable{N}) where {N}
-    return mesh(primitive; pointtype=Point{N,Float32}, uv=Vec2f, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (uv=decompose_uv(primitive), normals=decompose_normals(m)))
 end
 
-function normal_mesh(points::AbstractVector{<:AbstractPoint},
+function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
-    return Mesh(meta(_points; normals=normals(_points, _faces)), _faces)
+    return MetaMesh(Mesh(_points, _faces), (normals=normals(_points, _faces),))
 end
 
-function normal_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
-    if nvertices !== nothing
-        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
-        primitive = Tesselation(primitive, nvertices)
-    end
-    return mesh(primitive; pointtype=Point{N,Float32}, normaltype=Vec3f,
-                facetype=GLTriangleFace)
+function normal_mesh(primitive::AbstractGeometry{N}) where {N}
+    m = triangle_mesh(primitive)
+    return MetaMesh(m, (normals=decompose_normals(m),))
 end
 
 """
@@ -236,7 +112,7 @@ end
 
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
-        error("No meshes to merge")
+        return Mesh(Point3f[], GLTriangleFace[])
     elseif length(meshes) == 1
         return meshes[1]
     else
@@ -256,53 +132,94 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
     end
 end
 
+function Base.merge(meshes::AbstractVector{T}) where T <: MetaMesh
+    isempty(meshes) && return T(Point3f[], GLTriangleFace[])
+    big_mesh = merge(map(Mesh, meshes))
+    big_meta = deepcopy(meta(meshes[1]))
+    for mesh in Iterators.drop(meshes, 1)
+        mm = meta(mesh)
+        for (k, v) in pairs(mm)
+            append!(big_meta[k], v)
+        end
+    end
+    return MetaMesh(big_mesh, big_meta)
+end
 
-"""
-    pointmeta(mesh::Mesh; meta_data...)
 
-Attaches metadata to the coordinates of a mesh
-"""
-function pointmeta(mesh::Mesh; meta_data...)
+function map_coordinates(f, mesh::Mesh)
+    result = copy(mesh)
+    map_coordinates!(f, result)
+    return result
+end
+
+function map_coordinates(f, mesh::MetaMesh)
+    result = copy(Mesh(mesh))
+    map_coordinates!(f, result)
+    return MetaMesh(result, meta(mesh))
+end
+
+function map_coordinates!(f, mesh::AbstractMesh)
     points = coordinates(mesh)
-    attr = attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    foreach(k -> delete!(attr, k), keys(meta_data))
-    return Mesh(meta(metafree(points); attr..., meta_data...), faces(mesh))
+    map!(f, points, points)
+    return mesh
 end
 
-function pointmeta(mesh::Mesh, uv::UV)
-    return pointmeta(mesh; uv=decompose(uv, mesh))
+function add_meta(mesh::MetaMesh; kw...)
+    return MetaMesh(Mesh(mesh), (; meta(mesh)..., kw...))
 end
 
-function pointmeta(mesh::Mesh, normal::Normal)
-    return pointmeta(mesh; normals=decompose(normal, mesh))
+function add_meta(mesh::Mesh; kw...)
+    return MetaMesh(mesh, (; meta(mesh)..., kw...))
 end
 
-"""
-    pop_pointmeta(mesh::Mesh, property::Symbol)
-Remove `property` from point metadata.
-Returns the new mesh, and the property!
-"""
-function pop_pointmeta(mesh::Mesh, property::Symbol)
-    points = coordinates(mesh)
-    attr = attributes(points)
-    delete!(attr, :position) # position == metafree(points)
-    # delete overlapping attributes so we can replace with `meta_data`
-    m = pop!(attr, property)
-    return Mesh(meta(metafree(points); attr...), faces(mesh)), m
+# I didn't find a simple way to remove a field from a namedtuple in a type stable way without
+# a generated function..
+@generated function pop(nt::NamedTuple{Names, Values}, ::Val{name}) where {Names, Values, name}
+    if !(name in Names)
+        return :(throw(Base.KeyError($(QuoteNode(name)))))
+    else
+        names = filter(x-> x !== name, Names)
+        nt = map(names) do name
+            :($name = nt.$(name))
+        end
+        return :((; $(nt...)), nt.$(name))
+    end
 end
 
-"""
-    facemeta(mesh::Mesh; meta_data...)
-
-Attaches metadata to the faces of a mesh
-"""
-function facemeta(mesh::Mesh; meta_data...)
-    return Mesh(coordinates(mesh), meta(faces(mesh); meta_data...))
+function pop_meta(mesh::MetaMesh, name::Symbol)
+    new_meta, value = pop(meta(mesh), Val(name))
+    return MetaMesh(mesh, new_meta), value
 end
 
-function attributes(hasmeta::Mesh)
-    return Dict{Symbol,Any}((name => getproperty(hasmeta, name)
-                             for name in propertynames(hasmeta)))
+
+function Base.get(f, mesh::MetaMesh, key::Symbol)
+    hasproperty(mesh, key) && return getproperty(mesh, key)
+    return f()
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "Mesh{$N, $T, $(FT)}")
+    println(io, "    vertices: ", length(coordinates(mesh)))
+    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
+end
+
+function Base.show(io::IO, mesh::Mesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    print(io, "Mesh{$N, $T, $(FT)}(...)")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::MetaMesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "MetaMesh{$N, $T, $(FT)}")
+    println(io, "    vertices: ", length(coordinates(mesh)))
+    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
+    for (k, v) in pairs(meta(mesh))
+        println(io, "    ", k, ": ", length(v), " $(eltype(v))")
+    end
+end
+
+function Base.show(io::IO, mesh::MetaMesh{N, T}) where {N, T}
+    FT = eltype(faces(mesh))
+    println(io, "MetaMesh{$N, $T, $(FT)}($(join(keys(meta(mesh)), ", ")))")
 end
