@@ -279,6 +279,20 @@ end
     found, point = intersects(d, e)
     @test found && point ≈ Point(0.0, 4.0)
     @test intersects(a, f) === (false, Point(0.0, 0.0))
+
+    # issue #168
+    # If these tests fail then you can increase the tolerance on the checks so
+    # long as you know what you're doing :)
+    line_helper(a, b, c, d) = Line(Point(a, b), Point(c, d))
+    b, loc = intersects(line_helper(-3.1, 15.588457268119894, 3.1, 15.588457268119894),
+                        line_helper(2.0866025403784354, 17.37050807568877, -4.0866025403784505, 13.806406460551015))
+    @test b
+    @test loc ≈ Point(-1.0000000000000058, 15.588457268119894)
+
+    b, loc = intersects(line_helper(5743.933982822018, 150.0, 5885.355339059327, -50.0),
+                        line_helper(5760.0, 100.0, 5760.0, 140.0))
+    @test b
+    @test loc ≈ Point(5760.0, 127.27922061357884)
 end
 
 @testset "Offsetintegers" begin

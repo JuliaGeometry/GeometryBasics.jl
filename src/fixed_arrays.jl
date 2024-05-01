@@ -6,7 +6,10 @@ import Base: setindex
 abstract type StaticVector{N, T} end
 function similar_type end
 
-macro fixed_vector(VecT, SuperT)
+macro fixed_vector(name_parent)
+    @assert name_parent.head == :(=)
+    name, parent = name_parent.args
+
     expr = quote
         struct $(VecT){N, T} <: $(SuperT){N, T}
             data::NTuple{N,T}
@@ -186,8 +189,9 @@ Base.reverse(x::P) where P <: StaticVector = P(reverse(x.data))
 # Since we don't inherit from AbstractArray, some extra functions need to be overloaded
 LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T
 
-@fixed_vector Point StaticVector
-@fixed_vector Vec StaticVector
+@fixed_vector Point = StaticVector
+@fixed_vector Vec = StaticVector
+
 
 Base.lastindex(::StaticVector{N}) where N = N
 
@@ -199,31 +203,36 @@ const VecTypes{N,T} = Union{StaticVector{N,T}, NTuple{N,T}}
 const Vecf{N} = Vec{N, Float32}
 const PointT{T} = Point{N,T} where N
 const Pointf{N} = Point{N,Float32}
-Base.isnan(p::Union{Point,Vec}) = any(x -> isnan(x), p)
+    
+Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
+Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
+Base.isfinite(p::Union{AbstractPoint,Vec}) = all(isfinite, p)
 
-include("mat.jl")
+## Generate aliases
+## As a text file instead of eval/macro, to not confuse code linter
 
-for i in 1:4
-    for T in [:Point, :Vec]
-        name = Symbol("$T$i")
-        namef = Symbol("$T$(i)f")
-        @eval begin
-            const $name = $T{$i}
-            const $namef = $T{$i,Float32}
-            export $name
-            export $namef
+#=
+open(joinpath(@__DIR__, "generated-aliases.jl"), "w") do io
+    for i in 1:4
+        for T in [:Point, :Vec, :Mat]
+            namei = "$T$i"
+            res = T == :Mat ? "Mat{$i,$i,T,$(i * i)}" : "$T{$i,T}"
+            println(io, "const $(namei){T} = $res")
+            println(io, "export $namei")
+            for (postfix, t) in ["d" => Float64, "f" => Float32, "i" => Int, "ui" => UInt]
+                namep = "$T$i$postfix"
+                println(io, "const $(namep) = $(namei){$t}")
+                println(io, "export $namep")
+                # mnamep = "$(mname)$postfix"
+                # println(io, "const $mnamep = $mname{$t}")
+                # println(io, "export $mnamep")
+            end
         end
     end
-    name = Symbol("Mat$i")
-    namef = Symbol("Mat$(i)f")
-    namef = Symbol("Mat$(i)f")
-    @eval begin
-        const $name{T} = $Mat{$i,$i,T, $(i*i)}
-        const $namef = $name{Float32}
-        export $name
-        export $namef
-    end
 end
+=#
+
+include("generated-aliases.jl")
 
 export Mat, Vec, Point, unit
 export Vecf, Pointf

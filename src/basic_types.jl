@@ -27,12 +27,17 @@ end
     return map(i-> elements[i], face.data)
 end
 
-@fixed_vector SimplexFace AbstractSimplexFace
+@fixed_vector SimplexFace = AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
 Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 
-@fixed_vector NgonFace AbstractNgonFace
+"""
+Face index, connecting points to form an Ngon
+"""
+
+@fixed_vector NgonFace = AbstractNgonFace
+
 
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}

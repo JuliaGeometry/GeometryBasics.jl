@@ -14,23 +14,42 @@ end
 ##
 # Constructors & typealiases
 
+"""
+    const Rect{N,T} = HyperRectangle{N,T}
+
+A rectangle in N dimensions, formally the cartesian product of intervals. See also [`HyperRectangle`](@ref). Its aliases are
+
+|        |`T`(eltype)|`Float64` |`Float32` |`Int`     |
+|--------|-----------|----------|----------|----------|
+|`N`(dim)|`Rect{N,T}`|`Rectd{N}`|`Rectf{N}`|`Recti{N}`|
+|`2`     |`Rect2{T}` |`Rect2d`  |`Rect2f`  |`Rect2i`  |
+|`3`     |`Rect3{T}` |`Rect3d`  |`Rect3f`  |`Rect3i`  |
+
+There is an additional unexported alias `RectT` that simply reverses the order of type parameters: `RectT{T,N} == Rect{N,T}`.
+
+"""
+Rect, Rect2, Rect3, RectT, Rectd, Rect2d, Rect3d, Rectf, Rect2f, Rect3f, Recti, Rect2i, Rect3i
+
 const Rect{N,T} = HyperRectangle{N,T}
 const Rect2{T} = Rect{2,T}
 const Rect3{T} = Rect{3,T}
-const RectT{T} = Rect{N,T} where {N}
+
+const RectT{T,N} = Rect{N,T}
+
+const Rectd{N} = Rect{N,Float64}
+const Rect2d = Rect2{Float64}
+const Rect3d = Rect3{Float64}
 
 const Rectf{N} = Rect{N,Float32}
 const Rect2f = Rect2{Float32}
 const Rect3f = Rect3{Float32}
 
-const Recti{N} = HyperRectangle{N,Int}
+const Recti{N} = Rect{N,Int}
 const Rect2i = Rect2{Int}
 const Rect3i = Rect3{Int}
 
 Rect() = Rect{2,Float32}()
-
 RectT{T}() where {T} = Rect{2,T}()
-
 Rect{N}() where {N} = Rect{N,Float32}()
 
 function Rect{N,T}() where {T,N}
@@ -154,6 +173,9 @@ function Rect3f(x::Tuple{Tuple{<:Number,<:Number,<:Number},
                           Tuple{<:Number,<:Number,<:Number}})
     return Rect3f(Vec3f(x[1]...), Vec3f(x[2]...))
 end
+
+# allow auto-conversion between different eltypes
+Base.convert(::Type{Rect{N, T}}, r::Rect{N}) where {N, T} = Rect{N, T}(r)
 
 origin(prim::Rect) = prim.origin
 Base.maximum(prim::Rect) = origin(prim) + widths(prim)
