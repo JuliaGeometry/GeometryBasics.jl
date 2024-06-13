@@ -90,17 +90,11 @@ Rect constructor for individually specified intervals.
 e.g. Rect(0,0,1,2) has origin == Vec(0,0) and
 width == Vec(1,2)
 """
-@generated function Rect(vals::Number...)
-    # Generated so we get goodish codegen on each signature
-    n = length(vals)
-    @assert iseven(n)
-    mid = div(n, 2)
-    v1 = Expr(:call, :Vec)
-    v2 = Expr(:call, :Vec)
-    # TODO this can be inbounds
-    append!(v1.args, [:(vals[$i]) for i in 1:mid])
-    append!(v2.args, [:(vals[$i]) for i in (mid + 1):length(vals)])
-    return Expr(:call, :Rect, v1, v2)
+function Rect(vals::Vararg{Number, N}) where {N}
+    M, r = fldmod(N, 2)
+    (r == 0) || throw(ArgumentError("number of arguments must be even"))
+    origin, widths = ntuple(i -> vals[i], M), ntuple(i -> vals[i+M], M)
+    return Rect(Vec(origin), Vec(widths))
 end
 
 Rect3(a::Vararg{Number,6}) = Rect3(Vec{3}(a[1], a[2], a[3]), Vec{3}(a[4], a[5], a[6]))
