@@ -17,7 +17,7 @@ abstract type AbstractFace{N,T} <: StaticVector{N,T} end
 abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
 abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
-abstract type AbstractSimplex{Dim,N,T} <: StaticVector{Dim,T} end
+abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
 @propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Point, F <: AbstractFace}
     return Polytope(P, F)(map(i-> points[i], face.data))
@@ -136,7 +136,7 @@ This is for a simpler implementation.
 It applies to infinite dimensions. The structure of this type is designed
 to allow embedding in higher-order spaces by parameterizing on `T`.
 """
-struct Simplex{Dim,T<:Real,N} <: Polytope{Dim,T}
+struct Simplex{Dim,T<:Real,N} <: AbstractSimplex{Dim,T}
     points::NTuple{N,Point{Dim,T}}
 end
 
