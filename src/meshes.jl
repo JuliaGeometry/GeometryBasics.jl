@@ -37,13 +37,13 @@ const TriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
 
 Create a mesh from a polygon given as a vector of points, using triangulation.
 """
-function mesh(polygon::AbstractVector{P}; pointtype=P) where {P<:Point{2}}
-    return mesh(Polygon(polygon); pointtype=pointtype)
+function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace) where {P<:Point{2}}
+    return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype)
 end
 
-function triangle_mesh(primitive::AbstractGeometry{N})::TriangleMesh{N} where {N}
-    return mesh(primitive; pointtype=Point{N, Float32})
-end
+# function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{2}}})::TriangleMesh{N} where {N}
+#     return mesh(primitive; pointtype=Point{N, Float32})
+# end
 
 
 pointtype(x::Mesh) = eltype(decompose(Point, x))
@@ -58,7 +58,7 @@ function triangle_mesh(primitive::Mesh{N}) where {N}
     end
 end
 
-function triangle_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
+function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}}; nvertices = nothing)::TriangleMesh{N} where {N}
     if nvertices !== nothing
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)
