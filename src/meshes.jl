@@ -58,7 +58,7 @@ function triangle_mesh(primitive::Mesh{N}) where {N}
     end
 end
 
-function triangle_mesh(primitive::Meshable{N}; nvertices=nothing) where {N}
+function triangle_mesh(primitive::GeometryPrimitive{N}; nvertices=nothing) where {N}
     if nvertices !== nothing
         @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
         primitive = Tesselation(primitive, nvertices)

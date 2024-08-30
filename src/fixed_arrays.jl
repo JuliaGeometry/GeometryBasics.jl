@@ -8,7 +8,7 @@ function similar_type end
 
 macro fixed_vector(name_parent)
     @assert name_parent.head == :(=)
-    name, parent = name_parent.args
+    VecT, SuperT = name_parent.args
 
     expr = quote
         struct $(VecT){N, T} <: $(SuperT){N, T}
@@ -204,9 +204,9 @@ const Vecf{N} = Vec{N, Float32}
 const PointT{T} = Point{N,T} where N
 const Pointf{N} = Point{N,Float32}
     
-Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
-Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
-Base.isfinite(p::Union{AbstractPoint,Vec}) = all(isfinite, p)
+Base.isnan(p::Union{Point,Vec}) = any(isnan, p)
+Base.isinf(p::Union{Point,Vec}) = any(isinf, p)
+Base.isfinite(p::Union{Point,Vec}) = all(isfinite, p)
 
 ## Generate aliases
 ## As a text file instead of eval/macro, to not confuse code linter
@@ -232,6 +232,7 @@ open(joinpath(@__DIR__, "generated-aliases.jl"), "w") do io
 end
 =#
 
+include("mat.jl")
 include("generated-aliases.jl")
 
 export Mat, Vec, Point, unit
