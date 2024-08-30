@@ -313,20 +313,21 @@ function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
     return Mesh(points, connect(faces, facetype, skip))
 end
 
-struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}, Names, Types} <: AbstractMesh{Dim, T}
+struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}} <: AbstractMesh{Dim, T}
     mesh::M
-    meta::NamedTuple{Names, Types}
-    function MetaMesh(mesh::AbstractMesh{Dim, T}, meta::NamedTuple{Names, Types}) where {Dim, T, Names, Types}
-        new{Dim, T, typeof(mesh), Names, Types}(mesh, meta)
+    meta::Dict{Symbol, Any}
+
+    function MetaMesh(mesh::AbstractMesh{Dim, T}, meta::Dict{Symbol, Any}) where {Dim, T}
+        return new{Dim, T, typeof(mesh)}(mesh, meta)
     end
 end
 
-function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; meta...)
-    MetaMesh(Mesh(points, faces), values(meta))
+function MetaMesh(mesh::AbstractMesh; kwargs...)
+    MetaMesh(mesh, Dict{Symbol, Any}(kwargs))
 end
 
-function MetaMesh(m::AbstractMesh; kw...)
-    MetaMesh(Mesh(m), merge(meta(m), values(kw)))
+function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; kwargs...)
+    MetaMesh(Mesh(points, faces), Dict{Symbol, Any}(kwargs))
 end
 
 @inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
