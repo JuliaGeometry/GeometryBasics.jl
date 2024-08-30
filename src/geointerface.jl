@@ -43,7 +43,7 @@ GeoInterface.ngeom(::LineTrait, g::Line) = length(g)
 GeoInterface.getgeom(::LineTrait, g::Line, i::Int) = g[i]
 
 
-GeoInterface.ngeom(::LineStringTrait, g::LineString) = length(g) + 1  # n line segments + 1
+GeoInterface.ngeom(::LineStringTrait, g::LineString) = length(g)  # n connected points
 GeoInterface.ncoord(::LineStringTrait, g::LineString{Dim}) where {Dim} = Dim
 function GeoInterface.getgeom(::LineStringTrait, g::LineString, i::Int)
     return GeometryBasics.coordinates(g)[i]
