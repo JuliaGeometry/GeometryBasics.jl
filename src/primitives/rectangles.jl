@@ -548,7 +548,8 @@ end
 
 function coordinates(rect::Rect2, nvertices=(2, 2))
     mini, maxi = extrema(rect)
-    return [mini, Point(mini[1], maxi[2]), maxi, Point(maxi[1], mini[2])]
+    xrange, yrange = LinRange.(mini, maxi, nvertices)
+    return [Point(x, y) for y in yrange for x in xrange]
 end
 
 function texturecoordinates(rect::Rect2, nvertices=(2, 2))
