@@ -1,7 +1,7 @@
 using Test, Random, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
-using GeometryBasics: MetaMesh, add_meta, pop_meta
+using GeometryBasics: MetaMesh
 using GeoInterface
 using GeoJSON
 using Extents
@@ -201,46 +201,6 @@ end
     m = uv_normal_mesh(Circle(Point2f(0), 1f0))
     # For 2d primitives normal is just the upvector
     @test m.normals == [Vec3f(0, 0, 1) for p in coordinates(m)]
-end
-
-@testset "convert mesh + meta" begin
-    m = uv_normal_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
-    m_normal = add_meta(m; normals = decompose_normals(m))
-    # make sure we don't loose the uv
-    @test hasproperty(m_normal, :uv)
-    # Make sure we don't create any copies
-    @test coordinates(m) === coordinates(m_normal)
-    @test m.normals == m_normal.normals
-    @test m.uv === m_normal.uv
-
-    m = uv_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
-    m_normal = add_meta(m, normals = decompose_normals(m))
-    @test hasproperty(m_normal, :uv)
-    @test coordinates(m) === coordinates(m_normal)
-    @test decompose_normals(m) == GeometryBasics.normals(m_normal)
-    # uv stays untouched, since we don't specify the element type in normalmesh
-    @test m.uv === m_normal.uv
-end
-
-@testset "modifying meta" begin
-    xx = rand(10)
-    points = rand(Point3f, 10)
-    m = MetaMesh(points, GLTriangleFace[(1,2,3), (3,4,5)]; xx=xx)
-    color = rand(10)
-    m = add_meta(m; color=color)
-
-    @test hasproperty(m, :xx)
-    @test hasproperty(m, :color)
-
-    @test m.xx === xx
-    @test m.color === color
-
-    m, colpopt = GeometryBasics.pop_meta(m, :color)
-    m, xxpopt = GeometryBasics.pop_meta(m, :xx)
-
-    @test propertynames(m) == ()
-    @test colpopt === color
-    @test xxpopt === xx
 end
 
 @testset "mesh conversion" begin

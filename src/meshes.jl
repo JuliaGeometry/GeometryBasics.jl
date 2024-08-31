@@ -61,7 +61,7 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace) 
     return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype)
 end
 
-function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}})::TriangleMesh{N} where {N}
+function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}})::SimpleTriangleMesh{N} where {N}
     return mesh(primitive; pointtype=Point{N, Float32})
 end
 
@@ -285,36 +285,6 @@ function map_coordinates!(f, mesh::AbstractMesh)
     map!(f, points, points)
     return mesh
 end
-
-# TODO:
-add_meta(m, kw...) = error("TODO")
-pop_meta(m, kw...) = error("TODO")
-# function add_meta(mesh::MetaMesh; kw...)
-#     return MetaMesh(Mesh(mesh), (; meta(mesh)..., kw...))
-# end
-
-# function add_meta(mesh::Mesh; kw...)
-#     return MetaMesh(mesh, (; meta(mesh)..., kw...))
-# end
-
-# # I didn't find a simple way to remove a field from a namedtuple in a type stable way without
-# # a generated function..
-# @generated function pop(nt::NamedTuple{Names, Values}, ::Val{name}) where {Names, Values, name}
-#     if !(name in Names)
-#         return :(throw(Base.KeyError($(QuoteNode(name)))))
-#     else
-#         names = filter(x-> x !== name, Names)
-#         nt = map(names) do name
-#             :($name = nt.$(name))
-#         end
-#         return :((; $(nt...)), nt.$(name))
-#     end
-# end
-
-# function pop_meta(mesh::MetaMesh, name::Symbol)
-#     new_meta, value = pop(meta(mesh), Val(name))
-#     return MetaMesh(mesh, new_meta), value
-# end
 
 function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T, FT}) where {N, T, FT}
     println(io, "Mesh{$N, $T, $FT}")

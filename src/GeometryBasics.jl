@@ -43,7 +43,6 @@ export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
        texturecoordinates
 export Tesselation, Normal, UV, UVW
 export AbstractMesh, Mesh, MetaMesh
-export add_meta, pop_meta
 
 
 # all the different predefined mesh types

@@ -45,7 +45,7 @@ end
     m2 = GeometryBasics.merge_vertex_indices(m)
 
     @test faces(m) isa AbstractVector{<: GeometryBasics.MultiFace}
-    @test names(eltype(faces(m))) == keys(GeometryBasics.vertex_attributes(m))
+    @test propertynames(eltype(faces(m))) == keys(GeometryBasics.vertex_attributes(m))
     @test isempty(m.views)
 
     @test faces(m2) isa AbstractVector{<: QuadFace}
