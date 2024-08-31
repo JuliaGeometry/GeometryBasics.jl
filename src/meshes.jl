@@ -41,9 +41,9 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace) 
     return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype)
 end
 
-# function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{2}}})::TriangleMesh{N} where {N}
-#     return mesh(primitive; pointtype=Point{N, Float32})
-# end
+function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}})::TriangleMesh{N} where {N}
+    return mesh(primitive; pointtype=Point{N, Float32})
+end
 
 
 pointtype(x::Mesh) = eltype(decompose(Point, x))
@@ -56,14 +56,6 @@ function triangle_mesh(primitive::Mesh{N}) where {N}
     else
         return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
     end
-end
-
-function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}}; nvertices = nothing)::TriangleMesh{N} where {N}
-    if nvertices !== nothing
-        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
-        primitive = Tesselation(primitive, nvertices)
-    end
-    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
 function uv_mesh(primitive::AbstractGeometry{N,T}) where {N,T}
