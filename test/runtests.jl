@@ -36,13 +36,13 @@ end
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(Vec{3, Float64}, 8)
             stress = LinRange(0, 1, 8)
-            mesh = MetaMesh(points, tfaces; normals = normals, stress = stress)
+            mesh = Mesh(points, tfaces; normals = normals, stress = stress)
 
             @test hasproperty(mesh, :stress)
             @test hasproperty(mesh, :normals)
             @test mesh.stress === stress
             @test mesh.normals === normals
-            @test mesh.normals === normals
+            @test mesh.position === points
             @test GeometryBasics.faces(mesh) === tfaces
             @test propertynames(mesh) == (:normals, :stress)
         end
@@ -200,7 +200,7 @@ end
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(Circle(Point2f(0), 1f0))
     # For 2d primitives normal is just the upvector
-    m.normals == [Vec3f(0, 0, 1) for p in coordinates(m)]
+    @test m.normals == [Vec3f(0, 0, 1) for p in coordinates(m)]
 end
 
 @testset "convert mesh + meta" begin

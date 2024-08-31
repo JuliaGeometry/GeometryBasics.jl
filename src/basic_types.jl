@@ -349,18 +349,57 @@ struct Mesh{
         return new{D, T, FT, Names, VAT, FVT}(va, f, views)
     end
 end
+
+@inline function Base.hasproperty(mesh::Mesh, field::Symbol)
+    return hasproperty(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
+end
+@inline function Base.getproperty(mesh::Mesh, field::Symbol)
+    if hasfield(Mesh, field)
+        return getfield(mesh, field)
+    else
+        return getproperty(getfield(mesh, :vertex_attributes), field)
+    end
+end
+@inline function Base.propertynames(mesh::Mesh)
+    return (fieldnames(Mesh)..., propertynames(getfield(mesh, :vertex_attributes))...)
+end
+
+coordinates(mesh::Mesh) = mesh.position
 faces(mesh::Mesh) = mesh.connectivity
-Base.getindex(mesh::Mesh, i::Integer) = mesh.vertices[mesh.connectivity[i]]
+normals(mesh::Mesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
+texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
+vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
+
+Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
-Base.:(==)(a::Mesh, b::Mesh) = coordinates(a) == coordinates(b) && faces(a) == faces(b)
+
+# TODO: temp
+function Base.getindex(mesh::Mesh{D, T, <: AbstractFace, (:position,)}, f::AbstractFace) where {D, T}
+    return getfield(mesh, :vertex_attributes).position[f]
+end
+function Base.getindex(::Mesh, f::MultiFace)
+    error("TODO")
+end
+function Base.getindex(::Mesh, f::AbstractFace)
+    error("TODO")
+end
+
+function Base.:(==)(a::Mesh, b::Mesh)
+    return a.vertex_attributes == b.vertex_attributes && 
+           faces(a) == faces(b) && a.views == b.views
+end
 
 function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
+function Mesh(faces::AbstractVector{<:AbstractFace}; attributes...)
+    return Mesh(NamedTuple(attributes), faces)
+end
+
 function Mesh(points::AbstractVector{Point{Dim, T}},
-              faces::AbstractVector{<:AbstractFace}) where {Dim, T}
-    return Mesh{Dim, T, }(points, faces)
+              faces::AbstractVector{<:AbstractFace}; kwargs...) where {Dim, T}
+    return Mesh((position = points, kwargs...), faces)
 end
 
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
@@ -368,13 +407,10 @@ function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
     return Mesh(points, connect(faces, facetype, skip))
 end
 
+
 struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}} <: AbstractMesh{Dim, T}
     mesh::M
     meta::Dict{Symbol, Any}
-
-    function MetaMesh(mesh::AbstractMesh{Dim, T}, meta::Dict{Symbol, Any}) where {Dim, T}
-        return new{Dim, T, typeof(mesh)}(mesh, meta)
-    end
 end
 
 function MetaMesh(mesh::AbstractMesh; kwargs...)
@@ -385,14 +421,34 @@ function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Abstr
     MetaMesh(Mesh(points, faces), Dict{Symbol, Any}(kwargs))
 end
 
-@inline Base.hasproperty(mesh::MetaMesh, field::Symbol) = hasproperty(getfield(mesh, :meta), field)
-@inline Base.getproperty(mesh::MetaMesh, field::Symbol) = getproperty(getfield(mesh, :meta), field)
-@inline Base.propertynames(mesh::MetaMesh) = propertynames(getfield(mesh, :meta))
+# TODO: Do we want to access meta here?
+@inline function Base.hasproperty(mesh::MetaMesh, field::Symbol)
+    return hasfield(MetaMesh, field) || hasproperty(getfield(mesh, :mesh), field)
+end
+@inline function Base.getproperty(mesh::MetaMesh, field::Symbol)
+    if hasfield(MetaMesh, field)
+        return getfield(mesh, field)
+    else
+        return getproperty(getfield(mesh, :mesh), field)
+    end
+end
+@inline function Base.propertynames(mesh::MetaMesh)
+    return (fieldnames(MetaMesh)..., propertynames(getfield(mesh, :mesh))...)
+end
+
+# TODO: or via getindex?
+Base.haskey(mesh::MetaMesh, key::Symbol) = haskey(getfield(mesh, :meta), key)
+Base.get(f, mesh::MetaMesh, key::Symbol) = get(f, getfield(mesh, :meta), key)
+Base.get!(f, mesh::MetaMesh, key::Symbol) = get!(f, getfield(mesh, :meta), key)
+Base.getindex(mesh::MetaMesh, key::Symbol) = getindex(getfield(mesh, :meta), key)
+Base.setindex!(mesh::MetaMesh, value, key::Symbol) = setindex!(getfield(mesh, :meta), value, key)
+Base.delete!(mesh::MetaMesh, key::Symbol) = delete!(getfield(mesh, :meta), key)
 
 coordinates(mesh::MetaMesh) = coordinates(Mesh(mesh))
 faces(mesh::MetaMesh) = faces(Mesh(mesh))
-normals(mesh::MetaMesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
-texturecoordinates(mesh::MetaMesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
+normals(mesh::MetaMesh) = normals(Mesh(mesh))
+texturecoordinates(mesh::MetaMesh) = texturecoordinates(Mesh(mesh))
+vertex_attributes(mesh::MetaMesh) = vertex_attributes(Mesh(mesh))
 
 meta(@nospecialize(m)) = NamedTuple()
 meta(mesh::MetaMesh) = getfield(mesh, :meta)

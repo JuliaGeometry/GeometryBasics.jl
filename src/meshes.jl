@@ -11,7 +11,7 @@ Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is gri
 It also only losely correlates to the number of vertices, depending on the algorithm used.
 #TODO: find a better number here!
 """
-function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace)
+function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
     _f = faces(primitive)
     # If faces returns nothing for primitive, we try to triangulate!
@@ -25,11 +25,11 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
     else
         f = decompose(facetype, _f)
     end
-    return Mesh(positions, f)
+    return Mesh(positions, f; vertex_attributes...)
 end
 
-const SimpleMesh{N, T, FT} = Mesh{N, T, Vector{Point{N, T}}, Vector{FT}}
-const TriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
+const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
+const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
 
 """
     mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
@@ -58,26 +58,35 @@ function triangle_mesh(primitive::Mesh{N}) where {N}
     end
 end
 
+function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}}; nvertices = nothing)::SimpleTriangleMesh{N} where {N}
+    if nvertices !== nothing
+        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
+        primitive = Tesselation(primitive, nvertices)
+    end
+    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+end
+
 function uv_mesh(primitive::AbstractGeometry{N,T}) where {N,T}
-    m = triangle_mesh(primitive)
-    return MetaMesh(m, (uv=decompose_uv(primitive),))
+    return mesh(primitive, uv = decompose_uv(primitive), pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
 function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
-    m = triangle_mesh(primitive)
-    return MetaMesh(m, (uv=decompose_uv(primitive), normals=decompose_normals(m)))
+    return mesh(
+        primitive, uv = decompose_uv(primitive), normals = decompose_normals(primitive),
+        pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
 function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
-    return MetaMesh(Mesh(_points, _faces), (normals=normals(_points, _faces),))
+    return Mesh(_faces, position = _points, normals = normals(_points, _faces))
 end
 
 function normal_mesh(primitive::AbstractGeometry{N}) where {N}
-    m = triangle_mesh(primitive)
-    return MetaMesh(m, (normals=decompose_normals(m),))
+    return mesh(
+        primitive, normals = decompose_normals(primitive), 
+        pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
 """
@@ -156,59 +165,56 @@ function map_coordinates!(f, mesh::AbstractMesh)
     return mesh
 end
 
-function add_meta(mesh::MetaMesh; kw...)
-    return MetaMesh(Mesh(mesh), (; meta(mesh)..., kw...))
-end
+# TODO:
+add_meta(m, kw...) = error("TODO")
+pop_meta(m, kw...) = error("TODO")
+# function add_meta(mesh::MetaMesh; kw...)
+#     return MetaMesh(Mesh(mesh), (; meta(mesh)..., kw...))
+# end
 
-function add_meta(mesh::Mesh; kw...)
-    return MetaMesh(mesh, (; meta(mesh)..., kw...))
-end
+# function add_meta(mesh::Mesh; kw...)
+#     return MetaMesh(mesh, (; meta(mesh)..., kw...))
+# end
 
-# I didn't find a simple way to remove a field from a namedtuple in a type stable way without
-# a generated function..
-@generated function pop(nt::NamedTuple{Names, Values}, ::Val{name}) where {Names, Values, name}
-    if !(name in Names)
-        return :(throw(Base.KeyError($(QuoteNode(name)))))
-    else
-        names = filter(x-> x !== name, Names)
-        nt = map(names) do name
-            :($name = nt.$(name))
-        end
-        return :((; $(nt...)), nt.$(name))
+# # I didn't find a simple way to remove a field from a namedtuple in a type stable way without
+# # a generated function..
+# @generated function pop(nt::NamedTuple{Names, Values}, ::Val{name}) where {Names, Values, name}
+#     if !(name in Names)
+#         return :(throw(Base.KeyError($(QuoteNode(name)))))
+#     else
+#         names = filter(x-> x !== name, Names)
+#         nt = map(names) do name
+#             :($name = nt.$(name))
+#         end
+#         return :((; $(nt...)), nt.$(name))
+#     end
+# end
+
+# function pop_meta(mesh::MetaMesh, name::Symbol)
+#     new_meta, value = pop(meta(mesh), Val(name))
+#     return MetaMesh(mesh, new_meta), value
+# end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T, FT}) where {N, T, FT}
+    println(io, "Mesh{$N, $T, $FT}")
+    println(io, "    faces: ", length(faces(mesh)))
+    for (name, attrib) in pairs(vertex_attributes(mesh))
+        println(io, "    vertex $(name): ", length(attrib))
     end
 end
 
-function pop_meta(mesh::MetaMesh, name::Symbol)
-    new_meta, value = pop(meta(mesh), Val(name))
-    return MetaMesh(mesh, new_meta), value
-end
-
-
-function Base.get(f, mesh::MetaMesh, key::Symbol)
-    hasproperty(mesh, key) && return getproperty(mesh, key)
-    return f()
-end
-
-function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T}) where {N, T}
-    FT = eltype(faces(mesh))
-    println(io, "Mesh{$N, $T, $(FT)}")
-    println(io, "    vertices: ", length(coordinates(mesh)))
-    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
-end
-
-function Base.show(io::IO, mesh::Mesh{N, T}) where {N, T}
-    FT = eltype(faces(mesh))
+function Base.show(io::IO, ::Mesh{N, T, FT}) where {N, T, FT}
     print(io, "Mesh{$N, $T, $(FT)}(...)")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", mesh::MetaMesh{N, T}) where {N, T}
     FT = eltype(faces(mesh))
     println(io, "MetaMesh{$N, $T, $(FT)}")
-    println(io, "    vertices: ", length(coordinates(mesh)))
-    println(io, "    faces: ", length(faces(mesh)), " $(FT)")
-    for (k, v) in pairs(meta(mesh))
-        println(io, "    ", k, ": ", length(v), " $(eltype(v))")
+    println(io, "    faces: ", length(faces(mesh)))
+    for (name, attrib) in pairs(vertex_attributes(mesh))
+        println(io, "    vertex $(name): ", length(attrib))
     end
+    println(io, "    meta: ", keys(mesh.meta))
 end
 
 function Base.show(io::IO, mesh::MetaMesh{N, T}) where {N, T}
