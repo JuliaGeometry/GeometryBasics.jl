@@ -50,12 +50,18 @@ end
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
 Face(F::Type{NgonFace{N,FT}}, ::Type{T}) where {FT,N,T} = F
 
-struct MultiFace{N, T, FaceType <: AbstractFace{N, T}, Names, M}
-    pos_face::FaceType
-    attrib_faces::NamedTuple{Names, NTuple{M, FaceType}}
-end
+struct MultiFace{N, T, FaceType <: AbstractFace{N, T}, Names, M} <: AbstractFace{N, T}
+    faces::NamedTuple{Names, NTuple{M, FaceType}}
 
-MultiFace(face::AbstractFace; kwargs...) = MultiFace(face, NamedTuple(kwargs))
+    function MultiFace(nt::NamedTuple{Names, NTuple{M, FT}}) where {N, T, FT <: AbstractFace{N, T}, Names, M}
+        if FT <: MultiFace
+            error("A MultiFace cannot contain MultiFaces.")
+        end
+
+        return new{N, T, FT, Names, M}(nt)
+    end
+end
+Base.names(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -295,11 +301,54 @@ abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
     Mesh <: AbstractMesh{Element}
 The concrete AbstractMesh type.
 """
-struct Mesh{Dim, T<:Number, V<:AbstractVector{Point{Dim, T}}, C <: AbstractVector{<: AbstractFace}} <: AbstractMesh{Dim, T}
-    vertices::V
-    connectivity::C
+struct Mesh{
+        Dim, T <: Real, # TODO: Number?
+        FaceType <: AbstractFace,
+        Names,
+        VertexAttribTypes <: Tuple{AbstractVector{Point{Dim, T}}, Vararg{AbstractVector}},
+        FaceVecType <: AbstractVector{FaceType}
+    } <: AbstractMesh{Dim, T}
+
+    vertex_attributes::NamedTuple{Names, VertexAttribTypes}
+    connectivity::FaceVecType
+    views::Vector{UnitRange}
+
+    function Mesh(
+            va::NamedTuple{Names, VAT}, 
+            f::FVT, 
+            views::Vector{UnitRange} = UnitRange[]
+        ) where {
+            D, T, FT, Names,
+            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
+            FVT <: AbstractVector{FT}
+        }
+
+        # verify type
+        if first(Names) !== :position
+            error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
+        end
+
+        if FT <: MultiFace
+            f_names = names(FT)
+            if Names != f_names
+                error(
+                    "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
+                    "attribute names $f_names. These must include the same names in the same order."
+                )
+            end
+        elseif MultiFace <: FT 
+            # TODO: This is supposed to catch mixed types like
+            # [MultiFace(position = f1, normal = f2), MultiFace(position = f3)]
+            # but really just catches AbstractFace{N, T}[]. Technically we can
+            # probably handle mixtures of MultiFace and other Face types, but do
+            # we want to bother? Also do we want to allow mixtures of e.g.
+            # TriangleFace and QuadFace?
+            error("Face vectors that may include `MultiFace`s with different names are not allowed. (Type $FT too abstract.)")
+        end
+
+        return new{D, T, FT, Names, VAT, FVT}(va, f, views)
+    end
 end
-coordinates(mesh::Mesh) = mesh.vertices
 faces(mesh::Mesh) = mesh.connectivity
 Base.getindex(mesh::Mesh, i::Integer) = mesh.vertices[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
