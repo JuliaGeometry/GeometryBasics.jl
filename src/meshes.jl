@@ -146,6 +146,107 @@ function Base.merge(meshes::AbstractVector{T}) where T <: MetaMesh
     return MetaMesh(big_mesh, big_meta)
 end
 
+# TODO: naming
+# synchronize_vertex_attributes
+# merge_vertex_(attribute)_indices
+# convert(Face, MultiFace)
+# ...
+function merge_vertex_indices(mesh)
+    attribs, fs, views = merge_vertex_indices(
+        vertex_attributes(mesh), faces(mesh), mesh.views)
+
+    return Mesh(attribs, fs, views)
+end
+
+function merge_vertex_indices(
+        attribs::NamedTuple{Names}, 
+        faces::AbstractVector{<: MultiFace{N, T, FT, Names}},
+        views::Vector{UnitRange}
+    ) where {Names, N, T, FT}
+
+    # Note: typing checks for matching Names
+
+    if isempty(views)
+        new_faces, vertex_map = merge_vertex_indices(faces)
+        new_attribs = ntuple(n -> attribs[n][vertex_map[n]], length(Names))
+        return NamedTuple{Names}(new_attribs), new_faces, views
+    end
+
+    new_attribs = NamedTuple((Pair(k, similar(v, 0)) for (k, v) in pairs(attribs)))
+    new_faces = similar(faces, FT, 0)
+    new_views = UnitRange[]
+
+    for idxs in views
+        # TODO: this depends on T in Face (1 based -> 1, 0 based -> 0)
+        vertex_index_counter = T(length(new_attribs[1]) + 1)
+
+        # Generate new face from current view, with the first vertex_index 
+        # corresponding to the first vertex attribute added in this iteration
+        face_view = view(faces, idxs)
+        new_faces_in_view, vertex_map = merge_vertex_indices(face_view, vertex_index_counter)
+        
+        # update vertex attributes
+        for (name, indices) in pairs(vertex_map)
+            append!(new_attribs[name], view(attribs[name], indices))
+        end
+
+        # add new faces and new view
+        start = length(new_faces) + 1
+        append!(new_faces, new_faces_in_view)
+        append!(new_views, start:length(new_faces))
+    end
+
+    return new_attribs, new_faces, new_views
+end
+
+function merge_vertex_indices(
+        faces::AbstractVector{<: MultiFace{N, T, FT, Names, N_Attrib}},
+        vertex_index_counter = T(1)
+    ) where {N, T, FT <: AbstractFace{N, T}, Names, N_Attrib}
+
+    N_faces = length(faces)
+
+    # maps a combination of old indices in MultiFace to a new vertex_index
+    vertex_index_map = Dict{NTuple{N_Attrib, T}, T}()
+
+    # Faces after conversion
+    new_faces = sizehint!(FT[], N_faces)
+
+    # indices that remap attributes
+    attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
+
+    # keep track of the remmaped indices for one vertex so we don't have to 
+    # query the dict twice
+    temp = zeros(N)
+
+    for multi_face in faces
+
+        for i in 1:N
+            # get the i-th set of vertex indices from multi_face, i.e.
+            # (multi_face.position_index[i], multi_face.normal_index[i], ...)
+            vertex = ntuple(n -> multi_face.faces[n][i], N_Attrib)
+
+            # if the vertex exists, get it's index
+            # otherwise register it with the next available vertex index
+            temp[i] = get!(vertex_index_map, vertex) do 
+                vertex_index_counter += 1
+                push!.(attribute_indices, vertex)
+                return vertex_index_counter - 1
+            end
+        end
+
+        # generate new face
+        push!(new_faces, FT(temp))
+    end
+
+    # in case we are reserving more than needed
+    sizehint!(new_faces, length(new_faces))
+
+    return new_faces, attribute_indices
+end
+
+
+
 
 function map_coordinates(f, mesh::Mesh)
     result = copy(mesh)

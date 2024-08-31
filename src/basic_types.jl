@@ -61,7 +61,18 @@ struct MultiFace{N, T, FaceType <: AbstractFace{N, T}, Names, M} <: AbstractFace
         return new{N, T, FT, Names, M}(nt)
     end
 end
+
+MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
+MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
+
 Base.names(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
+function Base.getindex(f::MultiFace{N, T, FT, Names, N_Attrib}, i::Integer) where {N, T, FT, Names, N_Attrib}
+    return ntuple(n -> f.faces[n][i], N_Attrib)
+end
+
+# TODO: Some shorthands
+const NormalFace = MultiFace{(:position, :normal)}
+const NormalUVFace = MultiFace{(:position, :normal, :uv)}
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -366,7 +377,7 @@ end
 
 coordinates(mesh::Mesh) = mesh.position
 faces(mesh::Mesh) = mesh.connectivity
-normals(mesh::Mesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
+normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
