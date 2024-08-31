@@ -38,7 +38,6 @@ Face index, connecting points to form an Ngon
 
 @fixed_vector NgonFace = AbstractNgonFace
 
-
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}
 const QuadFace{T} = NgonFace{4,T}
@@ -50,6 +49,13 @@ end
 
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
 Face(F::Type{NgonFace{N,FT}}, ::Type{T}) where {FT,N,T} = F
+
+struct MultiFace{N, T, FaceType <: AbstractFace{N, T}, Names, M}
+    pos_face::FaceType
+    attrib_faces::NamedTuple{Names, NTuple{M, FaceType}}
+end
+
+MultiFace(face::AbstractFace; kwargs...) = MultiFace(face, NamedTuple(kwargs))
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
