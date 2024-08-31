@@ -67,7 +67,7 @@ MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names, FT}(args) where {Names, FT <: AbstractFace} = MultiFace(NamedTuple{Names}(FT.(args)))
 
-Base.getindex(f::MultiFace, i::Int64) = Base.getindex(getfield(f, :faces), i) # TODO: StaticVector should index with Integer
+Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
 @inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
 @inline Base.getproperty(f::MultiFace, field::Symbol) = getproperty(getfield(f, :faces), field)
 @inline Base.propertynames(f::MultiFace) = propertynames(getfield(f, :faces))
