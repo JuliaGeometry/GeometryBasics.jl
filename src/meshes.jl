@@ -14,6 +14,7 @@ It also only losely correlates to the number of vertices, depending on the algor
 function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
     _f = faces(primitive)
+
     # If faces returns nothing for primitive, we try to triangulate!
     if isnothing(_f)
         if eltype(positions) <: Point2
@@ -23,10 +24,29 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
             error("No triangulation for $(typeof(primitive))")
         end
     else
+        if _f isa AbstractVector{<: MultiFace}
+            if facetype isa MultiFace
+                # drop faces that facetype doesn't include
+                names = propertynames(facetype)
+                _f = map(f -> MultiFace{names}(getproperty.((f,), names)), _f)
+            else
+                # drop faces for vertex attributes that aren't given
+                names = (:position, keys(vertex_attributes)...)
+                _f2 = map(f -> MultiFace{names}(getproperty.((f,), names)), _f)
+                
+                # and remap to a simple face type so that decompose can handle the rest
+                _f, mappings = merge_vertex_indices(_f2)
+                positions = positions[mappings[1]]
+                vertex_attributes = NamedTuple(
+                    (Pair(names[i], vertex_attributes[i-1][mappings[i]]) for i in 2:length(mappings))    
+                )
+            end
+        end
         f = decompose(facetype, _f)
     end
     return Mesh(positions, f; vertex_attributes...)
 end
+
 
 const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
 const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
@@ -72,7 +92,7 @@ end
 
 function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
     return mesh(
-        primitive, uv = decompose_uv(primitive), normals = decompose_normals(primitive),
+        primitive, uv = decompose_uv(primitive), normal = decompose_normals(primitive),
         pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
@@ -80,12 +100,12 @@ function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
-    return Mesh(_faces, position = _points, normals = normals(_points, _faces))
+    return Mesh(_faces, position = _points, normal = normals(_points, _faces))
 end
 
 function normal_mesh(primitive::AbstractGeometry{N}) where {N}
     return mesh(
-        primitive, normals = decompose_normals(primitive), 
+        primitive, normal = decompose_normals(primitive), 
         pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
@@ -224,7 +244,7 @@ function merge_vertex_indices(
         for i in 1:N
             # get the i-th set of vertex indices from multi_face, i.e.
             # (multi_face.position_index[i], multi_face.normal_index[i], ...)
-            vertex = ntuple(n -> multi_face.faces[n][i], N_Attrib)
+            vertex = ntuple(n -> multi_face[n][i], N_Attrib)
 
             # if the vertex exists, get it's index
             # otherwise register it with the next available vertex index

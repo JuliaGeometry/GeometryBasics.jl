@@ -567,22 +567,33 @@ end
 
 ##
 # Rect3 decomposition
-function coordinates(rect::Rect3)
+function coordinates(rect::Rect3{T}) where T
     # TODO use n
     w = widths(rect)
     o = origin(rect)
-    points = Point{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
-                          (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
-                          (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
-                          (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
-    return ((x .* w .+ o) for x in points)
+    # points = Point{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
+    #                       (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
+    #                       (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
+    #                       (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
+    # return ((x .* w .+ o) for x in points)
+    return Point{3, T}[o + (x, y, z) .* w for x in (0, 1) for y in (0, 1) for z in (0, 1)]
+end
+
+function normals(::Rect3)
+    return Vec3f[(-1,0,0), (1,0,0), (0,-1,0), (0,1,0), (0,0,-1), (0,0,1)]
 end
 
 function texturecoordinates(rect::Rect3)
     return coordinates(Rect3(0, 0, 0, 1, 1, 1))
 end
 
-function faces(rect::Rect3)
-    return QuadFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (13, 14, 15, 16),
-                         (17, 18, 19, 20), (21, 22, 23, 24),]
+function faces(::Rect3)
+    return NormalUVFace{QuadFace}.([
+        ((1, 2, 3, 4), 1, (1, 2, 3, 4)), # -x
+        ((5, 6, 7, 8), 2, (5, 6, 7, 8)), # +x
+        ((1, 2, 5, 6), 3, (1, 2, 5, 6)), # -y
+        ((3, 4, 7, 8), 4, (3, 4, 7, 8)), # +y
+        ((1, 3, 5, 7), 5, (1, 3, 5, 7)), # -z
+        ((2, 4, 6, 8), 6, (2, 4, 6, 8)), # +z
+    ])
 end

@@ -64,15 +64,20 @@ end
 
 MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
 MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
+MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
+MultiFace{Names, FT}(args) where {Names, FT <: AbstractFace} = MultiFace(NamedTuple{Names}(FT.(args)))
 
-Base.names(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
-function Base.getindex(f::MultiFace{N, T, FT, Names, N_Attrib}, i::Integer) where {N, T, FT, Names, N_Attrib}
-    return ntuple(n -> f.faces[n][i], N_Attrib)
-end
+Base.getindex(f::MultiFace, i::Int64) = Base.getindex(getfield(f, :faces), i) # TODO: StaticVector should index with Integer
+@inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
+@inline Base.getproperty(f::MultiFace, field::Symbol) = getproperty(getfield(f, :faces), field)
+@inline Base.propertynames(f::MultiFace) = propertynames(getfield(f, :faces))
+@inline Base.propertynames(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
 
 # TODO: Some shorthands
 const NormalFace = MultiFace{(:position, :normal)}
 const NormalUVFace = MultiFace{(:position, :normal, :uv)}
+
+# TODO: enable something like NormalUVFace{QuadFace}[...]
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -340,7 +345,7 @@ struct Mesh{
         end
 
         if FT <: MultiFace
-            f_names = names(FT)
+            f_names = propertynames(FT)
             if Names != f_names
                 error(
                     "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
