@@ -115,7 +115,7 @@ function Random.randn(rng::Random.AbstractRNG, ::Type{V}) where V <: StaticVecto
     V(ntuple(i-> randn(rng, T), N))
 end
 
-Base.@propagate_inbounds function Base.getindex(v::StaticVector{N,T}, i::Int) where {N,T}
+Base.@propagate_inbounds function Base.getindex(v::StaticVector{N,T}, i::Integer) where {N,T}
     return v.data[i]
 end
 
