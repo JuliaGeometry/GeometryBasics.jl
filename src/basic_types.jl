@@ -67,11 +67,25 @@ MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names, FT}(args) where {Names, FT <: AbstractFace} = MultiFace(NamedTuple{Names}(FT.(args)))
 
+function MultiFace{Names}(f::MultiFace) where {Names}
+    return MultiFace{Names}(getproperty.((f,), Names))
+end
+
 Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
 @inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
 @inline Base.getproperty(f::MultiFace, field::Symbol) = getproperty(getfield(f, :faces), field)
 @inline Base.propertynames(f::MultiFace) = propertynames(getfield(f, :faces))
 @inline Base.propertynames(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
+Base.eltype(::MultiFace{N, T, FT}) where {N, T, FT} = FT
+Base.eltype(::Type{<: MultiFace{N, T, FT}}) where {N, T, FT} = FT
+
+function simplify_faces(::Type{MF1}, fs::AbstractVector{MF2}) where {MF1 <: MultiFace, MF2 <: MultiFace}
+    return simplify_faces(propertynames(MF1), fs)
+end
+
+function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where {N, MF2 <: MultiFace}
+    return map(f -> MultiFace{names}(f), fs)
+end
 
 # TODO: Some shorthands
 const NormalFace = MultiFace{(:position, :normal)}
@@ -327,12 +341,12 @@ struct Mesh{
 
     vertex_attributes::NamedTuple{Names, VertexAttribTypes}
     connectivity::FaceVecType
-    views::Vector{UnitRange}
+    views::Vector{UnitRange{Int}}
 
     function Mesh(
             va::NamedTuple{Names, VAT}, 
             f::FVT, 
-            views::Vector{UnitRange} = UnitRange[]
+            views::Vector{UnitRange{Int}} = UnitRange{Int}[]
         ) where {
             D, T, FT, Names,
             VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
@@ -346,7 +360,18 @@ struct Mesh{
 
         if FT <: MultiFace
             f_names = propertynames(FT)
-            if Names != f_names
+            # if Names != f_names
+            #     error(
+            #         "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
+            #         "attribute names $f_names. These must include the same names in the same order."
+            #     )
+            # end
+            if Names == f_names
+                # all good
+            elseif issubset(Names, f_names)
+                # remove the extras/fix order
+                f = simplify_faces(Names, f)
+            else
                 error(
                     "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
                     "attribute names $f_names. These must include the same names in the same order."
@@ -362,7 +387,7 @@ struct Mesh{
             error("Face vectors that may include `MultiFace`s with different names are not allowed. (Type $FT too abstract.)")
         end
 
-        return new{D, T, FT, Names, VAT, FVT}(va, f, views)
+        return new{D, T, eltype(typeof(f)), Names, VAT, typeof(f)}(va, f, views)
     end
 end
 
