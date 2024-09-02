@@ -97,6 +97,7 @@ Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
 Base.eltype(::MultiFace{N, T, FT}) where {N, T, FT} = FT
 Base.eltype(::Type{<: MultiFace{N, T, FT}}) where {N, T, FT} = FT
 
+# TODO: can we do this with a conversion? E.g. MultiFace{Names}.(faces)?
 function simplify_faces(::Type{MF1}, fs::AbstractVector{MF2}) where {MF1 <: MultiFace, MF2 <: MultiFace}
     return simplify_faces(propertynames(MF1), fs)
 end
@@ -438,7 +439,7 @@ end
 
 coordinates(mesh::Mesh) = mesh.position
 faces(mesh::Mesh) = mesh.connectivity
-normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
+normals(mesh::Mesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
@@ -513,6 +514,7 @@ Base.get!(f, mesh::MetaMesh, key::Symbol) = get!(f, getfield(mesh, :meta), key)
 Base.getindex(mesh::MetaMesh, key::Symbol) = getindex(getfield(mesh, :meta), key)
 Base.setindex!(mesh::MetaMesh, value, key::Symbol) = setindex!(getfield(mesh, :meta), value, key)
 Base.delete!(mesh::MetaMesh, key::Symbol) = delete!(getfield(mesh, :meta), key)
+Base.keys(mesh::MetaMesh) = keys(getfield(mesh, :meta))
 
 coordinates(mesh::MetaMesh) = coordinates(Mesh(mesh))
 faces(mesh::MetaMesh) = faces(Mesh(mesh))

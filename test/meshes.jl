@@ -39,7 +39,7 @@ end
     m = Mesh(
         [GeometryBasics.NormalFace(QuadFace(1, 2, 3, 4), QuadFace(1,1,1,1))],
         position = Point2f[(0, 0), (1, 0), (1, 1), (0, 1)],
-        normal = [Vec3f(0,0,1)]
+        normals = [Vec3f(0,0,1)]
     )
     
     m2 = GeometryBasics.merge_vertex_indices(m)

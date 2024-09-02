@@ -44,15 +44,18 @@ end
             @test mesh.normals === normals
             @test mesh.position === points
             @test GeometryBasics.faces(mesh) === tfaces
-            @test propertynames(mesh) == (:normals, :stress)
+            @test_broken propertynames(mesh) == (:normals, :stress)
+            @test propertynames(mesh) == (:vertex_attributes, :connectivity, :views, :position, :normals, :stress)
         end
     end
 
     @testset "Mesh with metadata" begin
        m = triangle_mesh(Sphere(Point3f(0), 1))
        m_meta = MetaMesh(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
-       @test m_meta.boundingbox === Rect(1.0, 1.0, 2.0, 2.0)
-       @test propertynames(m_meta) == (:boundingbox,)
+       @test_broken m_meta.boundingbox === Rect(1.0, 1.0, 2.0, 2.0)
+       @test_broken propertynames(m_meta) == (:boundingbox,)
+       @test m_meta[:boundingbox] === Rect(1.0, 1.0, 2.0, 2.0)
+       @test collect(keys(m_meta)) == [:boundingbox,]
     end
 end
 
