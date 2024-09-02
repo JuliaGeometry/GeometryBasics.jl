@@ -361,7 +361,7 @@ diff(h1::Rect, h2::Rect) = h1
 
 Perform a intersection between two Rects.
 """
-function intersect(h1::Rect{N}, h2::Rect{N}) where {N}
+function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
     m = max.(minimum(h1), minimum(h2))
     mm = min.(maximum(h1), maximum(h2))
     return Rect{N}(m, mm - m)
