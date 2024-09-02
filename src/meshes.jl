@@ -27,7 +27,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
         fs = _fs
     end
 
-    return mesh(positions, fs; facetype = facetype, vertex_attributes...)
+    return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
 end
 
 """
@@ -84,30 +84,80 @@ function mesh(
 end
 
 """
-    mesh(mesh::Mesh[, facetype = GLTriangleFace])
+    mesh(mesh::Mesh{D, T}[; pointtype = Point{D, Float32}, facetype = GLTriangleFace, vertex_attributes...])
 
-Converts a mesh to the given facetype.
+Converts a mesh to the given point and face types and adds the given vertex attributes.
+
+Note that the target `facetype` must `<: AbstractVertexFace` and that vertex 
+attributes are only allowed if `facetype(mesh) <: AbstractVertexFace`. 
 """
-function mesh(mesh::Mesh{D, T, FT}, facetype = GLTriangleFace) where {D, T, FT}
+function mesh(
+        mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
+        facetype::Type{<: AbstractVertexFace} = GLTriangleFace,
+        attributes...
+    ) where {D, T, FT <: AbstractMultiFace}
+
+    if !isempty(attributes)
+        error(
+            "Cannot add vertex attributes to a mesh with face type $FT as the " * 
+            "indexing of the new attributes is not clearly defined."
+        )
+    end
+
     if FT == facetype
-        return mesh
-
-    elseif (FT <: AbstractVertexFace) && (facetype <: AbstractVertexFace)
-        # TODO: handle views - changing faces changes views...
-        f, views = decompose(facetype, faces(mesh), mesh.views)
-        return Mesh(vertex_attributes(mesh), f, views)
-
-    elseif (FT <: AbstractMultiFace) && (facetype <: AbstractVertexFace)
-        # MultiFace{VertexFace} -> VertexFace
-        attribs, fs, views = merge_vertex_indices(vertex_attributes(mesh), faces(mesh), mesh.views)
-        # VertexFace -> facetype
-        f, views = decompose(facetype, fs, views)
-
-        return Mesh(attribs, fs, views)
+        if GeometryBasics.pointtype(mesh) == pointtype
+            return mesh
+        else
+            va = merge(vertex_attributes(mesh), (position = decompose(pointtype, mesh),))
+            return Mesh(va, faces(mesh), mesh.views)
+        end
     else
-        error("Conversion from $FT -> $facetype not implemented.")
+        # update position type (doing this first is likely cheaper since 
+        # MultiFace likely requires duplication of vertex attributes)
+        va = merge(vertex_attributes(mesh), (position = decompose(pointtype, mesh),))
+
+        # MultiFace{VertexFace} -> VertexFace
+        attribs, fs, views = merge_vertex_indices(va, faces(mesh), mesh.views)
+
+        # VertexFace -> facetype
+        faces, views = decompose(facetype, fs, views)
+
+        return Mesh(attribs, faces, views)
     end
 end
+
+function mesh(
+        mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
+        facetype::Type{<: AbstractVertexFace} = GLTriangleFace,
+        attributes...
+    ) where {D, T, FT <: AbstractVertexFace}
+
+    if FT == facetype
+        if isempty(attributes) && GeometryBasics.pointtype(mesh) == pointtype
+            return mesh
+        else
+            # 1. add vertex attributes, 2. convert position attribute
+            va = merge(vertex_attributes(mesh), NamedTuple(attributes))
+            va = merge(va, (position = decompose(pointtype, va.position),))
+            return Mesh(va, faces(mesh), mesh.views)
+        end
+    else
+        # 1. add vertex attributes, 2. convert position attribute
+        va = merge(vertex_attributes(mesh), NamedTuple(attributes))
+        va = merge(va, (position = decompose(pointtype, va.position),))
+
+        # update face types
+        f, views = decompose(facetype, faces(mesh), mesh.views)
+        return Mesh(va, f, views)
+    end
+end
+
+# catch-all else because these conversions need some oversight
+function mesh(m::AbstractMesh, args...; kwargs...)
+    # TODO: no methoderror with kwargs?
+    error("No method mesh() found for the given inputs.")
+end
+
 
 const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
 const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
