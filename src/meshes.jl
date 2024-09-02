@@ -83,6 +83,28 @@ function mesh(
     return Mesh(positions, f; vertex_attributes...)
 end
 
+"""
+    mesh(mesh::Mesh[, facetype = GLTriangleFace])
+
+Converts a mesh to the given facetype.
+"""
+function mesh(mesh::Mesh{D, T, FT}, facetype = GLTriangleFace) where {D, T, FT}
+    if FT == facetype
+        return mesh
+
+    elseif (FT <: AbstractVertexFace) && (facetype <: AbstractVertexFace)
+        # TODO: handle views - changing faces changes views...
+        f = decompose(facetype, faces(mesh))
+        return Mesh(vertex_attributes(mesh), f)
+
+    elseif (FT <: AbstractMultiFace) && (facetype <: AbstractVertexFace)
+        return merge_vertex_indices(mesh)
+
+    else
+        error("Conversion from $FT -> $facetype not implemented.")
+    end
+end
+
 const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
 const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
 
@@ -194,7 +216,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         end
 
         # We can't merge MultiFace with standard faces because MutliFace allows
-        # desynchronizes vertex indices that normal faces assume synchronized.
+        # desynchronizes vertex indices that vertex faces assume synchronized.
         is_multi = facetype(m1) <: MultiFace
 
         if all(m -> is_multi == (facetype(m) <: MultiFace), meshes)
@@ -249,7 +271,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
             vertex_index_counter = eltype(FT)(1)
 
             for mesh in meshes
-                # convert MultiFace mesh to normal faces, synchronizing vertex indices
+                # convert MultiFace mesh to vertex faces, synchronizing vertex indices
                 attribs, fs, views = merge_vertex_indices(
                     vertex_attributes(mesh), faces(mesh), mesh.views, vertex_index_counter)
                 
@@ -270,7 +292,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                 end
             end
 
-            # We did MultiFace -> normal face, now equalize normal face types
+            # We did MultiFace -> vertex face, now equalize vertex face types
             new_faces = reduce(vcat, remapped_faces)
 
             return Mesh(new_attribs, new_faces, new_views)
