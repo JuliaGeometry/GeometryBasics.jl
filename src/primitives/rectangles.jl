@@ -341,7 +341,9 @@ Return `true` if any of the widths of `h` are negative.
 Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
 
 """
-Perform a union between two Rects.
+    union(r1::Rect{N}, r2::Rect{N})
+
+Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
     m = min.(minimum(h1), minimum(h2))
@@ -349,12 +351,14 @@ function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
     return Rect{N}(m, mm - m)
 end
 
-"""
-    diff(h1::Rect, h2::Rect)
+# TODO: What should this be? The difference is "h2 - h1", which could leave an
+# L shaped cutout. Should we pad that back out into a full rect?
+# """
+#     diff(h1::Rect, h2::Rect)
 
-Perform a difference between two Rects.
-"""
-diff(h1::Rect, h2::Rect) = h1
+# Perform a difference between two Rects.
+# """
+# diff(h1::Rect, h2::Rect) = h1
 
 """
     intersect(h1::Rect, h2::Rect)
