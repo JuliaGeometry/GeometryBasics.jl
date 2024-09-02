@@ -13,9 +13,27 @@ Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngo
 abstract type Polytope{Dim,T} <: AbstractGeometry{Dim,T} end
 abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 
+"""
+    AbstractFace{N, T} <: StaticVector{N, T}
+
+Parent type for all faces. You should inherit from one of the child types instead.
+"""
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
-abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
-abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
+"""
+    AbstractMultiFace{N, T, M} <: AbstractFace{N, T}
+
+Parent type for faces addressing N vertices with M different vertex attribute 
+indices. 
+"""
+abstract type AbstractMultiFace{N, T, M} <: AbstractFace{N, T} end
+"""
+    AbstractVertexFace{N, T} <: AbstractFace{N, T}
+
+Parent type for faces addressing N vertices with common vertex indices.
+"""
+abstract type AbstractVertexFace{N, T} <: AbstractFace{N, T} end
+abstract type AbstractSimplexFace{N,T} <: AbstractVertexFace{N,T} end
+abstract type AbstractNgonFace{N,T} <: AbstractVertexFace{N,T} end
 
 abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
@@ -50,26 +68,26 @@ end
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
 Face(F::Type{NgonFace{N,FT}}, ::Type{T}) where {FT,N,T} = F
 
-struct MultiFace{N, T, FaceType <: AbstractFace{N, T}, Names, M} <: AbstractFace{N, T}
+struct MultiFace{N, T, FaceType <: AbstractVertexFace{N, T}, Names, M} <: AbstractMultiFace{N, T, M}
     faces::NamedTuple{Names, NTuple{M, FaceType}}
-
-    function MultiFace(nt::NamedTuple{Names, NTuple{M, FT}}) where {N, T, FT <: AbstractFace{N, T}, Names, M}
-        if FT <: MultiFace
-            error("A MultiFace cannot contain MultiFaces.")
-        end
-
-        return new{N, T, FT, Names, M}(nt)
-    end
 end
 
+# TODO: Split these up?
+"""
+    MultiFace(; kwargs...)
+    MultiFace{Names}(faces...)
+    MultiFace{Names}(faces::Tuple)
+    MultiFace{Names}(multiface::MultiFace)
+    MultiFace{Names, FaceType}(faces::Tuple)
+
+Constructs a `MultiFace` from a tuple of names `Names::NTuple{M, Symbol}` and 
+`faces::NTuple{M, FaceType}` similar to how a NamedTuple would.
+"""
 MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
 MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names, FT}(args) where {Names, FT <: AbstractFace} = MultiFace(NamedTuple{Names}(FT.(args)))
-
-function MultiFace{Names}(f::MultiFace) where {Names}
-    return MultiFace{Names}(getproperty.((f,), Names))
-end
+MultiFace{Names}(f::MultiFace) where {Names} = MultiFace{Names}(getproperty.((f,), Names))
 
 Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
 @inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
@@ -348,7 +366,41 @@ struct Mesh{
             f::FVT, 
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
         ) where {
-            D, T, FT, Names,
+            D, T, FT <: AbstractMultiFace, Names,
+            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
+            FVT <: AbstractVector{FT}
+        }
+
+        # verify type / naming rules & consistency
+        if first(Names) !== :position
+            error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
+        end
+
+        f_names = propertynames(FT)
+        if Names == f_names
+            # all good
+        elseif issubset(Names, f_names)
+            # Remove the extra names in faces/fix order
+            # Note: This might be redundant with `mesh()`. It is supposed to allow
+            #       using a general `MultiFace` in `faces(primitive)` which then
+            #       gets reduced to the vertex attributes used in a general mesh.
+            f = simplify_faces(Names, f)
+        else
+            error(
+                "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
+                "attribute names $f_names. These must include the same names in the same order."
+            )
+        end
+
+        return new{D, T, eltype(typeof(f)), Names, VAT, typeof(f)}(va, f, views)
+    end
+
+    function Mesh(
+            va::NamedTuple{Names, VAT}, 
+            f::FVT, 
+            views::Vector{UnitRange{Int}} = UnitRange{Int}[]
+        ) where {
+            D, T, FT <: AbstractVertexFace, Names,
             VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
             FVT <: AbstractVector{FT}
         }
@@ -358,36 +410,11 @@ struct Mesh{
             error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
         end
 
-        if FT <: MultiFace
-            f_names = propertynames(FT)
-            # if Names != f_names
-            #     error(
-            #         "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
-            #         "attribute names $f_names. These must include the same names in the same order."
-            #     )
-            # end
-            if Names == f_names
-                # all good
-            elseif issubset(Names, f_names)
-                # remove the extras/fix order
-                f = simplify_faces(Names, f)
-            else
-                error(
-                    "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
-                    "attribute names $f_names. These must include the same names in the same order."
-                )
-            end
-        elseif MultiFace <: FT 
-            # TODO: This is supposed to catch mixed types like
-            # [MultiFace(position = f1, normal = f2), MultiFace(position = f3)]
-            # but really just catches AbstractFace{N, T}[]. Technically we can
-            # probably handle mixtures of MultiFace and other Face types, but do
-            # we want to bother? Also do we want to allow mixtures of e.g.
-            # TriangleFace and QuadFace?
-            error("Face vectors that may include `MultiFace`s with different names are not allowed. (Type $FT too abstract.)")
-        end
+        # Note: With VertexFaces all vertex attributes should have the same 
+        #       length as they use a common vertex index. We could check this 
+        #       here but maybe it's better not to to prevent over-eager checking?
 
-        return new{D, T, eltype(typeof(f)), Names, VAT, typeof(f)}(va, f, views)
+        return new{D, T, FT, Names, VAT, FVT}(va, f, views)
     end
 end
 
@@ -415,13 +442,10 @@ Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
 
 # TODO: temp
-function Base.getindex(mesh::Mesh{D, T, <: AbstractFace, (:position,)}, f::AbstractFace) where {D, T}
+function Base.getindex(mesh::Mesh{D, T, <: AbstractVertexFace}, f::AbstractVertexFace) where {D, T}
     return getfield(mesh, :vertex_attributes).position[f]
 end
-function Base.getindex(::Mesh, f::MultiFace)
-    error("TODO")
-end
-function Base.getindex(::Mesh, f::AbstractFace)
+function Base.getindex(::Mesh, f::AbstractMultiFace)
     error("TODO")
 end
 

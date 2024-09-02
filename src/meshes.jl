@@ -24,7 +24,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
             error("No triangulation for $(typeof(primitive))")
         end
     else
-        if _f isa AbstractVector{<: MultiFace}
+        if _f isa AbstractVector{<: AbstractMultiFace}
             if facetype isa MultiFace
                 # drop faces that facetype doesn't include
                 _f = simplify_faces(facetype, _f)
@@ -95,7 +95,7 @@ function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
 end
 
 function normal_mesh(points::AbstractVector{<:Point},
-                     faces::AbstractVector{<:AbstractFace})
+                     faces::AbstractVector{<:AbstractVertexFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
     return Mesh(_faces, position = _points, normal = normals(_points, _faces))
@@ -269,19 +269,11 @@ function merge_vertex_indices(mesh)
 end
 
 function merge_vertex_indices(
-        attribs::NamedTuple{Names}, 
-        faces::AbstractVector{<: FT},
+        attribs::NamedTuple, 
+        faces::AbstractVector{<: AbstractVertexFace},
         views::Vector{UnitRange{Int}},
         vertex_index_counter = nothing
-    ) where {Names, FT <: AbstractFace}
-
-    if FT <: MultiFace
-        error(
-            "Failed to call correct method. This likely happened because vertex " *
-            "attributes names $Names do not match face name $(propertynames(first(faces)))."
-        )
-    end
-
+    )
     return attribs, faces, views
 end
 
@@ -326,15 +318,9 @@ function merge_vertex_indices(
     return new_attribs, new_faces, new_views
 end
 
-function merge_vertex_indices(
-        faces::AbstractVector{FT},
-        vertex_index_counter = T(1)
-    ) where {N, T, FT <: AbstractFace{N, T}}
-
-    @assert !(FT <: MultiFace) "Dispatch failed?"
-    
+function merge_vertex_indices(faces::AbstractVector{<: AbstractVertexFace}, i = T(1))
     N_vert = mapreduce(f -> max(f), max, faces)
-    return faces, (1:N_vert) .+ vertex_index_counter
+    return faces, i : N_vert - 1 + i
 end
 
 function merge_vertex_indices(
