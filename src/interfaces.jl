@@ -94,7 +94,7 @@ struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
 Normal() = Normal(Vec3f)
 
-function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFace}
+function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractVertexFace}
     f = faces(primitive)
     if isnothing(f)
         if ndims(primitive) == 2
@@ -106,11 +106,33 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFac
     end
     return collect_with_eltype(F, f)
 end
+    
+function decompose(::Type{F}, mesh::AbstractMesh) where {F<:AbstractVertexFace}
+    m = Mesh(mesh)
+    return decompose(F, faces(m), m.views)
+end
 
-function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
+function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractVertexFace}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
     return collect_with_eltype(F, fs)
+end
+
+function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractVertexFace}
+    fs = faces(f)
+    isnothing(fs) && error("No faces defined for $(typeof(f))")
+    if isempty(views)
+        return collect_with_eltype(F, fs), views
+    else
+        output = F[]
+        new_views = UnitRange{Int}[]
+        for range in views
+            start = length(output) + 1
+            collect_with_eltype!(output, view(fs, range))
+            push!(new_views, start:length(output))
+        end
+        return output, new_views
+    end
 end
 
 function decompose(::Type{P}, primitive) where {P<:Point}

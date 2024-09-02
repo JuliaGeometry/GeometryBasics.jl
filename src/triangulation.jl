@@ -110,7 +110,7 @@ Triangulate a Polygon without hole.
 
 Returns a Vector{`facetype`} defining indexes into `contour`.
 """
-function decompose(::Type{F}, points::AbstractVector{<:Point}) where {F<:AbstractFace}
+function decompose(::Type{F}, points::AbstractVector{<:Point}) where {F<:AbstractVertexFace}
     #= allocate and initialize list of Vertices in polygon =#
     result = F[]
 

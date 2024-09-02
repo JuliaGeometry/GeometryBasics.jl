@@ -73,9 +73,15 @@ end
 
 collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
+collect_with_eltype(::Type{T}, iter) where {T} = collect_with_eltype!(T[], iter)
 
-function collect_with_eltype(::Type{T}, iter) where {T}
-    isempty(iter) && return T[]
+function collect_with_eltype!(target::AbstractVector{T}, vec::AbstractVector{T}) where {T}
+    return append!(target, vec)
+end
+
+function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
+    isempty(iter) && return result
+
     # We need to get `eltype` information from `iter`, it seems to be `Any`
     # most of the time so the eltype checks here don't actually work
     l = if Base.IteratorSize(iter) isa Union{Base.HasShape,Base.HasLength}
@@ -90,18 +96,15 @@ function collect_with_eltype(::Type{T}, iter) where {T}
     else
         0
     end
-    n = 0
-    result = Vector{T}(undef, l)
+
+    # Allow result to be pre-filled for handling faces with mesh.views
+    sizehint!(result, length(result) + l)
+
     for element in iter
         # convert_simplex always returns a tuple,
         # so that e.g. convert(Triangle, quad) can return 2 elements
         for telement in convert_simplex(T, element)
-            n += 1
-            if n > l
-                push!(result, telement)
-            else
-                result[n] = telement
-            end
+            push!(result, telement)
         end
     end
     return result

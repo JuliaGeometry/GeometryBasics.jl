@@ -94,12 +94,16 @@ function mesh(mesh::Mesh{D, T, FT}, facetype = GLTriangleFace) where {D, T, FT}
 
     elseif (FT <: AbstractVertexFace) && (facetype <: AbstractVertexFace)
         # TODO: handle views - changing faces changes views...
-        f = decompose(facetype, faces(mesh))
-        return Mesh(vertex_attributes(mesh), f)
+        f, views = decompose(facetype, faces(mesh), mesh.views)
+        return Mesh(vertex_attributes(mesh), f, views)
 
     elseif (FT <: AbstractMultiFace) && (facetype <: AbstractVertexFace)
-        return merge_vertex_indices(mesh)
+        # MultiFace{VertexFace} -> VertexFace
+        attribs, fs, views = merge_vertex_indices(vertex_attributes(mesh), faces(mesh), mesh.views)
+        # VertexFace -> facetype
+        f, views = decompose(facetype, fs, views)
 
+        return Mesh(attribs, fs, views)
     else
         error("Conversion from $FT -> $facetype not implemented.")
     end
