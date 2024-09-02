@@ -106,8 +106,8 @@ function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where
 end
 
 # TODO: Some shorthands
-const NormalFace = MultiFace{(:position, :normal)}
-const NormalUVFace = MultiFace{(:position, :normal, :uv)}
+const NormalFace = MultiFace{(:position, :normals)}
+const NormalUVFace = MultiFace{(:position, :normals, :uv)}
 
 # TODO: enable something like NormalUVFace{QuadFace}[...]
 
