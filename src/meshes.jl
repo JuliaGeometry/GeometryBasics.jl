@@ -118,52 +118,69 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace) 
     return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype)
 end
 
-function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}})::SimpleTriangleMesh{N} where {N}
-    return mesh(primitive; pointtype=Point{N, Float32})
+function triangle_mesh(
+        primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}};
+        pointtype = Point{N, Float32}, facetype = GLTriangleFace
+    )::SimpleTriangleMesh{N} where {N} # TODO: is the output type doing anything here?
+
+    return mesh(primitive; pointtype = pointtype, facetype = facetype)
 end
 
 
-pointtype(x::Mesh) = eltype(decompose(Point, x))
-facetype(x::Mesh) = eltype(faces(x))
+pointtype(::Mesh{D, T}) where {D, T} = Point{D, T}
+facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
 
-function triangle_mesh(primitive::Mesh{N}) where {N}
+function triangle_mesh(primitive::Mesh{N}; pointtype = Point{N, Float32}, facetype = GLTriangleFace) where {N}
     # already target type:
-    if pointtype(primitive) === Point{N,Float32} && GLTriangleFace === facetype(primitive)
+    if GeometryBasics.pointtype(primitive) === pointtype && 
+            GeometryBasics.facetype(primitive) === facetype
         return primitive
     else
-        return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+        return mesh(primitive; pointtype = pointtype, facetype = facetype)
     end
 end
 
-function triangle_mesh(primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}}; nvertices = nothing)::SimpleTriangleMesh{N} where {N}
-    if nvertices !== nothing
-        @warn("nvertices argument deprecated. Wrap primitive in `Tesselation(primitive, nvertices)`")
-        primitive = Tesselation(primitive, nvertices)
-    end
-    return mesh(primitive; pointtype=Point{N,Float32}, facetype=GLTriangleFace)
-end
 
-function uv_mesh(primitive::AbstractGeometry{N,T}) where {N,T}
-    return mesh(primitive, uv = decompose_uv(primitive), pointtype=Point{N,Float32}, facetype=GLTriangleFace)
-end
-
-function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
+function uv_mesh(
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        uvtype = Vec2f, facetype = GLTriangleFace
+    ) where {N}
+    
     return mesh(
-        primitive, uv = decompose_uv(primitive), normals = decompose_normals(primitive),
-        pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+        primitive, uv = decompose_uv(uvtype, primitive), 
+        pointtype = pointtype, facetype = facetype
+    )
 end
 
-function normal_mesh(points::AbstractVector{<:Point},
-                     faces::AbstractVector{<:AbstractVertexFace})
-    _points = decompose(Point3f, points)
-    _faces = decompose(GLTriangleFace, faces)
-    return Mesh(_faces, position = _points, normals = normals(_points, _faces))
-end
+function uv_normal_mesh(
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        uvtype = Vec2f, normaltype = Vec3f, facetype = GLTriangleFace
+    ) where {N}
 
-function normal_mesh(primitive::AbstractGeometry{N}) where {N}
     return mesh(
-        primitive, normals = decompose_normals(primitive), 
-        pointtype=Point{N,Float32}, facetype=GLTriangleFace)
+        primitive, uv = decompose_uv(uvtype, primitive), 
+        normals = decompose_normals(normaltype, primitive),
+        pointtype = pointtype, facetype = facetype
+    )
+end
+
+function normal_mesh(
+        points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractVertexFace}; 
+        pointtype = Point3f, normaltype = Vec3f, facetype = GLTriangleFace
+    )
+    _points = decompose(pointtype, points)
+    _faces = decompose(facetype, faces)
+    return Mesh(_faces, position = _points, normals = normals(_points, _faces, normaltype))
+end
+
+function normal_mesh(
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        normaltype = Vec3f, facetype = GLTriangleFace
+    ) where {N}
+
+    return mesh(
+        primitive, normals = decompose_normals(normaltype, primitive), 
+        pointtype = pointtype, facetype = facetype)
 end
 
 """
