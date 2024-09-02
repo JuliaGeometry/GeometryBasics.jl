@@ -13,36 +13,73 @@ It also only losely correlates to the number of vertices, depending on the algor
 """
 function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
-    _f = faces(primitive)
 
     # If faces returns nothing for primitive, we try to triangulate!
-    if isnothing(_f)
+    _fs = faces(primitive)
+    if isnothing(ds)
         if eltype(positions) <: Point2
             # triangulation.jl
-            f = decompose(facetype, positions)
+            fs = decompose(facetype, positions)
         else
             error("No triangulation for $(typeof(primitive))")
         end
     else
-        if _f isa AbstractVector{<: AbstractMultiFace}
-            if facetype isa MultiFace
-                # drop faces that facetype doesn't include
-                _f = simplify_faces(facetype, _f)
-            else
-                # drop faces for vertex attributes that aren't given
-                names = (:position, keys(vertex_attributes)...)
-                _f2 = simplify_faces(names, _f)
-                
-                # and remap to a simple face type so that decompose can handle the rest
-                _f, mappings = merge_vertex_indices(_f2)
-                positions = positions[mappings[1]]
-                vertex_attributes = NamedTuple(
-                    (Pair(names[i], vertex_attributes[i-1][mappings[i]]) for i in 2:length(mappings))    
-                )
-            end
-        end
-        f = decompose(facetype, _f)
+        fs = _fs
     end
+
+    return mesh(positions, fs; facetype = facetype, vertex_attributes...)
+end
+
+"""
+    mesh(positions, faces[, facetype = GLTriangleFace, vertex_attributes...])
+
+Creates a mesh from the given positions and faces. Other vertex attributes like
+normals and texture coordinates can be added as keyword arguments.
+
+By default the generated mesh uses `GLTriangleFace`. If the input faces are of 
+type `MultiFace` they will get converted appropriately, which may cause 
+reordering and duplication of positions and other vertex attributes.
+"""
+function mesh(
+        positions::AbstractVector{<:Point}, 
+        faces::AbstractVector{AbstractMultiFace}, 
+        facetype=GLTriangleFace, vertex_attributes...
+    )
+
+    if facetype <: AbstractMultiFace
+        # drop vertex attribute references in faces that facetype does not include
+        f = simplify_faces(facetype, faces) # TODO: call this decompose?
+    
+    elseif facetype <: AbstractVertexFace
+        # drop vertex attributes references in faces that are not part of the 
+        # given vertex attributes. (This allows multi_face to be more general
+        # than the mesh we construct)
+        names = (:position, keys(vertex_attributes)...)
+        _f2 = simplify_faces(names, faces)
+                
+        # Convert MultiFace to its internally used VertexFace type and apply 
+        # necessary vertex attribute remapping
+        _f, mappings = merge_vertex_indices(_f2)
+        positions = positions[mappings[1]]
+        vertex_attributes = NamedTuple(
+            (Pair(names[i], vertex_attributes[i-1][mappings[i]]) for i in 2:length(mappings))    
+        )
+        
+        # Convert to actually requested facetype
+        f = decompose(facetype, _f)
+    else
+        error("Cannot convert MultiFace to $facetype.")
+    end
+
+    return Mesh(positions, f; vertex_attributes...)
+end
+
+function mesh(
+        positions::AbstractVector{<:Point}, 
+        faces::AbstractVector{AbstractVertexFace}, 
+        facetype=GLTriangleFace, vertex_attributes...)
+
+    f = decompose(facetype, faces)
     return Mesh(positions, f; vertex_attributes...)
 end
 
