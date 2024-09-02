@@ -16,7 +16,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
 
     # If faces returns nothing for primitive, we try to triangulate!
     _fs = faces(primitive)
-    if isnothing(ds)
+    if isnothing(_fs)
         if eltype(positions) <: Point2
             # triangulation.jl
             fs = decompose(facetype, positions)
@@ -42,7 +42,7 @@ reordering and duplication of positions and other vertex attributes.
 """
 function mesh(
         positions::AbstractVector{<:Point}, 
-        faces::AbstractVector{AbstractMultiFace}, 
+        faces::AbstractVector{<: AbstractMultiFace};
         facetype=GLTriangleFace, vertex_attributes...
     )
 
@@ -76,7 +76,7 @@ end
 
 function mesh(
         positions::AbstractVector{<:Point}, 
-        faces::AbstractVector{AbstractVertexFace}, 
+        faces::AbstractVector{<: AbstractVertexFace}; 
         facetype=GLTriangleFace, vertex_attributes...)
 
     f = decompose(facetype, faces)
