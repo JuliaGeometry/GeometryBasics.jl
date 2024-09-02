@@ -117,12 +117,12 @@ function mesh(
         va = merge(vertex_attributes(mesh), (position = decompose(pointtype, mesh),))
 
         # MultiFace{VertexFace} -> VertexFace
-        attribs, fs, views = merge_vertex_indices(va, faces(mesh), mesh.views)
+        attribs, _fs, views = merge_vertex_indices(va, faces(mesh), mesh.views)
 
         # VertexFace -> facetype
-        faces, views = decompose(facetype, fs, views)
+        fs, views = decompose(facetype, _fs, views)
 
-        return Mesh(attribs, faces, views)
+        return Mesh(attribs, fs, views)
     end
 end
 
@@ -131,6 +131,11 @@ function mesh(
         facetype::Type{<: AbstractVertexFace} = GLTriangleFace,
         attributes...
     ) where {D, T, FT <: AbstractVertexFace}
+    
+    N = length(mesh.position)
+    if !all(attr -> length(attr) == N, values(attributes))
+        error("At least one of the given vertex attributes does not match `length(mesh.positon) = $N`.")
+    end
 
     if FT == facetype
         if isempty(attributes) && GeometryBasics.pointtype(mesh) == pointtype
@@ -184,13 +189,13 @@ end
 pointtype(::Mesh{D, T}) where {D, T} = Point{D, T}
 facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
 
-function triangle_mesh(primitive::Mesh{N}; pointtype = Point{N, Float32}, facetype = GLTriangleFace) where {N}
+function triangle_mesh(primitive::Mesh{N}; pointtype = Point{N, Float32}) where {N}
     # already target type:
     if GeometryBasics.pointtype(primitive) === pointtype && 
-            GeometryBasics.facetype(primitive) === facetype
+            GeometryBasics.facetype(primitive) === GLTriangleFace
         return primitive
     else
-        return mesh(primitive; pointtype = pointtype, facetype = facetype)
+        return mesh(primitive; pointtype = pointtype, facetype = GLTriangleFace)
     end
 end
 

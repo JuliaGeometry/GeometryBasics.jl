@@ -86,7 +86,6 @@ Constructs a `MultiFace` from a tuple of names `Names::NTuple{M, Symbol}` and
 MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
 MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
-MultiFace{Names, FT}(args) where {Names, FT <: AbstractFace} = MultiFace(NamedTuple{Names}(FT.(args)))
 MultiFace{Names}(f::MultiFace) where {Names} = MultiFace{Names}(getproperty.((f,), Names))
 
 Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
@@ -107,8 +106,8 @@ function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where
 end
 
 # TODO: Some shorthands
-const NormalFace = MultiFace{(:position, :normals)}
-const NormalUVFace = MultiFace{(:position, :normals, :uv)}
+NormalFace{FT}(faces::Tuple) where {FT} = MultiFace{(:position, :normals)}(FT.(faces))
+NormalUVFace{FT}(faces::Tuple) where {FT} = MultiFace{(:position, :normals, :uv)}(FT.(faces))
 
 # TODO: enable something like NormalUVFace{QuadFace}[...]
 
