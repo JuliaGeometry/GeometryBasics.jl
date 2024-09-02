@@ -458,13 +458,14 @@ function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
-function Mesh(faces::AbstractVector{<:AbstractFace}; attributes...)
-    return Mesh(NamedTuple(attributes), faces)
+function Mesh(faces::AbstractVector{<:AbstractFace}; views = UnitRange{Int}[], attributes...)
+    return Mesh(NamedTuple(attributes), faces, views)
 end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
-              faces::AbstractVector{<:AbstractFace}; kwargs...) where {Dim, T}
-    return Mesh((position = points, kwargs...), faces)
+              faces::AbstractVector{<:AbstractFace}; 
+              views = UnitRange{Int}[], kwargs...) where {Dim, T}
+    return Mesh((position = points, kwargs...), faces, views)
 end
 
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
