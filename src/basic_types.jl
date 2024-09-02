@@ -418,6 +418,10 @@ struct Mesh{
     end
 end
 
+# TODO: what shorthands could be useful?
+# const GLMesh{D, T} = Mesh{D, T, GLTriangleFace}
+# const SimpleGLMesh{D, T} = Mesh{D, T, GLTriangleFace, (:position,)}
+
 @inline function Base.hasproperty(mesh::Mesh, field::Symbol)
     return hasproperty(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
 end

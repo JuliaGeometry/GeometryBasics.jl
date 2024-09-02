@@ -149,7 +149,7 @@ end
 
 function uv_normal_mesh(primitive::AbstractGeometry{N}) where {N}
     return mesh(
-        primitive, uv = decompose_uv(primitive), normal = decompose_normals(primitive),
+        primitive, uv = decompose_uv(primitive), normals = decompose_normals(primitive),
         pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
@@ -157,12 +157,12 @@ function normal_mesh(points::AbstractVector{<:Point},
                      faces::AbstractVector{<:AbstractVertexFace})
     _points = decompose(Point3f, points)
     _faces = decompose(GLTriangleFace, faces)
-    return Mesh(_faces, position = _points, normal = normals(_points, _faces))
+    return Mesh(_faces, position = _points, normals = normals(_points, _faces))
 end
 
 function normal_mesh(primitive::AbstractGeometry{N}) where {N}
     return mesh(
-        primitive, normal = decompose_normals(primitive), 
+        primitive, normals = decompose_normals(primitive), 
         pointtype=Point{N,Float32}, facetype=GLTriangleFace)
 end
 
