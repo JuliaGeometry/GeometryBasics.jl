@@ -133,6 +133,10 @@ decompose_uv(primitive) = decompose(UV(), primitive)
 decompose_uvw(primitive) = decompose(UVW(), primitive)
 decompose_normals(primitive) = decompose(Normal(), primitive)
 
+decompose_uv(T, primitive) = decompose(UV(T), primitive)
+decompose_uvw(T, primitive) = decompose(UVW(T), primitive)
+decompose_normals(T, primitive) = decompose(Normal(T), primitive)
+
 function decompose(::Normal{T}, primitive) where {T}
     _n = normals(primitive)
     if isnothing(_n)
