@@ -218,7 +218,7 @@ function uv_normal_mesh(
 
     return mesh(
         primitive, uv = decompose_uv(uvtype, primitive), 
-        normals = decompose_normals(normaltype, primitive),
+        normal = decompose_normals(normaltype, primitive),
         pointtype = pointtype, facetype = facetype
     )
 end
@@ -229,7 +229,7 @@ function normal_mesh(
     )
     _points = decompose(pointtype, points)
     _faces = decompose(facetype, faces)
-    return Mesh(_faces, position = _points, normals = normals(_points, _faces, normaltype))
+    return Mesh(_faces, position = _points, normal = normals(_points, _faces, normaltype))
 end
 
 function normal_mesh(
@@ -238,7 +238,7 @@ function normal_mesh(
     ) where {N}
 
     return mesh(
-        primitive, normals = decompose_normals(normaltype, primitive), 
+        primitive, normal = decompose_normals(normaltype, primitive), 
         pointtype = pointtype, facetype = facetype)
 end
 

@@ -376,6 +376,12 @@ struct Mesh{
             error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
         end
 
+        if :normals in Names
+            @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
+            names = map(name -> ifelse(name === :normals, :normal, name), Names)
+            va = NamedTuple{names}(values(va))
+        end
+
         f_names = propertynames(FT)
         if Names == f_names
             # all good
@@ -392,7 +398,7 @@ struct Mesh{
             )
         end
 
-        return new{D, T, eltype(typeof(f)), Names, VAT, typeof(f)}(va, f, views)
+        return new{D, T, eltype(typeof(f)), keys(va), VAT, typeof(f)}(va, f, views)
     end
 
     function Mesh(
@@ -410,11 +416,17 @@ struct Mesh{
             error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
         end
 
+        if :normals in Names
+            @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
+            names = map(name -> ifelse(name === :normals, :normal, name), Names)
+            va = NamedTuple{names}(values(va))
+        end
+
         # Note: With VertexFaces all vertex attributes should have the same 
         #       length as they use a common vertex index. We could check this 
         #       here but maybe it's better not to to prevent over-eager checking?
 
-        return new{D, T, FT, Names, VAT, FVT}(va, f, views)
+        return new{D, T, FT, keys(va), VAT, FVT}(va, f, views)
     end
 end
 
@@ -428,6 +440,9 @@ end
 @inline function Base.getproperty(mesh::Mesh, field::Symbol)
     if hasfield(Mesh, field)
         return getfield(mesh, field)
+    elseif field === :normals
+        @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
+        return getproperty(mesh, :normal)
     else
         return getproperty(getfield(mesh, :vertex_attributes), field)
     end
@@ -438,7 +453,7 @@ end
 
 coordinates(mesh::Mesh) = mesh.position
 faces(mesh::Mesh) = mesh.connectivity
-normals(mesh::Mesh) = hasproperty(mesh, :normals) ? mesh.normals : nothing
+normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
