@@ -18,6 +18,31 @@ Base.size(::Type{<: Mat{R, C}}) where {R, C} = (R, C)
 Base.ndims(::Type{<: Mat}) = 2
 Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
 
+# TODO: maybe ranges as well?
+function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::Integer) where {R, C, N}
+    @boundscheck begin
+        all(x -> 1 ≤ x ≤ R, i) && (1 ≤ j ≤ C)
+    end
+    @inbounds data = ntuple(n -> mat.values[i[n] + R * (j-1)], N)
+    return Mat{length(i), 1}(data)
+end
+function Base.getindex(mat::Mat{R, C}, i::Integer, j::StaticVector{N}) where {R, C, N}
+    @boundscheck begin
+        (1 ≤ i ≤ R) && all(x -> 1 ≤ x ≤ C, j)
+    end
+    @inbounds data = ntuple(n -> mat.values[i + R * (j[n] - 1)], N)
+    return Mat{1, length(j)}(data)
+end
+function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::StaticVector{M}) where {R, C, N, M}
+    @boundscheck begin
+        all(x -> 1 ≤ x ≤ R, i) && all(x -> 1 ≤ x ≤ C, j)
+    end
+    data = ntuple(N * M) do nm
+        m, n = fldmod1(nm, R)
+        @inbounds return mat.values[i[n] + R * (j[m] - 1)]
+    end
+    return Mat{1, length(j)}(data)
+end
 
 Base.IndexStyle(::Mat)= Base.IndexLinear()
 
@@ -182,6 +207,7 @@ end
     return :(similar_type(b)($elements))
 end
 
+# TODO: delete since we have a more specialized version up top?
 function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
     idx = CartesianIndices((NR, NC))
     data = ntuple(NR * NC) do i
@@ -190,3 +216,6 @@ function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, N
     end
     return Mat{NR, NC, T}(data)
 end
+
+# TODO: Fix Vec(mat) becoming Vec((mat,)) (i.e. restrict eltype to Number?)
+(VT::Type{<: StaticVector{N}})(mat::Mat{N, 1}) where {N} = VT(mat.values)
