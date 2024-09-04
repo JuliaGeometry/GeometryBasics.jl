@@ -48,6 +48,10 @@ Mat{C, R, T}(x::Tuple) where {C, R, T} = Mat{C, R, T}(convert(NTuple{length(x), 
 Mat{C, R}(x::NTuple{L, T}) where {C, R, L, T} = Mat{C, R, T}(x)
 Mat{C, R, T1}(x::NTuple{L, T2}) where {C, R, L, T1, T2} = Mat{C, R, T1}(convert(NTuple{L, T1}, x))
 
+# catch Mat2(...) etc which lowers to Mat{2, 2, T, 4} where T
+(::Type{MT})(args...) where {C, R, MT <: Mat{C, R}} = Mat{C, R}(args)
+(::Type{MT})(args::Tuple) where {C, R, MT <: Mat{C, R}} = Mat{C, R}(args)
+
 Mat{C, R}(x::AbstractMatrix{T}) where {C, R, T} = Mat{C, R, T}(x)
 Mat{C, R, T}(x::AbstractMatrix) where {C, R, T} = Mat{C, R, T}(ntuple(i-> convert(T, x[i]), C*R))
 
