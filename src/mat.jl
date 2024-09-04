@@ -87,6 +87,9 @@ Base.convert(::Type{Mat{C, R, T, L}}, from::Mat{C, R}) where {C, R, T, L} = Mat{
 # General shape mismatched versions are errors
 (*)(a::Mat{M, N, T1}, b::Mat{O, K, T2}) where {T1, T2, M, N, O, K} = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
+Base.:(-)(a::Mat{R, C}, b::Mat{R, C}) where {R, C} = Mat{R, C}(a.values .- b.values)
+Base.:(+)(a::Mat{R, C}, b::Mat{R, C}) where {R, C} = Mat{R, C}(a.values .+ b.values)
+
 # matrix * matrix
 @generated function *(a::Mat{M, N, T1}, b::Mat{N, P, T2}) where {T1, T2, M, N, P}
     elements = Expr(:tuple)
@@ -219,3 +222,12 @@ end
 
 # TODO: Fix Vec(mat) becoming Vec((mat,)) (i.e. restrict eltype to Number?)
 (VT::Type{<: StaticVector{N}})(mat::Mat{N, 1}) where {N} = VT(mat.values)
+
+function Base.isapprox(
+        a::Mat{R1, C1, T1}, b::Mat{R2, C2, T2};
+        atol::Real = 0,
+        rtol::Real = atol > 0 ? 0 : sqrt(max(eps(T1), eps(T2)))
+    ) where {R1, R2, C1, C2, T1, T2}
+    return (R1 == R2) && (C1 == C2) &&
+        norm(a - b) <= max(atol, rtol * max(norm(a), norm(b)))
+end
