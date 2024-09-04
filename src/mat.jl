@@ -17,6 +17,7 @@ Base.size(::Mat{R, C}) where {R, C} = (R, C)
 Base.size(::Type{<: Mat{R, C}}) where {R, C} = (R, C)
 Base.ndims(::Type{<: Mat}) = 2
 Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
+Base.getindex(mat::Mat{R, C}, i::CartesianIndex) where {R, C} = mat.values[i.I[1] + R * (i.I[2] - 1)]
 
 # TODO: maybe ranges as well?
 function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::Integer) where {R, C, N}
@@ -44,7 +45,7 @@ function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::StaticVector{M}) w
     return Mat{1, length(j)}(data)
 end
 
-Base.IndexStyle(::Mat)= Base.IndexLinear()
+Base.IndexStyle(::Type{<: Mat}) = Base.IndexLinear()
 
 function Mat{C, R, T}(::LinearAlgebra.UniformScaling) where {C, R, T}
     idx = CartesianIndices((R, C))
@@ -210,24 +211,5 @@ end
     return :(similar_type(b)($elements))
 end
 
-# TODO: delete since we have a more specialized version up top?
-function Base.getindex(mat::Mat{R, C, T}, r::Vec{NR}, c::Vec{NC}) where {R, C, NR, NC, T}
-    idx = CartesianIndices((NR, NC))
-    data = ntuple(NR * NC) do i
-        ri, ci = Tuple(idx[i])
-        return mat[r[ri], c[ci]]
-    end
-    return Mat{NR, NC, T}(data)
-end
-
 # TODO: Fix Vec(mat) becoming Vec((mat,)) (i.e. restrict eltype to Number?)
 (VT::Type{<: StaticVector{N}})(mat::Mat{N, 1}) where {N} = VT(mat.values)
-
-function Base.isapprox(
-        a::Mat{R1, C1, T1}, b::Mat{R2, C2, T2};
-        atol::Real = 0,
-        rtol::Real = atol > 0 ? 0 : sqrt(max(eps(T1), eps(T2)))
-    ) where {R1, R2, C1, C2, T1, T2}
-    return (R1 == R2) && (C1 == C2) &&
-        norm(a - b) <= max(atol, rtol * max(norm(a), norm(b)))
-end
