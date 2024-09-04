@@ -50,7 +50,7 @@ macro fixed_vector(name_parent)
             return $(VecT){N,T}(ntuple(i -> convert(T, x), N))
         end
 
-        $(VecT){1, T}(x) where {T} = $(VecT){1, T}((x,))
+        $(VecT){1, T}(x::Number) where {T} = $(VecT){1, T}((x,))
         $(VecT){1, T}(x::Tuple{Any}) where T = $(VecT){1, T}((T(x[1]),))
         $(VecT)(x::Tuple) = $(VecT)(promote(x...))
         $(VecT){N}(x::Tuple) where {N} = $(VecT){N}(promote(x...))
