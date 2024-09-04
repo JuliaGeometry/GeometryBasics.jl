@@ -476,7 +476,7 @@ function merge_vertex_indices(
 
     # keep track of the remmaped indices for one vertex so we don't have to 
     # query the dict twice
-    temp = zeros(N)
+    temp = Vector{T}(undef, N)
 
     for multi_face in faces
 

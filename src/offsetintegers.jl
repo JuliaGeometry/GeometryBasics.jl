@@ -92,3 +92,5 @@ function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
 end
 
 Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
+
+Base.hash(o::OffsetInteger{O}, h::UInt) where {O} = hash(o.i, hash(O, h))
