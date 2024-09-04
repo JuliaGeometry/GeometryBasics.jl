@@ -37,7 +37,7 @@ end
     # Sanity Check
     # TODO: extend
     m = Mesh(
-        [GeometryBasics.NormalFace(QuadFace(1, 2, 3, 4), QuadFace(1,1,1,1))],
+        [GeometryBasics.MultiFace(position = QuadFace(1, 2, 3, 4), normal = QuadFace(1,1,1,1))],
         position = Point2f[(0, 0), (1, 0), (1, 1), (0, 1)],
         normals = [Vec3f(0,0,1)]
     )
@@ -70,12 +70,12 @@ end
         @test_broken uvs isa Vector{Vec2f}
         fs = collect(faces(r))
         @test length(fs) == 6
-        @test fs isa Vector{GeometryBasics.MultiFace{4, Int64, QuadFace{Int64}, (:position, :normals, :uv), 3}}
+        @test fs isa Vector{GeometryBasics.NormalUVFace{4, Int64, QuadFace{Int64}}}
     end
 
     @testset "normal_mesh()" begin
         # TODO: simplify?
-        FT = GeometryBasics.MultiFace{4, Int64, QuadFace{Int64}, (:position, :normals), 2}
+        FT = GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
         m = normal_mesh(r, pointtype = Point3f, normaltype = Vec3f, facetype = FT)
         
         @test hasproperty(m, :position)
@@ -161,7 +161,7 @@ end
     end
 
     @testset "mesh(mesh)" begin
-        FT = GeometryBasics.MultiFace{4, Int64, QuadFace{Int64}, (:position, :normals), 2}
+        FT = GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
         m = GeometryBasics.mesh(r, pointtype = Point3f, normals = normals(r), facetype = FT)
 
         # Should be hit by normal_mesh as well...

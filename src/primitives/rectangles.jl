@@ -588,12 +588,13 @@ function texturecoordinates(rect::Rect3)
 end
 
 function faces(::Rect3)
-    return NormalUVFace{QuadFace}.([
+    return NormalUVFace{4, Int, QuadFace{Int}}[
+        #  position  normal    uv
         ((1, 2, 3, 4), 1, (1, 2, 3, 4)), # -x
         ((5, 6, 7, 8), 2, (5, 6, 7, 8)), # +x
         ((1, 2, 5, 6), 3, (1, 2, 5, 6)), # -y
         ((3, 4, 7, 8), 4, (3, 4, 7, 8)), # +y
         ((1, 3, 5, 7), 5, (1, 3, 5, 7)), # -z
         ((2, 4, 6, 8), 6, (2, 4, 6, 8)), # +z
-    ])
+    ]
 end

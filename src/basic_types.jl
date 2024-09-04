@@ -84,9 +84,17 @@ Constructs a `MultiFace` from a tuple of names `Names::NTuple{M, Symbol}` and
 `faces::NTuple{M, FaceType}` similar to how a NamedTuple would.
 """
 MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
-MultiFace{Names}(args...) where {Names} = MultiFace(NamedTuple{Names}(args))
-MultiFace{Names}(args::Tuple{Vararg{<: AbstractFace}}) where {Names} = MultiFace(NamedTuple{Names}(args))
 MultiFace{Names}(f::MultiFace) where {Names} = MultiFace{Names}(getproperty.((f,), Names))
+MultiFace{Names}(args...) where {Names} = MultiFace{Names}(args)
+function MultiFace{Names}(args::Tuple{Vararg{<: AbstractVertexFace}}) where {Names}
+    return MultiFace(NamedTuple{Names}(args))
+end
+
+function MultiFace{N, T, FT, Names, M}(faces...) where {N, T, FT <: AbstractVertexFace{N, T}, Names, M}
+    @assert length(faces) === M
+    @assert length(Names) === M
+    return MultiFace{Names}(FT.(face))
+end
 
 Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
 @inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
@@ -105,11 +113,14 @@ function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where
     return map(f -> MultiFace{names}(f), fs)
 end
 
-# TODO: Some shorthands
-NormalFace{FT}(faces::Tuple) where {FT} = MultiFace{(:position, :normals)}(FT.(faces))
-NormalUVFace{FT}(faces::Tuple) where {FT} = MultiFace{(:position, :normals, :uv)}(FT.(faces))
+# Shorthands for constructing faces
+const NormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal), 2}
+const NormalUVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal, :uv), 3}
 
-# TODO: enable something like NormalUVFace{QuadFace}[...]
+# enable something like NormalUVFace{GLTriangleFace}[(pos_face, normal_face, uv_face), ...]
+function Base.convert(::Type{<: MultiFace{N, T, FT, Names}}, t::Tuple) where {N, T, FT, Names}
+    return MultiFace{Names}(FT.(t))
+end
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
