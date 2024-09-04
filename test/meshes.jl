@@ -39,7 +39,7 @@ end
     m = Mesh(
         [GeometryBasics.MultiFace(position = QuadFace(1, 2, 3, 4), normal = QuadFace(1,1,1,1))],
         position = Point2f[(0, 0), (1, 0), (1, 1), (0, 1)],
-        normals = [Vec3f(0,0,1)]
+        normal = [Vec3f(0,0,1)]
     )
     
     m2 = GeometryBasics.merge_vertex_indices(m)
@@ -83,7 +83,7 @@ end
         @test length(coordinates(m)) == 8
         @test GeometryBasics.pointtype(m) == Point3f
 
-        @test hasproperty(m, :normals)
+        @test hasproperty(m, :normal)
         @test normals(m) isa Vector{Vec3f}
         @test length(normals(m)) == 6
 
@@ -106,7 +106,7 @@ end
         @test length(coordinates(m)) == 24
         @test GeometryBasics.pointtype(m) == Point3d
 
-        @test hasproperty(m, :normals)
+        @test hasproperty(m, :normal)
         @test normals(m) isa Vector{Vec3d}
         @test length(normals(m)) == 24
 
@@ -129,7 +129,7 @@ end
         @test length(coordinates(m)) == 8
         @test GeometryBasics.pointtype(m) == Point3f
 
-        @test !hasproperty(m, :normals)
+        @test !hasproperty(m, :normal)
         @test normals(m) === nothing
 
         @test hasproperty(m, :uv)
@@ -149,7 +149,7 @@ end
         @test length(coordinates(m)) == 8
         @test GeometryBasics.pointtype(m) == Point3f
 
-        @test !hasproperty(m, :normals)
+        @test !hasproperty(m, :normal)
         @test normals(m) === nothing
 
         @test !hasproperty(m, :uv)
@@ -162,7 +162,7 @@ end
 
     @testset "mesh(mesh)" begin
         FT = GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
-        m = GeometryBasics.mesh(r, pointtype = Point3f, normals = normals(r), facetype = FT)
+        m = GeometryBasics.mesh(r, pointtype = Point3f, normal = normals(r), facetype = FT)
 
         # Should be hit by normal_mesh as well...
         @test coordinates(m) isa Vector{Point3f}

@@ -391,25 +391,27 @@ struct Mesh{
             @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
             names = map(name -> ifelse(name === :normals, :normal, name), Names)
             va = NamedTuple{names}(values(va))
+        else
+            names = Names
         end
 
         f_names = propertynames(FT)
-        if Names == f_names
+        if names == f_names
             # all good
-        elseif issubset(Names, f_names)
+        elseif issubset(names, f_names)
             # Remove the extra names in faces/fix order
             # Note: This might be redundant with `mesh()`. It is supposed to allow
             #       using a general `MultiFace` in `faces(primitive)` which then
             #       gets reduced to the vertex attributes used in a general mesh.
-            f = simplify_faces(Names, f)
+            f = simplify_faces(names, f)
         else
             error(
-                "Cannot construct a mesh with vertex attribute names $Names and MultiFace " * 
+                "Cannot construct a mesh with vertex attribute names $names and MultiFace " * 
                 "attribute names $f_names. These must include the same names in the same order."
             )
         end
 
-        return new{D, T, eltype(typeof(f)), keys(va), VAT, typeof(f)}(va, f, views)
+        return new{D, T, eltype(typeof(f)), names, VAT, typeof(f)}(va, f, views)
     end
 
     function Mesh(
