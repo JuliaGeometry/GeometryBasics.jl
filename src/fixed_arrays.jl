@@ -175,11 +175,12 @@ function Base.:(==)(a::StaticVector{N}, b::StaticVector{N}) where N
     return true
 end
 
-function Base.isapprox(a::StaticVector{N}, b::StaticVector{N}; kw...) where N
-    for i in 1:N
-        isapprox(a[i], b[i]; kw...) || return false
-    end
-    return true
+function Base.isapprox(
+        a::StaticVector{N1, T1}, b::StaticVector{N2, T2};
+        atol::Real = 0,
+        rtol::Real = atol > 0 ? 0 : sqrt(max(eps(T1), eps(T2)))
+    ) where {N1, N2, T1, T2}
+    return (N1 == N2) && norm(a - b) <= max(atol, rtol * max(norm(a), norm(b)))
 end
 
 @generated function Base.transpose(b::StaticVector{N,T}) where {N,T}
