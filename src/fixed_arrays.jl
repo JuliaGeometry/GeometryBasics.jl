@@ -100,6 +100,8 @@ macro fixed_vector(name_parent)
     return esc(expr)
 end
 
+# TODO: `ifelse.(vec, vec, vec)` broadcasts to Vector, not Vec
+# e.g. ifelse.(Vec2(true), Vec2(0), Vec2(1))
 Base.broadcasted(f, a::StaticVector) = similar_type(a)(f.(a.data))
 Base.broadcasted(::typeof(+), a::StaticVector, b::Base.OneTo{Int64}) = similar_type(a)((a.data .+ b))
 Base.broadcasted(f, a::StaticVector, b) = similar_type(a)(f.(a.data, b))
@@ -149,6 +151,8 @@ Base.size(::Type{<: StaticVector{N}}) where {N} = (N,)
 Base.length(::StaticVector{N}) where {N} = N
 Base.length(::Type{<: StaticVector{N}}) where {N} = N
 Base.ndims(::Type{<: StaticVector}) = 1
+
+Base.vcat(a::StaticVector, b::StaticVector) = (a..., b...)
 
 function Base.iterate(A::StaticVector, i=1)
     i - 1 < length(A) ? (A[i], i + 1) : nothing

@@ -41,6 +41,7 @@ end
 
 Mat{C, R, T}(args...) where {C, R, T} = Mat{C, R, T}(args)
 Mat{C, R, T, L}(args...) where {C, R, T, L} = Mat{C, R, T}(args)
+Mat{C, R, T, L}(mat::Mat{C, R}) where {C, R, T, L} = Mat{C, R, T}(mat.values)
 Mat{C}(args...) where {C} = Mat{C, C}(args)
 Mat{C}(arg) where {C} = Mat{C, C}(arg)
 Mat{C, R}(x::Tuple) where {C, R} = Mat{C, R}(promote(x...))
