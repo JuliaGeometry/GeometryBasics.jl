@@ -86,6 +86,9 @@ Constructs a `MultiFace` from a tuple of names `Names::NTuple{M, Symbol}` and
 MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
 MultiFace{Names}(f::MultiFace) where {Names} = MultiFace{Names}(getproperty.((f,), Names))
 MultiFace{Names}(args...) where {Names} = MultiFace{Names}(args)
+function MultiFace{Names}(args::NTuple{M, NTuple{N, <: Integer}}) where {Names, N, M}
+    return MultiFace(NamedTuple{Names}(NgonFace.(args)))
+end
 function MultiFace{Names}(args::Tuple{Vararg{<: AbstractVertexFace}}) where {Names}
     return MultiFace(NamedTuple{Names}(args))
 end
@@ -94,6 +97,14 @@ function MultiFace{N, T, FT, Names, M}(faces...) where {N, T, FT <: AbstractVert
     @assert length(faces) === M
     @assert length(Names) === M
     return MultiFace{Names}(FT.(face))
+end
+
+# As you get from shorthands without defining N, T, FT
+const UnspecializedMultiFace{Names, M} = MultiFace{N, T, FT, Names, M} where {N, T, FT <: AbstractVertexFace{N, T}}
+function UnspecializedMultiFace{Names, M}(faces...) where {Names, M}
+    @assert length(faces) === M
+    @assert length(Names) === M
+    return MultiFace{Names}(faces)
 end
 
 Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
@@ -114,6 +125,7 @@ function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where
 end
 
 # Shorthands for constructing faces
+const UVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :uv), 2}
 const NormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal), 2}
 const NormalUVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal, :uv), 3}
 
