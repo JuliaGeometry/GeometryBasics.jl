@@ -106,11 +106,12 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractVer
     end
     return collect_with_eltype(F, f)
 end
-    
-function decompose(::Type{F}, mesh::AbstractMesh) where {F<:AbstractVertexFace}
-    m = Mesh(mesh)
-    return decompose(F, faces(m), m.views)
-end
+  
+# TODO: move
+# function decompose(::Type{F}, mesh::AbstractMesh) where {F<:AbstractVertexFace}
+#     m = Mesh(mesh)
+#     return decompose(F, faces(m), m.views)
+# end
 
 function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractVertexFace}
     fs = faces(f)
@@ -118,22 +119,23 @@ function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractVertexFace}
     return collect_with_eltype(F, fs)
 end
 
-function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractVertexFace}
-    fs = faces(f)
-    isnothing(fs) && error("No faces defined for $(typeof(f))")
-    if isempty(views)
-        return collect_with_eltype(F, fs), views
-    else
-        output = F[]
-        new_views = UnitRange{Int}[]
-        for range in views
-            start = length(output) + 1
-            collect_with_eltype!(output, view(fs, range))
-            push!(new_views, start:length(output))
-        end
-        return output, new_views
-    end
-end
+# TODO: Move
+# function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractVertexFace}
+#     fs = faces(f)
+#     isnothing(fs) && error("No faces defined for $(typeof(f))")
+#     if isempty(views)
+#         return collect_with_eltype(F, fs), views
+#     else
+#         output = F[]
+#         new_views = UnitRange{Int}[]
+#         for range in views
+#             start = length(output) + 1
+#             collect_with_eltype!(output, view(fs, range))
+#             push!(new_views, start:length(output))
+#         end
+#         return output, new_views
+#     end
+# end
 
 function decompose(::Type{P}, primitive) where {P<:Point}
     return collect_with_eltype(P, coordinates(primitive))
