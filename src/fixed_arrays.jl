@@ -107,25 +107,24 @@ end
 # style rules
 Base.BroadcastStyle(::StaticArrayStyle{T, B1}, ::StaticArrayStyle{T, B2}) where {B1, B2, T} = StaticArrayStyle{T, B1 || B2}()
 Base.BroadcastStyle(s::StaticArrayStyle, ::Broadcast.AbstractArrayStyle{0}) = s
+Base.BroadcastStyle(::Broadcast.AbstractArrayStyle{0}, s::StaticArrayStyle) = s
 Base.BroadcastStyle(s::StaticArrayStyle, ::Broadcast.Style{Tuple}) = s
-Base.BroadcastStyle(::StaticArrayStyle{T, B}, ::Broadcast.AbstractArrayStyle) where {B, T} = StaticArrayStyle{T, true}()
+Base.BroadcastStyle(::Broadcast.Style{Tuple}, s::StaticArrayStyle) = s
+Base.BroadcastStyle(::StaticArrayStyle{T, B}, ::Broadcast.BroadcastStyle) where {B, T} = StaticArrayStyle{T, true}()
+Base.BroadcastStyle(::Broadcast.BroadcastStyle, ::StaticArrayStyle{T, B}) where {B, T} = StaticArrayStyle{T, true}()
 # to allow mixing types, define:
 # Base.BroadcastStyle(::StaticArrayStyle{<: Type1, B1}, ::StaticArrayStyle{<: Type2, B2}) where {B1, B2} = 
+#     StaticArrayStyle{preffered_type, B1 || B2}()
+# Base.BroadcastStyle(::StaticArrayStyle{<: Type2, B1}, ::StaticArrayStyle{<: Type1, B2}) where {B1, B2} = 
 #     StaticArrayStyle{preffered_type, B1 || B2}()
 
 # If we don't inherit from AbstractVector we need this?
 Base.broadcastable(x::StaticVector) = x
 
-# resolve element-wise operation
-function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, false}}) where T
-    # Broadcasted may end up in args from nested calls (e.g. foo(a, b .+ c); a .+ b .+ c)
-    args = map(arg -> values(arg isa Broadcast.Broadcasted ? copy(arg) : arg), bc.args)
-    return T(broadcast(bc.f, args...))
-end
-
-# resolve StaticVector-as-const (i.e. with base array)
-function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, true}}) where T
-    args_converted = map(arg -> arg isa Broadcast.Broadcasted ? copy(arg) : arg, bc.args)
+# Required to avoid size missmatches between Array and StaticVector
+function Broadcast.instantiate(bc::Broadcast.Broadcasted{<: StaticArrayStyle{<: Any, true}})
+    # transform this to an Array broadcast with Ref'd StaticVectors and tuples
+    args_converted = map(arg -> arg isa Broadcast.Broadcasted ? copy(Broadcast.instantiate(arg)) : arg, bc.args)
     maybe_const_args = map(args_converted) do arg
         style = Base.BroadcastStyle(typeof(arg))
         if style isa Broadcast.AbstractArrayStyle # value or Array
@@ -134,7 +133,14 @@ function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, true}}) where T
             return Ref(arg)
         end
     end
-    return broadcast(bc.f, maybe_const_args...)
+    return Broadcast.broadcasted(bc.f, maybe_const_args...)
+end
+
+# resolve element-wise operation
+function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, false}}) where T
+    # Broadcasted may end up in args from nested calls (e.g. foo(a, b .+ c); a .+ b .+ c)
+    args = map(arg -> values(arg isa Broadcast.Broadcasted ? copy(arg) : arg), bc.args)
+    return T(broadcast(bc.f, args...))
 end
 
 Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
@@ -231,6 +237,8 @@ Base.lastindex(::StaticVector{N}) where N = N
 
 # Allow mixing Point Vec in broadcast
 Base.BroadcastStyle(::StaticArrayStyle{<: Point, B1}, ::StaticArrayStyle{<: Vec, B2}) where {B1, B2} = 
+    StaticArrayStyle{Point, B1 || B2}()
+Base.BroadcastStyle(::StaticArrayStyle{<: Vec, B1}, ::StaticArrayStyle{<: Point, B2}) where {B1, B2} = 
     StaticArrayStyle{Point, B1 || B2}()
 
 Base.:(+)(a::Vec{N}, b::Point{N}) where {N} = Point{N}(a.data .+ b.data)

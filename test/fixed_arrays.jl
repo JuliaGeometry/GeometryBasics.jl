@@ -37,17 +37,17 @@ end
     # TODO: Should this work with tuple somehow?
     @testset "with Vector (acting as const)" begin
         for T1 in (Vec, Point)
-            x = [T1(2, 3), T1(7, 3)]
+            x = [T1(2, 3, 1), T1(7, 3, 2)]
             for T2 in (Vec, Point)
                 T = ifelse(T1 == Point, Point, ifelse(T2 == Point, Point, Vec))
-                @test [T(4, 9), T(14, 9)] == x .* T2(2, 3)
-                @test [T(foo(v, T2(3, -1))) for v in x] == foo.(x, T2(3, -1))
+                @test [T(4, 9, 4), T(14, 9, 8)] == x .* T2(2, 3, 4)
+                @test [T(foo(v, T2(3, -1, 1))) for v in x] == foo.(x, T2(3, -1, 1))
             end
         end
 
-        x = [M1, M2]
-        @test [M1 + M2, M2 + M2] == x .+ M2
-        @test [foo(M1, M2), foo(M2, M2)] == foo.(x, M2)
+        x = [M1, M2, M1]
+        @test [M1 + M2, M2 + M2, M1 + M2] == x .+ M2
+        @test [foo(M1, M2), foo(M2, M2), foo(M1, M2)] == foo.(x, M2)
 
         # maybe bad...?
         @test [Vec(2, 3), Vec(3, 4)] == [1, 2] .+ Vec(1, 2)
