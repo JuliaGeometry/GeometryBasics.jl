@@ -3,7 +3,7 @@ using LinearAlgebra
 import Random
 import Base: setindex
 
-abstract type StaticVector{N, T} end
+abstract type StaticVector{N, T} <: AbstractVector{T} end
 function similar_type end
 
 struct StaticArrayStyle{T, AsConst} <: Broadcast.BroadcastStyle end
@@ -119,7 +119,7 @@ Base.BroadcastStyle(::Broadcast.BroadcastStyle, ::StaticArrayStyle{T, B}) where 
 #     StaticArrayStyle{preffered_type, B1 || B2}()
 
 # If we don't inherit from AbstractVector we need this?
-Base.broadcastable(x::StaticVector) = x
+# Base.broadcastable(x::StaticVector) = x
 
 # Required to avoid size missmatches between Array and StaticVector
 function Broadcast.instantiate(bc::Broadcast.Broadcasted{<: StaticArrayStyle{<: Any, true}})
@@ -143,7 +143,9 @@ function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, false}}) where 
     return T(broadcast(bc.f, args...))
 end
 
-Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
+Base.map(f, a::StaticVector, args::AbstractArray...) = broadcast(f, a, args...)
+Base.map(f, a::AbstractArray, b::StaticVector, args::AbstractArray...) = broadcast(f, a, b, args...)
+Base.map(f, a::StaticVector, b::StaticVector, args::AbstractArray...) = broadcast(f, a, b, args...)
 
 function Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{V}) where V <: StaticVector{N,T} where {N, T}
     V(ntuple(i-> rand(rng, T), N))
