@@ -6,7 +6,7 @@ using Test
 end
 
 @testset "broadcast" begin
-    foo(args...) = +(args...) * -(args...)
+    foo(a, b) = (a + b) * (a - b)
     M1 = Mat{2, 2}(1,2,3,4)
     M2 = Mat{2, 2}(2,2,1,1)
 
@@ -53,21 +53,24 @@ end
         @test [Vec(2, 3), Vec(3, 4)] == [1, 2] .+ Vec(1, 2)
     end
 
-    @testset "chained" begin
+    @testset "chained/nested" begin
         for T1 in (Vec, Point, tuple)
             for T2 in (Vec, Point, tuple)
                 T1 == tuple && T2 == tuple && continue
                 T = ifelse(T1 == Point, Point, ifelse(T2 == Point, Point, Vec))
                 @test T(-6, -4, 4) == T1(1,2,3) .+ T2(1, 0, 1) .- T2(3, 2, 1) .* T1(2,2,0) .- T2(2,2,0)
+                @test T(-15, -5) == foo.(T1(1,2), T1(-1, 0) .+ foo.(T1(1,1), T2(2,2)))
             end
         end
 
         @test [Point(1, 3), Point(3, 1)] == [Vec(1,2), Vec(2, 1)] .+ [Vec(1,2), Vec(2, 1)] .+ Point(-1, -1)
         @test [Vec(1, 3), Point(3, 1)] == [Vec(1,2), Vec(2, 1)] .+ Vec(-1, -1) .+ [Vec(1,2), Point(2, 1)]
+        @test [Vec(-1, -3), Point(-3, -1)] == foo.([Vec(1,2), Vec(2, 1)] .+ Vec(-1, -1), [Vec(1,2), Point(2, 1)])
 
         x = [M1, M2]
         @test [M1 * M1 + M2, M1 * M2 + M2] == M1 .* x .+ M2
         @test [M1 + M2 * M1, M2 + M2 * M2] == x .+ M2 .* x
+        @test [foo(M1+M2, M1), foo(M2+M2, M2)] == foo.(x .+ M2, x)
     end
 
     @testset "Longer functions" begin
