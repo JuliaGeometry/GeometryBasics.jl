@@ -116,25 +116,17 @@ Base.BroadcastStyle(::StaticArrayStyle{T, B}, ::Broadcast.AbstractArrayStyle) wh
 # If we don't inherit from AbstractVector we need this?
 Base.broadcastable(x::StaticVector) = x
 
-# Resolve a .+ b .+ c
-function Base.broadcasted(f, arg, bc::Broadcast.Broadcasted{<: StaticArrayStyle})
-    return Base.broadcasted(f, arg, copy(bc))
-end
-function Base.broadcasted(f, bc::Broadcast.Broadcasted{<: StaticArrayStyle}, arg)
-    return Base.broadcasted(f, copy(bc), arg)
-end
-function Base.broadcasted(f, bc1::Broadcast.Broadcasted{<: StaticArrayStyle}, bc2::Broadcast.Broadcasted{<: StaticArrayStyle})
-    return Base.broadcasted(f, copy(bc1), copy(bc2))
-end
-
 # resolve element-wise operation
 function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, false}}) where T
-    return T(broadcast(bc.f, values.(bc.args)...))
+    # Broadcasted may end up in args from nested calls (e.g. foo(a, b .+ c); a .+ b .+ c)
+    args = map(arg -> values(arg isa Broadcast.Broadcasted ? copy(arg) : arg), bc.args)
+    return T(broadcast(bc.f, args...))
 end
 
 # resolve StaticVector-as-const (i.e. with base array)
 function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, true}}) where T
-    args = map(bc.args) do arg
+    args_converted = map(arg -> arg isa Broadcast.Broadcasted ? copy(arg) : arg, bc.args)
+    maybe_const_args = map(args_converted) do arg
         style = Base.BroadcastStyle(typeof(arg))
         if style isa Broadcast.AbstractArrayStyle # value or Array
             return arg
@@ -142,7 +134,7 @@ function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, true}}) where T
             return Ref(arg)
         end
     end
-    return broadcast(bc.f, args...)
+    return broadcast(bc.f, maybe_const_args...)
 end
 
 Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
