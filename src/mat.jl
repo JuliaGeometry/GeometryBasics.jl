@@ -4,11 +4,11 @@ import Random
 struct Mat{Row, Column, T, L} <: AbstractMatrix{T}
     values::NTuple{L, T}
     function Mat{R, C, T}(values::NTuple{L, T}) where {R, C, T, L}
-        @assert L == R * C "$R * $C needs to be $L"
+        @assert L == R * C "Number of rows $R * number of columns $C needs to match the number of values $L."
         return new{R, C, T, L}(values)
     end
         function Mat{R, C, T, L}(values::NTuple{L, T}) where {R, C, T, L}
-        @assert L == R * C "$R * $C needs to be $L"
+        @assert L == R * C "Number of rows $R * number of columns $C needs to match the number of values $L."
         return new{R, C, T, L}(values)
     end
 end
@@ -16,33 +16,36 @@ end
 Base.size(::Mat{R, C}) where {R, C} = (R, C)
 Base.size(::Type{<: Mat{R, C}}) where {R, C} = (R, C)
 Base.ndims(::Type{<: Mat}) = 2
-Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
-Base.getindex(mat::Mat{R, C}, i::CartesianIndex) where {R, C} = mat.values[i.I[1] + R * (i.I[2] - 1)]
+Base.@propagate_inbounds Base.getindex(mat::Mat{R, C}, i) where {R, C} = mat.values[i]
+Base.@propagate_inbounds Base.getindex(mat::Mat{R, C}, i::CartesianIndex) where {R, C} = mat.values[i.I[1] + R * (i.I[2] - 1)]
 
 # TODO: maybe ranges as well?
-function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::Integer) where {R, C, N}
+Base.@propagate_inbounds function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::Integer) where {R, C, N}
     @boundscheck begin
-        all(x -> 1 ≤ x ≤ R, i) && (1 ≤ j ≤ C)
+        inbounds = all(x -> 1 ≤ x ≤ R, i) && (1 ≤ j ≤ C)
+        inbounds || throw(BoundsError(mat, (i, j)))
     end
     @inbounds data = ntuple(n -> mat.values[i[n] + R * (j-1)], N)
-    return Mat{length(i), 1}(data)
+    return Mat{N, 1}(data)
 end
-function Base.getindex(mat::Mat{R, C}, i::Integer, j::StaticVector{N}) where {R, C, N}
+Base.@propagate_inbounds function Base.getindex(mat::Mat{R, C}, i::Integer, j::StaticVector{N}) where {R, C, N}
     @boundscheck begin
-        (1 ≤ i ≤ R) && all(x -> 1 ≤ x ≤ C, j)
+        inbounds = (1 ≤ i ≤ R) && all(x -> 1 ≤ x ≤ C, j)
+        inbounds || throw(BoundsError(mat, (i, j)))
     end
     @inbounds data = ntuple(n -> mat.values[i + R * (j[n] - 1)], N)
-    return Mat{1, length(j)}(data)
+    return Mat{1, N}(data)
 end
-function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::StaticVector{M}) where {R, C, N, M}
+Base.@propagate_inbounds function Base.getindex(mat::Mat{R, C}, i::StaticVector{N}, j::StaticVector{M}) where {R, C, N, M}
     @boundscheck begin
-        all(x -> 1 ≤ x ≤ R, i) && all(x -> 1 ≤ x ≤ C, j)
+        inbounds = all(x -> 1 ≤ x ≤ R, i) && all(x -> 1 ≤ x ≤ C, j)
+        inbounds || throw(BoundsError(mat, (i, j)))
     end
-    data = ntuple(N * M) do nm
-        m, n = fldmod1(nm, R)
-        @inbounds return mat.values[i[n] + R * (j[m] - 1)]
+    @inbounds data = ntuple(N * M) do nm
+        m, n = fldmod1(nm, N)
+        return mat.values[i[n] + R * (j[m] - 1)]
     end
-    return Mat{1, length(j)}(data)
+    return Mat{N, M}(data)
 end
 
 Base.IndexStyle(::Type{<: Mat}) = Base.IndexLinear()
