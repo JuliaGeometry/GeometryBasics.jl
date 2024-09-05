@@ -47,6 +47,11 @@ end
 
 Base.IndexStyle(::Type{<: Mat}) = Base.IndexLinear()
 
+# Broadcasting
+Base.broadcastable(x::Mat) = x
+Base.BroadcastStyle(::Type{<: Mat{C, R}}) where {C, R} = StaticArrayStyle{Mat{C, R}}()
+Base.values(m::Mat) = m.values
+
 function Mat{C, R, T}(::LinearAlgebra.UniformScaling) where {C, R, T}
     idx = CartesianIndices((R, C))
     data = ntuple(C * R) do i

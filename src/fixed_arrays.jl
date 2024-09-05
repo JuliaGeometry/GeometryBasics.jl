@@ -6,6 +6,9 @@ import Base: setindex
 abstract type StaticVector{N, T} end
 function similar_type end
 
+struct StaticArrayStyle{T, AsConst} <: Broadcast.BroadcastStyle end
+StaticArrayStyle{T}() where T = StaticArrayStyle{T, false}()
+
 macro fixed_vector(name_parent)
     @assert name_parent.head == :(=)
     VecT, SuperT = name_parent.args
@@ -87,9 +90,9 @@ macro fixed_vector(name_parent)
         @inline similar_type(::$(VecT), n::Integer, ::Type{T}) where {T} = $(VecT){n, T}
         @inline similar_type(::$(VecT)) = $(VecT)
 
-        function Base.broadcasted(f, a::$(VecT), b::$(VecT))
-            return $(VecT)(map(f, a.data, b.data))
-        end
+        Base.BroadcastStyle(::Type{<: $(VecT)}) = StaticArrayStyle{$(VecT)}()
+        Base.values(v::$(VecT)) = v.data
+
         function LinearAlgebra.cross(a::$(VecT){3}, b::$(VecT){3})
             @inbounds elements = (a[2]*b[3]-a[3]*b[2],
                                     a[3]*b[1]-a[1]*b[3],
@@ -100,13 +103,47 @@ macro fixed_vector(name_parent)
     return esc(expr)
 end
 
-# TODO: `ifelse.(vec, vec, vec)` broadcasts to Vector, not Vec
-# e.g. ifelse.(Vec2(true), Vec2(0), Vec2(1))
-Base.broadcasted(f, a::StaticVector) = similar_type(a)(f.(a.data))
-Base.broadcasted(::typeof(+), a::StaticVector, b::Base.OneTo{Int64}) = similar_type(a)((a.data .+ b))
-Base.broadcasted(f, a::StaticVector, b) = similar_type(a)(f.(a.data, b))
-Base.broadcasted(f, a, b::StaticVector{N}) where N = similar_type(b, N)(f.(a, b.data))
-Base.broadcasted(f, a::AbstractArray, b::StaticVector{N}) where N = f.(a, (b,))
+# Broadcasting
+# style rules
+Base.BroadcastStyle(::StaticArrayStyle{T, B1}, ::StaticArrayStyle{T, B2}) where {B1, B2, T} = StaticArrayStyle{T, B1 || B2}()
+Base.BroadcastStyle(s::StaticArrayStyle, ::Broadcast.AbstractArrayStyle{0}) = s
+Base.BroadcastStyle(s::StaticArrayStyle, ::Broadcast.Style{Tuple}) = s
+Base.BroadcastStyle(::StaticArrayStyle{T, B}, ::Broadcast.AbstractArrayStyle) where {B, T} = StaticArrayStyle{T, true}()
+# to allow mixing types, define:
+# Base.BroadcastStyle(::StaticArrayStyle{<: Type1, B1}, ::StaticArrayStyle{<: Type2, B2}) where {B1, B2} = 
+#     StaticArrayStyle{preffered_type, B1 || B2}()
+
+# If we don't inherit from AbstractVector we need this?
+Base.broadcastable(x::StaticVector) = x
+
+# Resolve a .+ b .+ c
+function Base.broadcasted(f, arg, bc::Broadcast.Broadcasted{<: StaticArrayStyle})
+    return Base.broadcasted(f, arg, copy(bc))
+end
+function Base.broadcasted(f, bc::Broadcast.Broadcasted{<: StaticArrayStyle}, arg)
+    return Base.broadcasted(f, copy(bc), arg)
+end
+function Base.broadcasted(f, bc1::Broadcast.Broadcasted{<: StaticArrayStyle}, bc2::Broadcast.Broadcasted{<: StaticArrayStyle})
+    return Base.broadcasted(f, copy(bc1), copy(bc2))
+end
+
+# resolve element-wise operation
+function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, false}}) where T
+    return T(broadcast(bc.f, values.(bc.args)...))
+end
+
+# resolve StaticVector-as-const (i.e. with base array)
+function Base.copy(bc::Broadcast.Broadcasted{StaticArrayStyle{T, true}}) where T
+    args = map(bc.args) do arg
+        style = Base.BroadcastStyle(typeof(arg))
+        if style isa Broadcast.AbstractArrayStyle # value or Array
+            return arg
+        else # tuple, StaticVector
+            return Ref(arg)
+        end
+    end
+    return broadcast(bc.f, args...)
+end
 
 Base.map(f, b::StaticVector) = similar_type(b)(map(f, b.data))
 
@@ -133,9 +170,9 @@ import Base: *, +, -, /
 
 for op in [:*, :+, :-, :/]
     @eval begin
-        ($op)(a::StaticVector, b::StaticVector) = Base.broadcasted($(op), a, b)
-        ($op)(a::Number, b::StaticVector) = Base.broadcasted($(op), a, b)
-        ($op)(a::StaticVector, b::Number) = Base.broadcasted($(op), a, b)
+        ($op)(a::StaticVector, b::StaticVector) = Base.broadcast($(op), a, b)
+        ($op)(a::Number, b::StaticVector) = Base.broadcast($(op), a, b)
+        ($op)(a::StaticVector, b::Number) = Base.broadcast($(op), a, b)
     end
 end
 
@@ -200,8 +237,10 @@ LinearAlgebra.promote_leaf_eltypes(x::StaticVector{N, T}) where {N,T} = T
 
 Base.lastindex(::StaticVector{N}) where N = N
 
-Base.broadcasted(f, a::Point, b::Vec) = Vec(f.(a.data, b.data))
-Base.broadcasted(f, a::Vec, b::Point) = Vec(f.(a.data, b.data))
+# Allow mixing Point Vec in broadcast
+Base.BroadcastStyle(::StaticArrayStyle{<: Point, B1}, ::StaticArrayStyle{<: Vec, B2}) where {B1, B2} = 
+    StaticArrayStyle{Point, B1 || B2}()
+
 Base.:(+)(a::Vec{N}, b::Point{N}) where {N} = Point{N}(a.data .+ b.data)
 
 const VecTypes{N,T} = Union{StaticVector{N,T}, NTuple{N,T}}
