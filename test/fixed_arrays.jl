@@ -104,3 +104,30 @@ end
         end
     end
 end
+
+@testset "Mat" begin
+    M3 = Mat3(1,2,3, 4,5,6, 7,8,9)
+    @test M3 isa Mat{3,3,Int,9}
+    
+    @testset "indexing" begin
+        for i in 1:9
+            @test getindex(M3, i) == i
+        end
+        @test_throws BoundsError getindex(M3, 0)
+        @test_throws BoundsError getindex(M3, 10)
+
+        # Sanity check for loop
+        @test M3[2, Vec(1,2)] == Mat{1, 2}(M3[2,1], M3[2,2])
+
+        for x in (2, Vec(1,2), Vec(1,1,2,2))
+            for y in (2, Vec(1,2), Vec(1,1,2,2))
+                x isa Real && y isa Real && continue
+                @test M3[x, y] == Mat{length(x), length(y)}((M3[i, j] for j in y for i in x)...)
+                @test_throws BoundsError M3[x .- 2, y]
+                @test_throws BoundsError M3[x, y .+ 2]
+                @test_throws BoundsError M3[x .+ 2, y .- 2]
+            end
+        end
+
+    end
+end
