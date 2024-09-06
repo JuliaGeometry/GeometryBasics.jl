@@ -56,6 +56,11 @@ Extract all line segments in a Face.
     return v
 end
 
+# This assumes that line faces don't care about normals, uvs, etc
+function convert_simplex(::Type{LF}, f::MultiFace) where {LF <: LineFace}
+    return convert_simplex(LF, f.position)
+end
+
 to_pointn(::Type{T}, x) where {T<:Point} = convert_simplex(T, x)[1]
 
 # disambiguation method overlords
