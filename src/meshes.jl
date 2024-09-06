@@ -30,7 +30,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
     return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
 end
 
-function drop_nothing_kwargs(kwargs::Base.Pairs)
+function drop_nothing_kwargs(kwargs)
     _keys = filter(k -> !isnothing(kwargs[k]), keys(kwargs))
     _vals = ntuple(n -> kwargs[_keys[n]], length(_keys))
     return NamedTuple{_keys}(_vals)
