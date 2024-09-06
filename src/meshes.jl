@@ -30,6 +30,12 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
     return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
 end
 
+function drop_nothing_kwargs(kwargs::Base.Pairs)
+    _keys = filter(k -> !isnothing(kwargs[k]), keys(kwargs))
+    _vals = ntuple(n -> kwargs[_keys[n]], length(_keys))
+    return NamedTuple{_keys}(_vals)
+end
+
 """
     mesh(positions, faces[, facetype = GLTriangleFace, vertex_attributes...])
 
@@ -46,6 +52,8 @@ function mesh(
         facetype=GLTriangleFace, vertex_attributes...
     )
 
+    va = drop_nothing_kwargs(vertex_attributes)
+
     if facetype <: AbstractMultiFace
         # drop vertex attribute references in faces that facetype does not include
         f = simplify_faces(facetype, faces) # TODO: call this decompose?
@@ -54,16 +62,14 @@ function mesh(
         # drop vertex attributes references in faces that are not part of the 
         # given vertex attributes. (This allows multi_face to be more general
         # than the mesh we construct)
-        names = (:position, keys(vertex_attributes)...)
+        names = (:position, keys(va)...)
         _f2 = simplify_faces(names, faces)
                 
         # Convert MultiFace to its internally used VertexFace type and apply 
         # necessary vertex attribute remapping
         _f, mappings = merge_vertex_indices(_f2)
         positions = positions[mappings[1]]
-        vertex_attributes = NamedTuple(
-            (Pair(names[i], vertex_attributes[i-1][mappings[i]]) for i in 2:length(mappings))    
-        )
+        va = NamedTuple((Pair(names[i], va[i-1][mappings[i]]) for i in 2:length(mappings)))
         
         # Convert to actually requested facetype
         f = decompose(facetype, _f)
@@ -71,7 +77,7 @@ function mesh(
         error("Cannot convert MultiFace to $facetype.")
     end
 
-    return Mesh(positions, f; vertex_attributes...)
+    return Mesh(positions, f; va...)
 end
 
 function mesh(
@@ -80,7 +86,8 @@ function mesh(
         facetype=GLTriangleFace, vertex_attributes...)
 
     f = decompose(facetype, faces)
-    return Mesh(positions, f; vertex_attributes...)
+    va = drop_nothing_kwargs(vertex_attributes)
+    return Mesh(positions, f; va...)
 end
 
 """
@@ -132,23 +139,25 @@ function mesh(
         attributes...
     ) where {D, T, FT <: AbstractVertexFace}
     
+    va = drop_nothing_kwargs(attributes)
+
     N = length(mesh.position)
-    if !all(attr -> length(attr) == N, values(attributes))
+    if !all(attr -> length(attr) == N, values(va))
         error("At least one of the given vertex attributes does not match `length(mesh.positon) = $N`.")
     end
 
     if FT == facetype
-        if isempty(attributes) && GeometryBasics.pointtype(mesh) == pointtype
+        if isempty(va) && GeometryBasics.pointtype(mesh) == pointtype
             return mesh
         else
             # 1. add vertex attributes, 2. convert position attribute
-            va = merge(vertex_attributes(mesh), NamedTuple(attributes))
+            va = merge(vertex_attributes(mesh), va)
             va = merge(va, (position = decompose(pointtype, va.position),))
             return Mesh(va, faces(mesh), mesh.views)
         end
     else
         # 1. add vertex attributes, 2. convert position attribute
-        va = merge(vertex_attributes(mesh), NamedTuple(attributes))
+        va = merge(vertex_attributes(mesh), va)
         va = merge(va, (position = decompose(pointtype, va.position),))
 
         # update face types
