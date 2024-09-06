@@ -89,6 +89,7 @@ Mat{C, R, T1}(x::NTuple{L, T2}) where {C, R, L, T1, T2} = Mat{C, R, T1}(convert(
 
 Mat{C, R}(x::AbstractMatrix{T}) where {C, R, T} = Mat{C, R, T}(x)
 Mat{C, R, T}(x::AbstractMatrix) where {C, R, T} = Mat{C, R, T}(ntuple(i-> convert(T, x[i]), C*R))
+Mat{C, R, T, N}(x::AbstractMatrix) where {C, R, T, N} = Mat{C, R, T}(ntuple(i-> convert(T, x[i]), C*R))
 
 Base.convert(::Type{Mat{C, R, T, L}}, from::Mat{C, R}) where {C, R, T, L} = Mat{C, R, T}(from.values)
 
@@ -221,3 +222,11 @@ end
 
 # TODO: Fix Vec(mat) becoming Vec((mat,)) (i.e. restrict eltype to Number?)
 (VT::Type{<: StaticVector{N}})(mat::Mat{N, 1}) where {N} = VT(mat.values)
+
+function Base.isapprox(
+        a::Mat{R1, C1, T1}, b::Mat{R2, C2, T2};
+        atol::Real = 0,
+        rtol::Real = atol > 0 ? 0 : sqrt(max(eps(T1), eps(T2)))
+    ) where {R1, R2, C1, C2, T1, T2}
+    return (R1 == R2) && (C1 == C2) && norm(a - b) <= max(atol, rtol * max(norm(a), norm(b)))
+end
