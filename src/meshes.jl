@@ -163,10 +163,6 @@ function mesh(m::AbstractMesh, args...; kwargs...)
     error("No method mesh() found for the given inputs.")
 end
 
-
-const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
-const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
-
 """
     mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
          normaltype=nothing)

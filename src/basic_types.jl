@@ -128,6 +128,7 @@ end
 const UVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :uv), 2}
 const NormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal), 2}
 const NormalUVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal, :uv), 3}
+const UVNormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :uv, :normal), 3}
 
 # enable something like NormalUVFace{GLTriangleFace}[(pos_face, normal_face, uv_face), ...]
 function Base.convert(::Type{<: MultiFace{N, T, FT, Names}}, t::Tuple) where {N, T, FT, Names}
@@ -494,8 +495,8 @@ function Base.getindex(::Mesh, f::AbstractMultiFace)
 end
 
 function Base.:(==)(a::Mesh, b::Mesh)
-    return a.vertex_attributes == b.vertex_attributes && 
-           faces(a) == faces(b) && a.views == b.views
+    return (a.vertex_attributes == b.vertex_attributes) && 
+           (faces(a) == faces(b)) && (a.views == b.views)
 end
 
 function Base.iterate(mesh::Mesh, i=1)
@@ -565,3 +566,14 @@ meta(@nospecialize(m)) = NamedTuple()
 meta(mesh::MetaMesh) = getfield(mesh, :meta)
 Mesh(mesh::MetaMesh) = getfield(mesh, :mesh)
 Mesh(mesh::Mesh) = mesh
+
+
+# Shorthand types
+# used in meshes.jl
+const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
+const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
+#
+const NormalMesh{N, T, FT}   = Mesh{N, T, FT, (:position, :normal), Tuple{Vector{Point{N, T}}, Vector{Vec3f}}, Vector{FT}}
+const NormalUVMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal, :uv), Tuple{Vector{Point{N, T}}, Vector{Vec3f}, Vector{Vec2f}}, Vector{FT}}
+const GLNormalMesh{N}   = NormalMesh{N, Float32, GLTriangleFace}
+const GLNormalUVMesh{N} = NormalUVMesh{N, Float32, GLTriangleFace}
