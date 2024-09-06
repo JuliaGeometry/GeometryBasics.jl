@@ -189,6 +189,8 @@ Base.length(::StaticVector{N}) where {N} = N
 Base.length(::Type{<: StaticVector{N}}) where {N} = N
 Base.ndims(::Type{<: StaticVector}) = 1
 
+Base.copy(v::StaticVector) = deepcopy(v)
+
 Base.vcat(a::StaticVector, b::StaticVector) = (a..., b...)
 
 function Base.iterate(A::StaticVector, i=1)
