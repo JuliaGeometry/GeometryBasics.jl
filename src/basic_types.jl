@@ -461,6 +461,10 @@ end
 # const SimpleGLMesh{D, T} = Mesh{D, T, GLTriangleFace, (:position,)}
 
 @inline function Base.hasproperty(mesh::Mesh, field::Symbol)
+    if field === :normals
+        @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
+        return hasfield(mesh, :normal)
+    end
     return hasproperty(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
 end
 @inline function Base.getproperty(mesh::Mesh, field::Symbol)
