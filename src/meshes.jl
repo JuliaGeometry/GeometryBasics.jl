@@ -412,14 +412,15 @@ function merge_vertex_indices(
         attribs::NamedTuple, 
         faces::AbstractVector{<: AbstractVertexFace},
         views::Vector{UnitRange{Int}},
-        vertex_index_counter = nothing
+        vertex_index_counter = nothing, 
+        loop = false
     )
     return attribs, faces, views
 end
 
 function merge_vertex_indices(
         attribs::NamedTuple, 
-        faces::AbstractVector{<: MultiFace},
+        faces::AbstractVector{<: MultiFace{N, T, FT} where {N, T, FT}},
         views::Vector{UnitRange{Int}},
         vertex_index_counter = nothing,
         looped = false

@@ -62,7 +62,7 @@ function Rect{N,T1}(a::Rect{N,T2}) where {N,T1,T2}
     return Rect(Vec{N,T1}(minimum(a)), Vec{N,T1}(widths(a)))
 end
 
-function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
+function Rect(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
     T = promote_type(T1, T2)
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end

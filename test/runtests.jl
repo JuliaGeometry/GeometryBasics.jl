@@ -6,6 +6,8 @@ using GeoInterface
 using GeoJSON
 using Extents
 
+using GeometryBasics: MultiFace
+
 @testset "GeometryBasics" begin
 @testset "algorithms" begin
     @test_broken false
@@ -193,7 +195,9 @@ end
     r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test first(texturecoordinates(r3)) == Vec3(0, 0, 0)
     uv = decompose_uv(m)
-    @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
+    @test_broken false # Rect(Point.(uv)) == Rect(0, 0, 1, 1) # decompose_uv must now produces 2D uvs
+    uvw = GeometryBasics.decompose_uvw(m)
+    @test Rect(Point.(uvw)) == Rect(Point3f(0), Vec3f(1))
 
     points = decompose(Point2f, Circle(Point2f(0), 1))
     m = GeometryBasics.mesh(points)
