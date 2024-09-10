@@ -278,10 +278,11 @@ end
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
         return Mesh(Point3f[], GLTriangleFace[])
+
     elseif length(meshes) == 1
         return meshes[1]
-    else
 
+    else
         m1 = meshes[1]
 
         # Check that all meshes use the same VertexAttributes
@@ -338,69 +339,18 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 
             return Mesh(new_attribs, fs, views)
 
-        else
+        else # mixed MultiFace and VertexFace
+            
+            # simplify to VertexFace types, then retry merge
+            return merge(merge_vertex_indices.(meshes))
 
-            # TODO: We can probably simplify this to `merge(merge_vertex_indices.(meshes))`
-            #       but need to check performance
-
-
-            # Varying ace types, need to convert MultiFace
-            new_attribs = NamedTuple{names}(similar.(values(vertex_attributes(m1)), 0))
-            FT = facetype(m1) <: MultiFace ? eltype(facetype(m1)) : facetype(m1)
-            remapped_faces = []
-            new_views = UnitRange{Int}[]
-            vertex_index_counter = eltype(FT)(1)
-
-            for mesh in meshes
-                # convert MultiFace mesh to vertex faces, synchronizing vertex indices
-                attribs, fs, views = merge_vertex_indices(
-                    vertex_attributes(mesh), faces(mesh), mesh.views, vertex_index_counter)
-                
-                # increment first vertex index used by faces of the next iteration
-                vertex_index_counter += length(attribs[1])
-                
-                # update merged data
-                for name in names
-                    append!(new_attribs[name], attribs[name])
-                end
-
-                push!(remapped_faces, fs)
-
-                if isempty(views)
-                    push!(new_views, 1:length(fs))
-                else 
-                    append!(new_views, views)
-                end
-            end
-
-            # We did MultiFace -> vertex face, now equalize vertex face types
-            new_faces = reduce(vcat, remapped_faces)
-
-            return Mesh(new_attribs, new_faces, new_views)
         end
 
     end
 end
 
-# TODO: Probably not our problem
-# function Base.merge(meshes::AbstractVector{T}) where T <: MetaMesh
-#     isempty(meshes) && return T(Point3f[], GLTriangleFace[])
-#     big_mesh = merge(map(Mesh, meshes))
-#     big_meta = deepcopy(meta(meshes[1]))
-#     for mesh in Iterators.drop(meshes, 1)
-#         mm = meta(mesh)
-#         for (k, v) in pairs(mm)
-#             append!(big_meta[k], v)
-#         end
-#     end
-#     return MetaMesh(big_mesh, big_meta)
-# end
 
-# TODO: naming
-# synchronize_vertex_attributes
-# merge_vertex_(attribute)_indices
-# convert(Face, MultiFace)
-# ...
+
 function merge_vertex_indices(mesh::AbstractMesh)
     attribs, fs, views = merge_vertex_indices(
         vertex_attributes(mesh), faces(mesh), mesh.views)
