@@ -76,6 +76,8 @@ function normals(c::Cylinder, nvertices = 30)
 end
 
 function faces(c::Cylinder, facets=30)
+    return nothing
+    #=
     nvertices = facets + isodd(facets)
     nhalf = div(nvertices, 2)
 
@@ -102,4 +104,5 @@ function faces(c::Cylinder, facets=30)
     end
 
     return vcat(disk1, mantle, disk2)
+    =#
 end

@@ -571,16 +571,12 @@ function coordinates(rect::Rect3{T}) where T
     # TODO use n
     w = widths(rect)
     o = origin(rect)
-    # points = Point{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
-    #                       (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
-    #                       (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
-    #                       (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
-    # return ((x .* w .+ o) for x in points)
     return Point{3, T}[o + (x, y, z) .* w for x in (0, 1) for y in (0, 1) for z in (0, 1)]
 end
 
 function normals(::Rect3)
-    return Vec3f[(-1,0,0), (1,0,0), (0,-1,0), (0,1,0), (0,0,-1), (0,0,1)]
+    ns = Vec3f[(-1,0,0), (1,0,0), (0,-1,0), (0,1,0), (0,0,-1), (0,0,1)]
+    return FaceView(ns, QuadFace{Int}.(1:6))
 end
 
 function texturecoordinates(rect::Rect3)
@@ -588,13 +584,8 @@ function texturecoordinates(rect::Rect3)
 end
 
 function faces(::Rect3)
-    return NormalUVFace{4, Int, QuadFace{Int}}[
-        #  position  normal    uv
-        ((1, 2, 4, 3), 1, (1, 2, 4, 3)), # -x
-        ((7, 8, 6, 5), 2, (7, 8, 6, 5)), # +x
-        ((5, 6, 2, 1), 3, (5, 6, 2, 1)), # -y
-        ((3, 4, 8, 7), 4, (3, 4, 8, 7)), # +y
-        ((1, 3, 7, 5), 5, (1, 3, 7, 5)), # -z
-        ((6, 8, 4, 2), 6, (6, 8, 4, 2)), # +z
+    return QuadFace{Int}[
+        (1, 2, 4, 3), (7, 8, 6, 5), (5, 6, 2, 1), 
+        (3, 4, 8, 7), (1, 3, 7, 5), (6, 8, 4, 2)
     ]
 end

@@ -56,11 +56,6 @@ Extract all line segments in a Face.
     return v
 end
 
-# This assumes that line faces don't care about normals, uvs, etc
-function convert_simplex(::Type{LF}, f::MultiFace) where {LF <: LineFace}
-    return convert_simplex(LF, f.position)
-end
-
 to_pointn(::Type{T}, x) where {T<:Point} = convert_simplex(T, x)[1]
 
 # disambiguation method overlords
@@ -78,7 +73,12 @@ end
 
 collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
+collect_with_eltype(::Type{T}, vec::FaceView{T}) where {T} = vec
 collect_with_eltype(::Type{T}, iter) where {T} = collect_with_eltype!(T[], iter)
+
+function collect_with_eltype(::Type{T}, iter::FaceView) where {T}
+    return FaceView(collect_with_eltype!(T[], iter.data), iter.faces)
+end
 
 function collect_with_eltype!(target::AbstractVector{T}, vec::AbstractVector{T}) where {T}
     return append!(target, vec)

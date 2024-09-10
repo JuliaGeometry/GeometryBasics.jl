@@ -14,8 +14,14 @@ It also only losely correlates to the number of vertices, depending on the algor
 function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
 
+    if positions isa FaceView
+        positions = positions.data
+        _fs = positions.faces
+    else
+        _fs = faces(primitive)
+    end
+
     # If faces returns nothing for primitive, we try to triangulate!
-    _fs = faces(primitive)
     if isnothing(_fs)
         if eltype(positions) <: Point2
             # triangulation.jl
@@ -27,7 +33,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
         fs = _fs
     end
 
-    return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
+    return mesh(positions, fs; facetype = facetype, vertex_attributes...)
 end
 
 function drop_nothing_kwargs(kwargs)
@@ -48,103 +54,39 @@ reordering and duplication of positions and other vertex attributes.
 """
 function mesh(
         positions::AbstractVector{<:Point}, 
-        faces::AbstractVector{<: AbstractMultiFace};
+        faces::AbstractVector{FT}; 
         facetype=GLTriangleFace, vertex_attributes...
-    )
+    ) where {FT <: AbstractVertexFace}
 
+    fs = decompose(facetype, faces)
     va = drop_nothing_kwargs(vertex_attributes)
 
-    if facetype <: AbstractMultiFace
-        # drop vertex attribute references in faces that facetype does not include
-        f = simplify_faces(facetype, faces) # TODO: call this decompose?
-    
-    elseif facetype <: AbstractVertexFace
-        # drop vertex attributes references in faces that are not part of the 
-        # given vertex attributes. (This allows multi_face to be more general
-        # than the mesh we construct)
-        names = (:position, keys(va)...)
-        _f2 = simplify_faces(names, faces)
-                
-        # Convert MultiFace to its internally used VertexFace type and apply 
-        # necessary vertex attribute remapping
-        _f, mappings = merge_vertex_indices(_f2)
-        positions = positions[mappings[1]]
-        va = NamedTuple((Pair(names[i], va[i-1][mappings[i]]) for i in 2:length(mappings)))
-        
-        # Convert to actually requested facetype
-        f = decompose(facetype, _f)
-    else
-        error("Cannot convert MultiFace to $facetype.")
+    if (facetype != FT)
+        va = NamedTuple(map(keys(va)) do name
+            attrib = va[name]
+            if attrib isa FaceView
+                return name => FaceView(attrib.data, decompose(facetype, attrib.faces))
+            else
+                return name => attrib
+            end
+        end)
     end
 
-    return Mesh(positions, f; va...)
-end
-
-function mesh(
-        positions::AbstractVector{<:Point}, 
-        faces::AbstractVector{<: AbstractVertexFace}; 
-        facetype=GLTriangleFace, vertex_attributes...)
-
-    f = decompose(facetype, faces)
-    va = drop_nothing_kwargs(vertex_attributes)
-    return Mesh(positions, f; va...)
-end
-
-"""
-    mesh(mesh::Mesh{D, T}[; pointtype = Point{D, Float32}, facetype = GLTriangleFace, vertex_attributes...])
-
-Converts a mesh to the given point and face types and adds the given vertex attributes.
-
-Note that the target `facetype` must `<: AbstractVertexFace` and that vertex 
-attributes are only allowed if `facetype(mesh) <: AbstractVertexFace`. 
-"""
-function mesh(
-        mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
-        facetype::Type{<: AbstractVertexFace} = GLTriangleFace,
-        attributes...
-    ) where {D, T, FT <: AbstractMultiFace}
-
-    if !isempty(attributes)
-        error(
-            "Cannot add vertex attributes to a mesh with face type $FT as the " * 
-            "indexing of the new attributes is not clearly defined."
-        )
-    end
-
-    if FT == facetype
-        if GeometryBasics.pointtype(mesh) == pointtype
-            return mesh
-        else
-            va = merge(vertex_attributes(mesh), (position = decompose(pointtype, mesh),))
-            return Mesh(va, faces(mesh), mesh.views)
-        end
-    else
-        # update position type (doing this first is likely cheaper since 
-        # MultiFace likely requires duplication of vertex attributes)
-        va = merge(vertex_attributes(mesh), (position = decompose(pointtype, mesh),))
-
-        # MultiFace{VertexFace} -> VertexFace
-        attribs, _fs, views = merge_vertex_indices(va, faces(mesh), mesh.views)
-
-        # VertexFace -> facetype
-        fs, views = decompose(facetype, _fs, views)
-
-        return Mesh(attribs, fs, views)
-    end
+    return Mesh(positions, fs; va...)
 end
 
 function mesh(
         mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
-        facetype::Type{<: AbstractVertexFace} = GLTriangleFace,
+        facetype::Type{<: AbstractFace} = GLTriangleFace,
         attributes...
-    ) where {D, T, FT <: AbstractVertexFace}
+    ) where {D, T, FT <: AbstractFace}
     
     va = drop_nothing_kwargs(attributes)
 
-    N = length(mesh.position)
-    if !all(attr -> length(attr) == N, values(va))
-        error("At least one of the given vertex attributes does not match `length(mesh.positon) = $N`.")
-    end
+    # N = length(mesh.position)
+    # if !all(attr -> length(attr) == N, values(va))
+    #     error("At least one of the given vertex attributes does not match `length(mesh.positon) = $N`.")
+    # end
 
     if FT == facetype
         if isempty(va) && GeometryBasics.pointtype(mesh) == pointtype
@@ -160,16 +102,20 @@ function mesh(
         va = merge(vertex_attributes(mesh), va)
         va = merge(va, (position = decompose(pointtype, va.position),))
 
-        # update face types
+        # Resolve facetype conversions of FaceViews
+        va = NamedTuple(map(keys(va)) do name
+            attrib = va[name]
+            if attrib isa FaceView
+                return name => FaceView(attrib.data, decompose(facetype, attrib.faces))
+            else
+                return name => attrib
+            end
+        end)
+
+        # update main face type
         f, views = decompose(facetype, faces(mesh), mesh.views)
         return Mesh(va, f, views)
     end
-end
-
-# catch-all else because these conversions need some oversight
-function mesh(m::AbstractMesh, args...; kwargs...)
-    # TODO: no methoderror with kwargs?
-    error("No method mesh() found for the given inputs.")
 end
 
 """
@@ -269,11 +215,6 @@ function volume(mesh::Mesh)
     return sum(volume, mesh)
 end
 
-# TODO: Is this ok as "public" function?
-# MultiFace(f1, f2, f3) + (o1, o2, o3) = MultiFace(f1 + o1, f2 + o2, f3 + o3)
-function Base.:+(f::MultiFace{N, T, FT, Names, M}, o::NTuple{M, T}) where {N, T, FT, Names, M}
-    return MultiFace{Names}(ntuple(m -> f[m] + o[m], M))
-end
 
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
@@ -297,11 +238,19 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
             )
         end
 
-        # We can't merge MultiFace with standard faces because MutliFace allows
-        # desynchronizes vertex indices that vertex faces assume synchronized.
-        is_multi = facetype(m1) <: MultiFace
+        consistent_face_views = true
+        for name in names
+            is_face_view = getproperty(m1, name) isa FaceView
+            for i in 2:length(meshes)
+                if getproperty(meshes[i], name) isa FaceView != is_face_view
+                    consistent_face_views = false
+                    @goto DOUBLE_BREAK
+                end
+            end
+        end
+        @label DOUBLE_BREAK
 
-        if all(m -> is_multi == (facetype(m) <: MultiFace), meshes)
+        if consistent_face_views
 
             # All the same kind of face, can just merge
 
@@ -312,7 +261,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 
             # TODO: is the type difference in offset bad?
             idx = length(faces(m1))
-            offset = is_multi ? length.(values(vertex_attributes(m1))) : length(coordinates(m1))
+            offset = length(coordinates(m1))
             views = isempty(m1.views) ? [1:idx] : copy(m1.views)
             
             for mesh in Iterators.drop(meshes, 1)
@@ -330,26 +279,27 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                 end
     
                 idx += N
-                if is_multi
-                    offset = offset .+ length.(values(vertex_attributes(mesh)))
-                else
-                    offset += length(coordinates(mesh))
-                end
+                offset += length(coordinates(mesh))
             end
 
             return Mesh(new_attribs, fs, views)
 
         else # mixed MultiFace and VertexFace
-            
+
             # simplify to VertexFace types, then retry merge
-            return merge(merge_vertex_indices.(meshes))
+            return merge(clear_face_views.(meshes))
 
         end
 
     end
 end
 
-
+#=
+# TODO: Is this ok as "public" function?
+# MultiFace(f1, f2, f3) + (o1, o2, o3) = MultiFace(f1 + o1, f2 + o2, f3 + o3)
+function Base.:+(f::MultiFace{N, T, FT, Names, M}, o::NTuple{M, T}) where {N, T, FT, Names, M}
+    return MultiFace{Names}(ntuple(m -> f[m] + o[m], M))
+end
 
 function merge_vertex_indices(mesh::AbstractMesh)
     attribs, fs, views = merge_vertex_indices(
@@ -443,14 +393,51 @@ function merge_vertex_indices(
         something(vertex_index_counter, GLIndex(1))
     )
 end
+=#
 
+function clear_face_views(mesh::Mesh)
+    main_fs = faces(mesh)
+    va = vertex_attributes(mesh)
+    # views = mesh.views # TODO: ignoring this for now
+    names = filter(name -> va[name] isa FaceView, collect(keys(va)))
+    other_fs = map(name -> va[name].faces, names)
+    
+    new_fs, maps = merge_vertex_indices(tuple(main_fs, other_fs...))
+
+    pushfirst!(names, :position)
+    named_maps = NamedTuple{tuple(names...)}(maps)
+
+    new_va = NamedTuple(map(collect(keys(va))) do name
+        attrib = va[name]
+        if name === :position
+            return name => attrib[named_maps[name]]
+        elseif haskey(named_maps, name)
+            return name => attrib.data[named_maps[name]]
+        else
+            return name => attrib
+        end
+    end)
+
+    return Mesh(new_va, new_fs)
+end
 
 function merge_vertex_indices(
-        faces::AbstractVector{<: MultiFace{N, T, FT, Names, N_Attrib}},
-        vertex_index_counter = T(1)
-    ) where {N, T, FT <: AbstractFace{N, T}, Names, N_Attrib}
+        faces::AbstractVector{FT}, args...
+    ) where {N, T, FT <: AbstractFace{N, T}}
+    if args[end] isa Integer
+        fs = tuple(faces, args[1:end-1]...)
+        return merge_vertex_indices(fs, args[end])
+    else
+        return merge_vertex_indices(tuple(faces, args...))
+    end
+end
 
-    N_faces = length(faces)
+function merge_vertex_indices(
+        faces::NTuple{N_Attrib, <: AbstractVector{FT}},
+        vertex_index_counter::Integer = T(1)
+    ) where {N, T, FT <: AbstractFace{N, T}, N_Attrib}
+
+    N_faces = length(faces[1])
 
     # maps a combination of old indices in MultiFace to a new vertex_index
     vertex_index_map = Dict{NTuple{N_Attrib, T}, T}()
@@ -465,7 +452,7 @@ function merge_vertex_indices(
     # query the dict twice
     temp = Vector{T}(undef, N)
 
-    for multi_face in faces
+    for multi_face in zip(faces...)
 
         for i in 1:N
             # get the i-th set of vertex indices from multi_face, i.e.
@@ -493,7 +480,6 @@ end
 
 
 
-
 function map_coordinates(f, mesh::Mesh)
     result = copy(mesh)
     map_coordinates!(f, result)
@@ -516,7 +502,7 @@ function Base.show(io::IO, ::MIME"text/plain", mesh::Mesh{N, T, FT}) where {N, T
     println(io, "Mesh{$N, $T, $FT}")
     println(io, "    faces: ", length(faces(mesh)))
     for (name, attrib) in pairs(vertex_attributes(mesh))
-        println(io, "    vertex $(name): ", length(attrib))
+        println(io, "    vertex $(name): ", attrib isa FaceView ? length(attrib.data) : length(attrib))
     end
 end
 

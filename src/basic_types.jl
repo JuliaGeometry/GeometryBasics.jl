@@ -19,13 +19,7 @@ abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 Parent type for all faces. You should inherit from one of the child types instead.
 """
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
-"""
-    AbstractMultiFace{N, T, M} <: AbstractFace{N, T}
 
-Parent type for faces addressing N vertices with M different vertex attribute 
-indices. 
-"""
-abstract type AbstractMultiFace{N, T, M} <: AbstractFace{N, T} end
 """
     AbstractVertexFace{N, T} <: AbstractFace{N, T}
 
@@ -67,81 +61,6 @@ end
 
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
 Face(F::Type{NgonFace{N,FT}}, ::Type{T}) where {FT,N,T} = F
-
-struct MultiFace{N, T, FaceType <: AbstractVertexFace{N, T}, Names, M} <: AbstractMultiFace{N, T, M}
-    faces::NamedTuple{Names, NTuple{M, FaceType}}
-end
-
-# TODO: Split these up?
-"""
-    MultiFace(; kwargs...)
-    MultiFace{Names}(faces...)
-    MultiFace{Names}(faces::Tuple)
-    MultiFace{Names}(multiface::MultiFace)
-    MultiFace{Names, FaceType}(faces::Tuple)
-
-Constructs a `MultiFace` from a tuple of names `Names::NTuple{M, Symbol}` and 
-`faces::NTuple{M, FaceType}` similar to how a NamedTuple would.
-"""
-MultiFace(; kwargs...) = MultiFace(NamedTuple(kwargs))
-MultiFace{Names}(f::MultiFace) where {Names} = MultiFace{Names}(getproperty.((f,), Names))
-MultiFace{Names}(args...) where {Names} = MultiFace{Names}(args)
-function MultiFace{Names}(args::NTuple{M, NTuple{N, <: Integer}}) where {Names, N, M}
-    return MultiFace(NamedTuple{Names}(NgonFace.(args)))
-end
-function MultiFace{Names}(args::NTuple{M, FT}) where {Names, M, FT <: AbstractVertexFace}
-    return MultiFace(NamedTuple{Names}(args))
-end
-
-function MultiFace{N, T, FT, Names, M}(faces...) where {N, T, FT <: AbstractVertexFace{N, T}, Names, M}
-    @assert length(faces) === M
-    @assert length(Names) === M
-    return MultiFace{Names}(FT.(face))
-end
-
-# As you get from shorthands without defining N, T, FT
-const UnspecializedMultiFace{Names, M} = MultiFace{N, T, FT, Names, M} where {N, T, FT <: AbstractVertexFace{N, T}}
-function UnspecializedMultiFace{Names, M}(faces...) where {Names, M}
-    @assert length(faces) === M
-    @assert length(Names) === M
-    return MultiFace{Names}(faces)
-end
-
-Base.getindex(f::MultiFace, i::Integer) = Base.getindex(getfield(f, :faces), i)
-@inline Base.hasproperty(f::MultiFace, field::Symbol) = hasproperty(getfield(f, :faces), field)
-@inline Base.getproperty(f::MultiFace, field::Symbol) = getproperty(getfield(f, :faces), field)
-@inline Base.propertynames(f::MultiFace) = propertynames(getfield(f, :faces))
-@inline Base.propertynames(::Type{<: MultiFace{N, T, FT, Names}}) where {N, T, FT, Names} = Names
-Base.eltype(::MultiFace{N, T, FT}) where {N, T, FT} = FT
-Base.eltype(::Type{<: MultiFace{N, T, FT}}) where {N, T, FT} = FT
-
-# TODO: can we do this with a conversion? E.g. MultiFace{Names}.(faces)?
-function simplify_faces(::Type{MF1}, fs::AbstractVector{MF2}) where {MF1 <: MultiFace, MF2 <: MultiFace}
-    return simplify_faces(propertynames(MF1), fs)
-end
-
-function simplify_faces(names::NTuple{N, Symbol}, fs::AbstractVector{MF2}) where {N, MF2 <: MultiFace}
-    return map(f -> MultiFace{names}(f), fs)
-end
-
-# Shorthands for constructing faces
-const UVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :uv), 2}
-const NormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal), 2}
-const NormalUVFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :normal, :uv), 3}
-const UVNormalFace{N, T, FT <: AbstractVertexFace{N, T}} = MultiFace{N, T, FT, (:position, :uv, :normal), 3}
-
-# enable something like NormalUVFace{GLTriangleFace}[(pos_face, normal_face, uv_face), ...]
-function Base.convert(::Type{<: MultiFace{N, T, FT, Names}}, t::Tuple) where {N, T, FT, Names}
-    return MultiFace{Names}(FT.(t))
-end
-
-Base.show(io::IO, f::MultiFace) = show(io, getfield(f, :faces))
-function Base.show(io::IO, ::MIME"text/plain", f::MultiFace)
-    print(io, "MultiFace")
-    show(io, getfield(f, :faces))
-end
-
-Base.:(==)(f1::MultiFace, f2::MultiFace) = getfield(f1, :faces) == getfield(f2, :faces)
 
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
@@ -377,71 +296,48 @@ coordinates(mesh). Arbitrary meta information can be attached per point or per f
 """
 abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
 
+struct FaceView{
+        T, AVT <: AbstractVector{T}, 
+        FVT <: AbstractVector{ <: AbstractFace}
+    }
+
+    data::AVT
+    faces::FVT
+end
+
+const VertexAttributeType{T} = Union{FaceView{T}, AbstractVector{T}}
+
+function Base.vcat(a::FaceView, b::FaceView)
+    N = length(a.data)
+    return FaceView(
+        vcat(a.data, b.data),
+        vcat(a.faces, map(f -> f .+ N, b.faces))
+    )
+end
+
 """
     Mesh <: AbstractMesh{Element}
 The concrete AbstractMesh type.
 """
 struct Mesh{
         Dim, T <: Real, # TODO: Number?
-        FaceType <: AbstractFace,
+        FT <: AbstractFace,
         Names,
-        VertexAttribTypes <: Tuple{AbstractVector{Point{Dim, T}}, Vararg{AbstractVector}},
-        FaceVecType <: AbstractVector{FaceType}
+        VAT <: Tuple{AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
+        FVT <: AbstractVector{FT}
     } <: AbstractMesh{Dim, T}
 
-    vertex_attributes::NamedTuple{Names, VertexAttribTypes}
-    connectivity::FaceVecType
+    vertex_attributes::NamedTuple{Names, VAT}
+    connectivity::FVT
     views::Vector{UnitRange{Int}}
 
     function Mesh(
             va::NamedTuple{Names, VAT}, 
-            f::FVT, 
+            faces::FVT,
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
         ) where {
-            D, T, FT <: AbstractMultiFace, Names,
-            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
-            FVT <: AbstractVector{FT}
-        }
-
-        # verify type / naming rules & consistency
-        if first(Names) !== :position
-            error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
-        end
-
-        if :normals in Names
-            @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-            names = map(name -> ifelse(name === :normals, :normal, name), Names)
-            va = NamedTuple{names}(values(va))
-        else
-            names = Names
-        end
-
-        f_names = propertynames(FT)
-        if names == f_names
-            # all good
-        elseif issubset(names, f_names)
-            # Remove the extra names in faces/fix order
-            # Note: This might be redundant with `mesh()`. It is supposed to allow
-            #       using a general `MultiFace` in `faces(primitive)` which then
-            #       gets reduced to the vertex attributes used in a general mesh.
-            f = simplify_faces(names, f)
-        else
-            error(
-                "Cannot construct a mesh with vertex attribute names $names and MultiFace " * 
-                "attribute names $f_names. These must include the same names in the same order."
-            )
-        end
-
-        return new{D, T, eltype(typeof(f)), names, VAT, typeof(f)}(va, f, views)
-    end
-
-    function Mesh(
-            va::NamedTuple{Names, VAT}, 
-            f::FVT, 
-            views::Vector{UnitRange{Int}} = UnitRange{Int}[]
-        ) where {
-            D, T, FT <: AbstractVertexFace, Names,
-            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{AbstractVector}},
+            D, T, FT <: AbstractFace, Names,
+            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{VertexAttributeType}},
             FVT <: AbstractVector{FT}
         }
 
@@ -456,11 +352,33 @@ struct Mesh{
             va = NamedTuple{names}(values(va))
         end
 
-        # Note: With VertexFaces all vertex attributes should have the same 
-        #       length as they use a common vertex index. We could check this 
-        #       here but maybe it's better not to to prevent over-eager checking?
+        if va.position isa FaceView
+            if faces != va.position.faces
+                error("position faces do not match gives faces")
+            end
+            va = NamedTuple(map(pairs(va)) do (key, val)
+                return key => (key == :position ? val.data : val)
+            end)
+        end
 
-        return new{D, T, FT, keys(va), VAT, FVT}(va, f, views)
+        # verify matching faces between face views
+        for (name, attrib) in pairs(va)
+            name == :position && continue
+
+            if attrib isa FaceView
+                if length(attrib.faces) != length(faces)
+                    error("Number of faces defined for $name $(length(attrib.faces)) does not match position $(length(faces))")
+                end
+                
+                for (i, (f1, f2)) in enumerate(zip(attrib.faces, faces))
+                    if length(f1) != length(f2)
+                        error("Length of face $name[$i] = $(length(f1)) does not match position[$i] = $(length(f2))")
+                    end
+                end
+            end
+        end
+
+        return new{D, T, FT, keys(va), VAT, FVT}(va, faces, views)
     end
 end
 
@@ -499,12 +417,12 @@ Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
 
 # TODO: temp
-function Base.getindex(mesh::Mesh{D, T, <: AbstractVertexFace}, f::AbstractVertexFace) where {D, T}
-    return getfield(mesh, :vertex_attributes).position[f]
-end
-function Base.getindex(::Mesh, f::AbstractMultiFace)
-    error("TODO")
-end
+# function Base.getindex(mesh::Mesh{D, T, <: AbstractVertexFace}, f::AbstractVertexFace) where {D, T}
+#     return getfield(mesh, :vertex_attributes).position[f]
+# end
+# function Base.getindex(::Mesh, f::AbstractMultiFace)
+#     error("TODO")
+# end
 
 function Base.:(==)(a::Mesh, b::Mesh)
     return (a.vertex_attributes == b.vertex_attributes) && 
@@ -515,9 +433,9 @@ function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
-function Mesh(faces::AbstractVector{<:AbstractFace}; views = UnitRange{Int}[], attributes...)
-    return Mesh(NamedTuple(attributes), faces, views)
-end
+# function Mesh(faces::AbstractVector{<:AbstractFace}; views = UnitRange{Int}[], attributes...)
+#     return Mesh(NamedTuple(attributes), faces, views)
+# end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
               faces::AbstractVector{<:AbstractFace}; 
