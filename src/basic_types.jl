@@ -135,6 +135,12 @@ function Base.convert(::Type{<: MultiFace{N, T, FT, Names}}, t::Tuple) where {N,
     return MultiFace{Names}(FT.(t))
 end
 
+Base.show(io::IO, f::MultiFace) = show(io, getfield(f, :faces))
+function Base.show(io::IO, ::MIME"text/plain", f::MultiFace)
+    print(io, "MultiFace")
+    show(io, getfield(f, :faces))
+end
+
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
 @propagate_inbounds Base.iterate(x::Polytope, i) = iterate(coordinates(x), i)
