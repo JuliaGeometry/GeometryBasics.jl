@@ -33,7 +33,7 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
         fs = _fs
     end
 
-    return mesh(positions, fs; facetype = facetype, vertex_attributes...)
+    return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
 end
 
 function drop_nothing_kwargs(kwargs)
@@ -242,7 +242,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         for name in names
             is_face_view = getproperty(m1, name) isa FaceView
             for i in 2:length(meshes)
-                if getproperty(meshes[i], name) isa FaceView != is_face_view
+                if (getproperty(meshes[i], name) isa FaceView) != is_face_view
                     consistent_face_views = false
                     @goto DOUBLE_BREAK
                 end
@@ -284,141 +284,85 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 
             return Mesh(new_attribs, fs, views)
 
-        else # mixed MultiFace and VertexFace
+        else # mixed FaceViews and Arrays
 
             # simplify to VertexFace types, then retry merge
-            return merge(clear_face_views.(meshes))
+            return merge(clear_faceviews.(meshes))
 
         end
 
     end
 end
 
-#=
-# TODO: Is this ok as "public" function?
-# MultiFace(f1, f2, f3) + (o1, o2, o3) = MultiFace(f1 + o1, f2 + o2, f3 + o3)
-function Base.:+(f::MultiFace{N, T, FT, Names, M}, o::NTuple{M, T}) where {N, T, FT, Names, M}
-    return MultiFace{Names}(ntuple(m -> f[m] + o[m], M))
-end
-
-function merge_vertex_indices(mesh::AbstractMesh)
-    attribs, fs, views = merge_vertex_indices(
-        vertex_attributes(mesh), faces(mesh), mesh.views)
-
-    return Mesh(attribs, fs, views)
-end
-
-function merge_vertex_indices(
-        attribs::NamedTuple, 
-        faces::AbstractVector{<: AbstractVertexFace},
-        views::Vector{UnitRange{Int}},
-        vertex_index_counter = nothing, 
-        loop = false
-    )
-    return attribs, faces, views
-end
-
-function merge_vertex_indices(
-        attribs::NamedTuple, 
-        faces::AbstractVector{<: MultiFace{N, T, FT} where {N, T, FT}},
-        views::Vector{UnitRange{Int}},
-        vertex_index_counter = nothing,
-        looped = false
-    )
-
-    if !looped
-        return merge_vertex_indices(
-            attribs, decompose(GLTriangleFace, faces), views,
-            something(vertex_index_counter, GLIndex(1)), true
-        )
-    else
-        throw(MethodError(merge_vertex_indices, (attribs, faces, views, vertex_index_counter)))
-    end
-end
-
-function merge_vertex_indices(
-        attribs::NamedTuple{Names}, 
-        faces::AbstractVector{<: MultiFace{N, T, FT, Names}},
-        views::Vector{UnitRange{Int}},
-        vertex_index_counter = T(1), # TODO: test 0 vs 1 base
-        loop = false
-    ) where {Names, N, T, FT}
-
-    # Note: typing checks for matching Names
-
-    if isempty(views)
-        new_faces, vertex_map = merge_vertex_indices(faces)
-        new_attribs = ntuple(n -> attribs[n][vertex_map[n]], length(Names))
-        return NamedTuple{Names}(new_attribs), new_faces, views
-    end
-
-    new_attribs = NamedTuple((Pair(k, similar(v, 0)) for (k, v) in pairs(attribs)))
-    new_faces = similar(faces, FT, 0)
-    new_views = UnitRange{Int}[]
-
-    # TODO: this depends on T in Face (1 based -> 1, 0 based -> 0)
-    for idxs in views
-        # Generate new face from current view, with the first vertex_index 
-        # corresponding to the first vertex attribute added in this iteration
-        face_view = view(faces, idxs)
-        new_faces_in_view, vertex_map = merge_vertex_indices(face_view, vertex_index_counter)
-        vertex_index_counter += length(vertex_map[1])
-
-        # update vertex attributes
-        for (name, indices) in pairs(vertex_map)
-            append!(new_attribs[name], view(attribs[name], indices))
-        end
-
-        # add new faces and new view
-        start = length(new_faces) + 1
-        append!(new_faces, new_faces_in_view)
-        push!(new_views, start:length(new_faces))
-    end
-
-    return new_attribs, new_faces, new_views
-end
-
-function merge_vertex_indices(faces::AbstractVector{<: AbstractVertexFace}, i = T(1))
-    N_vert = mapreduce(f -> max(f), max, faces)
-    return faces, i : N_vert - 1 + i
-end
-
-function merge_vertex_indices(
-        faces::AbstractVector{<: MultiFace{N, T, FT} where {N, T, FT}},
-        vertex_index_counter = nothing
-    )
-
-    return merge_vertex_indices(
-        decompose(GLTriangleFace, faces), 
-        something(vertex_index_counter, GLIndex(1))
-    )
-end
-=#
-
-function clear_face_views(mesh::Mesh)
+function clear_faceviews(mesh::Mesh)
     main_fs = faces(mesh)
     va = vertex_attributes(mesh)
-    # views = mesh.views # TODO: ignoring this for now
+
     names = filter(name -> va[name] isa FaceView, collect(keys(va)))
+    isempty(names) && return mesh
+
     other_fs = map(name -> va[name].faces, names)
-    
-    new_fs, maps = merge_vertex_indices(tuple(main_fs, other_fs...))
-
     pushfirst!(names, :position)
-    named_maps = NamedTuple{tuple(names...)}(maps)
+    all_fs = tuple(main_fs, other_fs...)
+    
+    
+    if isempty(mesh.views)
 
-    new_va = NamedTuple(map(collect(keys(va))) do name
-        attrib = va[name]
-        if name === :position
-            return name => attrib[named_maps[name]]
-        elseif haskey(named_maps, name)
-            return name => attrib.data[named_maps[name]]
-        else
-            return name => attrib
+        new_fs, maps = merge_vertex_indices(all_fs)
+
+        named_maps = NamedTuple{tuple(names...)}(maps)
+
+        new_va = NamedTuple(map(collect(keys(va))) do name
+            attrib = va[name]
+            if name === :position
+                return name => attrib[named_maps[name]]
+            elseif haskey(named_maps, name)
+                return name => attrib.data[named_maps[name]]
+            else
+                return name => attrib
+            end
+        end)
+
+        return Mesh(new_va, new_fs)
+
+    else
+
+        new_fs = sizehint!(eltype(main_fs)[], length(main_fs))
+        new_views = sizehint!(UnitRange{Int}[], length(mesh.views))
+        new_va = NamedTuple(map(collect(keys(va))) do name
+            attrib = va[name]
+            if name == :position
+                return name => sizehint!(eltype(attrib)[], length(attrib))
+            elseif name in names
+                return name => sizehint!(eltype(attrib.data)[], length(attrib.data))
+            else # doesn't need remapping so we just add it here
+                return name => attrib
+            end
+        end)
+
+        vertex_index_counter = eltype(first(main_fs))(1)
+
+        for idxs in mesh.views
+            view_fs, maps = merge_vertex_indices(view.(all_fs, (idxs,)), vertex_index_counter)
+
+            vertex_index_counter += length(maps[1])
+            
+            for (name, map) in zip(names, maps)
+                if name == :position
+                    append!(new_va[name], va[name][map])
+                else
+                    append!(new_va[name], va[name].data[map])
+                end
+            end
+
+            # add new faces and new view
+            start = length(new_fs) + 1
+            append!(new_fs, view_fs)
+            push!(new_views, start:length(new_fs))
         end
-    end)
 
-    return Mesh(new_va, new_fs)
+        return Mesh(new_va, new_fs, new_views)
+    end
 end
 
 function merge_vertex_indices(
