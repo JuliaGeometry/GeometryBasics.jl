@@ -81,13 +81,24 @@ end
     @test decompose(Point2f, mesh) == pt_expa
 
     b = Rect(Vec(1, 1, 1), Vec(1, 1, 1))
-    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 2], [1, 2, 1], [1, 1, 1],
-                             [2, 1, 1], [2, 1, 2], [1, 1, 2], [1, 1, 1], [1, 2, 1],
-                             [2, 2, 1], [2, 1, 1], [2, 2, 2], [1, 2, 2], [1, 1, 2],
-                             [2, 1, 2], [2, 2, 2], [2, 1, 2], [2, 1, 1], [2, 2, 1],
-                             [2, 2, 2], [2, 2, 1], [1, 2, 1], [1, 2, 2]]
-    @test_broken decompose(Point{3,Int}, b) == pt_expb
+    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 1], [1, 2, 2], 
+                             [2, 1, 1], [2, 1, 2], [2, 2, 1], [2, 2, 2]]
+    @test decompose(Point{3,Int}, b) == pt_expb
+    
+
     mesh = normal_mesh(b)
+    @test faces(mesh) == GLTriangleFace[
+        (1, 2, 3), (1, 3, 4), (5, 6, 7), (5, 7, 8), (9, 10, 11), (9, 11, 12), 
+        (13, 14, 15), (13, 15, 16), (17, 18, 19), (17, 19, 20), (21, 22, 23), (21, 23, 24)
+    ]
+    @test normals(mesh) == [n for n in normals(b) for _ in 1:4]
+    @test coordinates(mesh) == Point{3, Float32}[
+        [1.0, 1.0, 1.0], [1.0, 1.0, 2.0], [1.0, 2.0, 2.0], [1.0, 2.0, 1.0], 
+        [2.0, 2.0, 1.0], [2.0, 2.0, 2.0], [2.0, 1.0, 2.0], [2.0, 1.0, 1.0], 
+        [2.0, 1.0, 1.0], [2.0, 1.0, 2.0], [1.0, 1.0, 2.0], [1.0, 1.0, 1.0], 
+        [1.0, 2.0, 1.0], [1.0, 2.0, 2.0], [2.0, 2.0, 2.0], [2.0, 2.0, 1.0], 
+        [1.0, 1.0, 1.0], [1.0, 2.0, 1.0], [2.0, 2.0, 1.0], [2.0, 1.0, 1.0], 
+        [2.0, 1.0, 2.0], [2.0, 2.0, 2.0], [1.0, 2.0, 2.0], [1.0, 1.0, 2.0]]
 
     @test isempty(Rect{3,Float32}())
 end
@@ -117,18 +128,13 @@ NFace = NgonFace
 end
 
 @testset "Normals" begin
-    n64 = Vec{3,Float64}[(0.0, 0.0, -1.0), (0.0, 0.0, -1.0), (0.0, 0.0, -1.0),
-                         (0.0, 0.0, -1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0),
-                         (0.0, 0.0, 1.0), (0.0, 0.0, 1.0), (-1.0, 0.0, 0.0),
-                         (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (-1.0, 0.0, 0.0),
-                         (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                         (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0),
-                         (0.0, -1.0, 0.0), (0.0, -1.0, 0.0), (0.0, -1.0, 0.0),
-                         (0.0, -1.0, 0.0),]
+    r = centered(Rect3{Float64})
+    n64 = [n for n in normals(r) for _ in 1:4]
     n32 = map(Vec{3,Float32}, n64)
-    r = triangle_mesh(centered(Rect3))
-    # @test normals(coordinates(r), GeometryBasics.faces(r)) == n32
-    # @test normals(coordinates(r), GeometryBasics.faces(r)) == n64
+    m32 = normal_mesh(r)
+    m64 = normal_mesh(r, pointtype = Point3d)
+    @test normals(coordinates(m32), GeometryBasics.faces(m32)) == n32
+    @test normals(coordinates(m64), GeometryBasics.faces(m64)) == n64
 end
 
 @testset "HyperSphere" begin
