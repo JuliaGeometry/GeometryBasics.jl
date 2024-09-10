@@ -55,7 +55,7 @@ export uv_mesh, normal_mesh, uv_normal_mesh
 
 export height, origin, radius, width, widths
 export HyperSphere, Circle, Sphere
-export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
+export Cylinder, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f, Rectd, Rect2d, Rect3d
 export before, during, meets, overlaps, intersects, finishes
 export centered, direction, area, volume, update

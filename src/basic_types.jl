@@ -141,6 +141,8 @@ function Base.show(io::IO, ::MIME"text/plain", f::MultiFace)
     show(io, getfield(f, :faces))
 end
 
+Base.:(==)(f1::MultiFace, f2::MultiFace) = getfield(f1, :faces) == getfield(f2, :faces)
+
 @propagate_inbounds Base.getindex(x::Polytope, i::Integer) = coordinates(x)[i]
 @propagate_inbounds Base.iterate(x::Polytope) = iterate(coordinates(x))
 @propagate_inbounds Base.iterate(x::Polytope, i) = iterate(coordinates(x), i)

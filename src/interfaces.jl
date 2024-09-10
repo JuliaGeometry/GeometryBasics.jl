@@ -104,7 +104,7 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractVer
             return nothing
         end
     end
-    return collect_with_eltype(F, f)
+    return decompose(F, f)
 end
   
 function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractVertexFace}
