@@ -462,7 +462,7 @@ function merge_vertex_indices(
         # corresponding to the first vertex attribute added in this iteration
         face_view = view(faces, idxs)
         new_faces_in_view, vertex_map = merge_vertex_indices(face_view, vertex_index_counter)
-        vertex_index_counter += length(vertex_map)
+        vertex_index_counter += length(vertex_map[1])
 
         # update vertex attributes
         for (name, indices) in pairs(vertex_map)
@@ -472,7 +472,7 @@ function merge_vertex_indices(
         # add new faces and new view
         start = length(new_faces) + 1
         append!(new_faces, new_faces_in_view)
-        append!(new_views, start:length(new_faces))
+        push!(new_views, start:length(new_faces))
     end
 
     return new_attribs, new_faces, new_views
