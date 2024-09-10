@@ -55,6 +55,44 @@ end
     @test isempty(m2.views)
 end
 
+@testset "complex merge" begin
+    rects = [Rect3f(Point3f(x, y, z), Vec3f(0.5)) for x in -1:1 for y in -1:1 for z in -1:1]
+    multiface_meshes = map(rects) do r
+        GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
+    end
+    mfm = merge(multiface_meshes)
+    
+    @test GeometryBasics.facetype(mfm) == GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
+    @test length(faces(mfm)) == 27 * 6 # 27 rects, 6 quad faces
+    @test length(normals(mfm)) == 27 * 6
+    @test length(coordinates(mfm)) == 27 * 8
+    @test !allunique([idx for f in faces(mfm) for idx in f.position])
+    @test !allunique([idx for f in faces(mfm) for idx in f.normal])
+    
+    vertexface_meshes = map(rects) do r
+        GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
+    end
+    vfm = merge(vertexface_meshes)
+
+    @test GeometryBasics.facetype(vfm) == QuadFace{Int64}
+    @test length(faces(vfm)) == 27 * 6           # 27 rects, 6 quad faces each
+    @test length(normals(vfm)) == 27 * 6 * 4     # 27 rects, 6 faces, 4 normals each
+    @test length(coordinates(vfm)) == 27 * 8 * 3 # 27 rects, 8 points, 3 duplications (for 3 attached quad faces)
+    @test allunique([idx for f in faces(vfm) for idx in f])
+
+    mixed_meshes = map(multiface_meshes, vertexface_meshes) do mfm, vfm
+        rand() > 0.5 ? mfm : vfm 
+    end
+    mm = merge(mixed_meshes)
+
+    @test GeometryBasics.facetype(mm) == QuadFace{Int64}
+    @test length(faces(mm)) == 27 * 6           # 27 rects, 6 quad faces each
+    @test length(normals(mm)) == 27 * 6 * 4     # 27 rects, 6 faces, 4 normals each
+    @test length(coordinates(mm)) == 27 * 8 * 3 # 27 rects, 8 points, 3 duplications (for 3 attached quad faces)
+    @test allunique([idx for f in faces(mm) for idx in f])
+    @test mm == vfm
+end
+
 @testset "mesh() constructors" begin
     r = Rect3d(Point3d(-1), Vec3d(2))
 
