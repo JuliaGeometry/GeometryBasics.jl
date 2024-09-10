@@ -418,10 +418,29 @@ function merge_vertex_indices(
 end
 
 function merge_vertex_indices(
+        attribs::NamedTuple, 
+        faces::AbstractVector{<: MultiFace},
+        views::Vector{UnitRange{Int}},
+        vertex_index_counter = nothing,
+        looped = false
+    )
+
+    if !looped
+        return merge_vertex_indices(
+            attribs, decompose(GLTriangleFace, faces), views,
+            something(vertex_index_counter, GLIndex(1)), true
+        )
+    else
+        throw(MethodError(merge_vertex_indices, (attribs, faces, views, vertex_index_counter)))
+    end
+end
+
+function merge_vertex_indices(
         attribs::NamedTuple{Names}, 
         faces::AbstractVector{<: MultiFace{N, T, FT, Names}},
         views::Vector{UnitRange{Int}},
-        vertex_index_counter = T(1) # TODO: test 0 vs 1 base
+        vertex_index_counter = T(1), # TODO: test 0 vs 1 base
+        loop = false
     ) where {Names, N, T, FT}
 
     # Note: typing checks for matching Names
@@ -462,6 +481,18 @@ function merge_vertex_indices(faces::AbstractVector{<: AbstractVertexFace}, i = 
     N_vert = mapreduce(f -> max(f), max, faces)
     return faces, i : N_vert - 1 + i
 end
+
+function merge_vertex_indices(
+        faces::AbstractVector{<: MultiFace{N, T, FT} where {N, T, FT}},
+        vertex_index_counter = nothing
+    )
+
+    return merge_vertex_indices(
+        decompose(GLTriangleFace, faces), 
+        something(vertex_index_counter, GLIndex(1))
+    )
+end
+
 
 function merge_vertex_indices(
         faces::AbstractVector{<: MultiFace{N, T, FT, Names, N_Attrib}},

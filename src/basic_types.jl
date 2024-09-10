@@ -89,7 +89,7 @@ MultiFace{Names}(args...) where {Names} = MultiFace{Names}(args)
 function MultiFace{Names}(args::NTuple{M, NTuple{N, <: Integer}}) where {Names, N, M}
     return MultiFace(NamedTuple{Names}(NgonFace.(args)))
 end
-function MultiFace{Names}(args::Tuple{Vararg{<: AbstractVertexFace}}) where {Names}
+function MultiFace{Names}(args::NTuple{M, FT}) where {Names, M, FT <: AbstractVertexFace}
     return MultiFace(NamedTuple{Names}(args))
 end
 

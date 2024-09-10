@@ -26,13 +26,11 @@ function normals(p::Pyramid)
 end
 
 function faces(::Pyramid)
-    # return (TriangleFace(triangle) for triangle in TupleView{3}(1:18))
-    return NormalFace{3, Int, TriangleFace{Int}}[
-        ((1, 2, 3), (1)),
-        ((1, 3, 4), (2)),
-        ((1, 4, 5), (3)),
-        ((1, 5, 2), (4)),
-        ((2, 3, 4), (5)),
-        ((4, 5, 2), (5))
+    return [
+        NormalFace(GLTriangleFace(1, 2, 3), GLTriangleFace(1)),
+        NormalFace(GLTriangleFace(1, 3, 4), GLTriangleFace(2)),
+        NormalFace(GLTriangleFace(1, 4, 5), GLTriangleFace(3)),
+        NormalFace(GLTriangleFace(1, 5, 2), GLTriangleFace(4)),
+        NormalFace(QuadFace(2, 3, 4, 5), QuadFace(5))
     ]
 end

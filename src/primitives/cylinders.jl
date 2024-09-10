@@ -40,7 +40,6 @@ function coordinates(c::Cylinder{T}, nvertices=30) where {T}
     nhalf = div(nvertices, 2)
 
     R = rotation(c)
-    h = height(c)
     step = 2pi / nhalf
     
     ps = Vector{Point3{T}}(undef, nvertices + 2)
@@ -72,7 +71,7 @@ function normals(c::Cylinder, nvertices = 30)
     end
     ns[end-1] = R * Vec3f(0, 0, -1)
     ns[end] = R * Vec3f(0, 0, 1)
-    
+
     return ns
 end
 
@@ -87,19 +86,11 @@ function faces(c::Cylinder, facets=30)
         )
     end
 
-    mantle1 = map(1:nhalf) do i
+    mantle = map(1:nhalf) do i
         i1 = mod1(i+1, nhalf)
         NormalFace(
-            GLTriangleFace(i, i+nhalf, i1 + nhalf),
-            GLTriangleFace(i, i, i1)
-        )
-    end
-
-    mantle2 = map(1:nhalf) do i
-        i1 = mod1(i+1, nhalf)
-        NormalFace(
-            GLTriangleFace(i1 + nhalf, i1, i),
-            GLTriangleFace(i1, i1, i)
+            QuadFace(i, i+nhalf, i1 + nhalf, i1),
+            QuadFace(i, i, i1, i1)
         )
     end
 
@@ -110,5 +101,5 @@ function faces(c::Cylinder, facets=30)
         )
     end
 
-    return vcat(disk1, mantle1, mantle2, disk2)
+    return vcat(disk1, mantle, disk2)
 end

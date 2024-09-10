@@ -131,6 +131,19 @@ function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) 
     end
 end
 
+function decompose(
+        ::Type{FT}, 
+        faces::AbstractVector{<: MultiFace{_N, _T, _FT, Names} where {_N, _T, _FT}}
+    ) where {Names, FT <: AbstractVertexFace}
+
+    groups = map(Names) do name
+        single_attrib_faces = getproperty.(faces, name)
+        return decompose(FT, single_attrib_faces)
+    end
+
+    return MultiFace{Names}.(groups...)
+end
+
 function decompose(::Type{P}, primitive) where {P<:Point}
     return collect_with_eltype(P, coordinates(primitive))
 end
