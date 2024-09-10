@@ -311,7 +311,7 @@ function Base.vcat(a::FaceView, b::FaceView)
     N = length(a.data)
     return FaceView(
         vcat(a.data, b.data),
-        vcat(a.faces, map(f -> f .+ N, b.faces))
+        vcat(a.faces, map(f -> typeof(f)(f .+ N), b.faces))
     )
 end
 

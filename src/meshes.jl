@@ -268,7 +268,8 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                 # update face indices
                 N = length(faces(mesh))
                 for i = idx .+ (1:N)
-                    fs[i] = fs[i] + offset
+                    # TODO: face + Int changes type to Int
+                    fs[i] = typeof(fs[i])(fs[i] + offset)
                 end
 
                 # add views
@@ -304,7 +305,6 @@ function clear_faceviews(mesh::Mesh)
     other_fs = map(name -> va[name].faces, names)
     pushfirst!(names, :position)
     all_fs = tuple(main_fs, other_fs...)
-    
     
     if isempty(mesh.views)
 
