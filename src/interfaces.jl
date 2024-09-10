@@ -180,6 +180,10 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
         # nothing, indicating that texturecoordinates aren't implemented
         positions = decompose(Point, primitive)
         isnothing(positions) && return nothing
+        # We should generate 3D uvw's if uv's are requested
+        # TODO: we should probably enforce that UV has a 2D type and UVW a 3D type
+        (length(T) != length(eltype(positions))) && return nothing
+
         # Let this overlord do the work
         return decompose(UVT, positions)
     end

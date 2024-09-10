@@ -401,7 +401,7 @@ end
 # merge_vertex_(attribute)_indices
 # convert(Face, MultiFace)
 # ...
-function merge_vertex_indices(mesh)
+function merge_vertex_indices(mesh::AbstractMesh)
     attribs, fs, views = merge_vertex_indices(
         vertex_attributes(mesh), faces(mesh), mesh.views)
 
