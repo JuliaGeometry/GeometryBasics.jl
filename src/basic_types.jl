@@ -280,20 +280,9 @@ Base.getindex(mpt::MultiPoint, i) = mpt.points[i]
 Base.size(mpt::MultiPoint) = size(mpt.points)
 Base.length(mpt::MultiPoint) = length(mpt.points)
 
-"""
-    AbstractMesh
 
-An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
-The connections are defined via faces(mesh), the coordinates of the elements are returned by
-coordinates(mesh). Arbitrary meta information can be attached per point or per face
-"""
-abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
 
-struct FaceView{
-        T, AVT <: AbstractVector{T}, 
-        FVT <: AbstractVector{ <: AbstractFace}
-    }
-
+struct FaceView{T, AVT <: AbstractVector{T}, FVT <: AbstractVector{<: AbstractFace}}
     data::AVT
     faces::FVT
 end
@@ -307,6 +296,57 @@ function Base.vcat(a::FaceView, b::FaceView)
         vcat(a.faces, map(f -> typeof(f)(f .+ N), b.faces))
     )
 end
+
+faces(x::FaceView) = x.faces
+# attribute(x::FaceView) = x.data
+Base.values(x::FaceView) = x.data
+facetype(x::FaceView) = eltype(x.faces)
+Base.getindex(x::FaceView, f::AbstractFace) = getindex(values(x), f)
+Base.isempty(x::FaceView) = isempty(values(x))
+
+# TODO: maybe underscore this as it requires care to make sure all FaceViews and
+#       mesh faces stay in sync
+convert_facetype(::Type{FT}, x::AbstractVector) where {FT <: AbstractFace} = x
+function convert_facetype(::Type{FT}, x::FaceView) where {FT <: AbstractFace}
+    if eltype(x) != FT
+        return FaceView(values(x), decompose(FT, faces(x)))
+    end
+    return x
+end
+
+# Dodgy definitions... (since attributes can be FaceView or Array it's often 
+#                       useful to treat a FaceView like the vertex data it contains)
+Base.length(x::FaceView) = length(values(x))
+# Base.iterate(x::FaceView) = iterate(values(x))
+# Base.getindex(x::FaceView, i::Integer) = getindex(values(x), i)
+# Taken from Base/arrayshow.jl
+function Base.show(io::IO, ::MIME"text/plain", X::FaceView)
+    summary(io, X)
+    isempty(X) && return
+    print(io, ":")
+
+    if get(io, :limit, false)::Bool && displaysize(io)[1]-4 <= 0
+        return print(io, " …")
+    else
+        println(io)
+    end
+
+    io = IOContext(io, :typeinfo => eltype(values(X)))
+
+    recur_io = IOContext(io, :SHOWN_SET => values(X))
+    Base.print_array(recur_io, values(X))
+end
+
+
+
+"""
+    AbstractMesh
+
+An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
+The connections are defined via faces(mesh), the coordinates of the elements are returned by
+coordinates(mesh). Arbitrary meta information can be attached per point or per face
+"""
+abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
 
 """
     Mesh <: AbstractMesh{Element}
@@ -326,7 +366,7 @@ struct Mesh{
 
     function Mesh(
             va::NamedTuple{Names, VAT}, 
-            faces::FVT,
+            fs::FVT,
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
         ) where {
             D, T, FT <: AbstractFace, Names,
@@ -346,24 +386,28 @@ struct Mesh{
         end
 
         if va.position isa FaceView
-            if faces != va.position.faces
+            if fs != faces(va.position)
                 error("position faces do not match gives faces")
             end
-            va = NamedTuple(map(pairs(va)) do (key, val)
-                return key => (key == :position ? val.data : val)
+            va = NamedTuple(map(keys(va)) do key
+                return key => (key == :position ? values(va[key]) : va[key])
             end)
         end
 
-        # verify matching faces between face views
+        # verify that faces of FaceViews match `fs` (in length per face)
         for (name, attrib) in pairs(va)
             name == :position && continue
 
             if attrib isa FaceView
-                if length(attrib.faces) != length(faces)
-                    error("Number of faces defined for $name $(length(attrib.faces)) does not match position $(length(faces))")
+                if isconcretetype(FT) && (FT == facetype(attrib))
+                    continue
+                end
+
+                if length(attrib.faces) != length(fs)
+                    error("Number of faces defined for $name $(length(attrib.faces)) does not match position $(length(fs))")
                 end
                 
-                for (i, (f1, f2)) in enumerate(zip(attrib.faces, faces))
+                for (i, (f1, f2)) in enumerate(zip(attrib.faces, fs))
                     if length(f1) != length(f2)
                         error("Length of face $name[$i] = $(length(f1)) does not match position[$i] = $(length(f2))")
                     end
@@ -371,7 +415,7 @@ struct Mesh{
             end
         end
 
-        return new{D, T, FT, keys(va), VAT, FVT}(va, faces, views)
+        return new{D, T, FT, keys(va), VAT, FVT}(va, fs, views)
     end
 end
 
@@ -406,29 +450,21 @@ normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
+# TODO: maybe instead of this:
+#   mesh.attrib -> FaceView (get or construct)
+#   faceview[i] -> values(faceview)[faces(faceview)[i]]
+#   this would maybe clash with other functions of faceview though...
+# Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
-
-# TODO: temp
-# function Base.getindex(mesh::Mesh{D, T, <: AbstractVertexFace}, f::AbstractVertexFace) where {D, T}
-#     return getfield(mesh, :vertex_attributes).position[f]
-# end
-# function Base.getindex(::Mesh, f::AbstractMultiFace)
-#     error("TODO")
-# end
 
 function Base.:(==)(a::Mesh, b::Mesh)
     return (a.vertex_attributes == b.vertex_attributes) && 
            (faces(a) == faces(b)) && (a.views == b.views)
 end
 
-function Base.iterate(mesh::Mesh, i=1)
-    return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
+function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
+    return Mesh(NamedTuple(attributes), faces, views)
 end
-
-# function Mesh(faces::AbstractVector{<:AbstractFace}; views = UnitRange{Int}[], attributes...)
-#     return Mesh(NamedTuple(attributes), faces, views)
-# end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
               faces::AbstractVector{<:AbstractFace}; 

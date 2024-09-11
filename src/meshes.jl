@@ -14,9 +14,11 @@ It also only losely correlates to the number of vertices, depending on the algor
 function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
 
+    # TODO: consider not allowing FaceView here?
     if positions isa FaceView
         positions = positions.data
         _fs = positions.faces
+        isnothing(faces(primitive)) || @error("A primitive should not define `faces` and use a FaceView for `coordinates()`. Using faces from FaceView.")
     else
         _fs = faces(primitive)
     end
@@ -61,15 +63,8 @@ function mesh(
     fs = decompose(facetype, faces)
     va = drop_nothing_kwargs(vertex_attributes)
 
-    if (facetype != FT)
-        va = NamedTuple(map(keys(va)) do name
-            attrib = va[name]
-            if attrib isa FaceView
-                return name => FaceView(attrib.data, decompose(facetype, attrib.faces))
-            else
-                return name => attrib
-            end
-        end)
+    if facetype != FT
+        va = NamedTuple{keys(va)}(convert_facetype.(facetype, values(va)))
     end
 
     return Mesh(positions, fs; va...)
@@ -103,14 +98,9 @@ function mesh(
         va = merge(va, (position = decompose(pointtype, va.position),))
 
         # Resolve facetype conversions of FaceViews
-        va = NamedTuple(map(keys(va)) do name
-            attrib = va[name]
-            if attrib isa FaceView
-                return name => FaceView(attrib.data, decompose(facetype, attrib.faces))
-            else
-                return name => attrib
+        if facetype != FT
+            va = NamedTuple{keys(va)}(convert_facetype.(facetype, values(va)))
             end
-        end)
 
         # update main face type
         f, views = decompose(facetype, faces(mesh), mesh.views)
@@ -302,7 +292,7 @@ function clear_faceviews(mesh::Mesh)
     names = filter(name -> va[name] isa FaceView, collect(keys(va)))
     isempty(names) && return mesh
 
-    other_fs = map(name -> va[name].faces, names)
+    other_fs = faces.(getproperty.((mesh,), names))
     pushfirst!(names, :position)
     all_fs = tuple(main_fs, other_fs...)
     
