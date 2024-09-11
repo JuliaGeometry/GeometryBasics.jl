@@ -22,16 +22,17 @@ end
 
 function normals(p::Pyramid)
     w = p.width; h = p.length
-    return normalize.(Vec3f[(h, 0, w), (0, h, w), (-h, 0, w), (0, -h, w), (0, 0, -1)])
+    ns = normalize.(Vec3f[(h, 0, w), (0, h, w), (-h, 0, w), (0, -h, w), (0, 0, -1)])
+    fs = [GLTriangleFace(1), GLTriangleFace(2), GLTriangleFace(3), GLTriangleFace(4), QuadFace(5)]
+    return FaceView(ns, fs)
 end
 
 function faces(::Pyramid)
-    return nothing
-    # return [
-    #     NormalFace(GLTriangleFace(1, 2, 3), GLTriangleFace(1)),
-    #     NormalFace(GLTriangleFace(1, 3, 4), GLTriangleFace(2)),
-    #     NormalFace(GLTriangleFace(1, 4, 5), GLTriangleFace(3)),
-    #     NormalFace(GLTriangleFace(1, 5, 2), GLTriangleFace(4)),
-    #     NormalFace(QuadFace(2, 3, 4, 5), QuadFace(5))
-    # ]
+    return [
+        GLTriangleFace(1, 2, 3),
+        GLTriangleFace(1, 3, 4),
+        GLTriangleFace(1, 4, 5),
+        GLTriangleFace(1, 5, 2),
+        QuadFace(2, 3, 4, 5)
+    ]
 end

@@ -72,37 +72,24 @@ function normals(c::Cylinder, nvertices = 30)
     ns[end-1] = R * Vec3f(0, 0, -1)
     ns[end] = R * Vec3f(0, 0, 1)
 
-    return ns
+    disk1 = map(i -> GLTriangleFace(nhalf+1), 1:nhalf)
+    mantle = map(i -> QuadFace(i, i, mod1(i+1, nhalf), mod1(i+1, nhalf)), 1:nhalf)
+    disk2 = map(i -> GLTriangleFace(nhalf+2), 1:nhalf)
+    fs = vcat(disk1, mantle, disk2)
+
+    return FaceView(ns, fs)
 end
 
-function faces(c::Cylinder, facets=30)
-    return nothing
-    #=
+function faces(::Cylinder, facets=30)
     nvertices = facets + isodd(facets)
     nhalf = div(nvertices, 2)
 
-    disk1 = map(1:nhalf) do i
-        NormalFace(
-            GLTriangleFace(nvertices+1, i, mod1(i+1, nhalf)),
-            GLTriangleFace(nhalf+1)
-        )
-    end
-
+    disk1 = map(i -> GLTriangleFace(nvertices+1, i, mod1(i+1, nhalf)), 1:nhalf)
     mantle = map(1:nhalf) do i
         i1 = mod1(i+1, nhalf)
-        NormalFace(
-            QuadFace(i, i+nhalf, i1 + nhalf, i1),
-            QuadFace(i, i, i1, i1)
-        )
+        QuadFace(i, i+nhalf, i1 + nhalf, i1)
     end
-
-    disk2 = map(1:nhalf) do i
-        NormalFace(
-            GLTriangleFace(nvertices+2, i+nhalf, mod1(i+1, nhalf)+nhalf),
-            GLTriangleFace(nhalf+2)
-        )
-    end
+    disk2 = map(i -> GLTriangleFace(nvertices+2, i+nhalf, mod1(i+1, nhalf)+nhalf), 1:nhalf)
 
     return vcat(disk1, mantle, disk2)
-    =#
 end
