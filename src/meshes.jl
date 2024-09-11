@@ -56,7 +56,7 @@ function mesh(
         positions::AbstractVector{<:Point}, 
         faces::AbstractVector{FT}; 
         facetype=GLTriangleFace, vertex_attributes...
-    ) where {FT <: AbstractVertexFace}
+    ) where {FT <: AbstractFace}
 
     fs = decompose(facetype, faces)
     va = drop_nothing_kwargs(vertex_attributes)
@@ -175,7 +175,7 @@ function uv_normal_mesh(
 end
 
 function normal_mesh(
-        points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractVertexFace}; 
+        points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; 
         pointtype = Point3f, normaltype = Vec3f, facetype = GLTriangleFace
     )
     _points = decompose(pointtype, points)

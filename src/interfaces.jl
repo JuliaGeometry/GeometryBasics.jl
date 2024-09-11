@@ -94,7 +94,7 @@ struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
 Normal() = Normal(Vec3f)
 
-function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractVertexFace}
+function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFace}
     f = faces(primitive)
     if isnothing(f)
         if ndims(primitive) == 2
@@ -107,14 +107,14 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractVer
     return decompose(F, f)
 end
   
-function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractVertexFace}
+function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
     return collect_with_eltype(F, fs)
 end
 
 # TODO: Should this be a completely different function?
-function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractVertexFace}
+function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractFace}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
     if isempty(views)

@@ -19,15 +19,8 @@ abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 Parent type for all faces. You should inherit from one of the child types instead.
 """
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
-
-"""
-    AbstractVertexFace{N, T} <: AbstractFace{N, T}
-
-Parent type for faces addressing N vertices with common vertex indices.
-"""
-abstract type AbstractVertexFace{N, T} <: AbstractFace{N, T} end
-abstract type AbstractSimplexFace{N,T} <: AbstractVertexFace{N,T} end
-abstract type AbstractNgonFace{N,T} <: AbstractVertexFace{N,T} end
+abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
+abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
