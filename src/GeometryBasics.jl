@@ -40,9 +40,9 @@ export Triangle
 export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
 export OffsetInteger, ZeroIndex, OneIndex, GLIndex
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
-       texturecoordinates
+       texturecoordinates, vertex_attributes
 export Tesselation, Normal, UV, UVW
-export AbstractMesh, Mesh, MetaMesh
+export AbstractMesh, Mesh, MetaMesh, FaceView
 
 
 # all the different predefined mesh types
