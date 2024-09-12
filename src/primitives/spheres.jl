@@ -42,14 +42,20 @@ function centered(::Type{T}) where {T<:HyperSphere}
 end
 
 function coordinates(s::Circle, nvertices=64)
-    rad = radius(s)
-    inner(fi) = Point(rad * sin(fi + pi), rad * cos(fi + pi)) .+ origin(s)
-    return [inner(fi) for fi in LinRange(0, 2pi, nvertices)]
+    r = radius(s); o = origin(s)
+    ps = [r * Point(cos(phi), sin(phi)) + o for phi in LinRange(0, 2pi, nvertices+1)]
+    ps[end] = o
+    return ps
 end
 
 function texturecoordinates(::Circle, nvertices=64)
     return coordinates(Circle(Point2f(0.5), 0.5f0), nvertices)
 end
+
+function faces(::Circle, nvertices=64)
+    return [GLTriangleFace(nvertices+1, i, mod1(i+1, nvertices)) for i in 1:nvertices]
+end
+
 
 function coordinates(s::Sphere, nvertices=24)
     θ = LinRange(0, pi, nvertices)
