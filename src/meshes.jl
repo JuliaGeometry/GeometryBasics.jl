@@ -38,12 +38,6 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
     return mesh(positions, collect(fs); facetype = facetype, vertex_attributes...)
 end
 
-function drop_nothing_kwargs(kwargs)
-    _keys = filter(k -> !isnothing(kwargs[k]), keys(kwargs))
-    _vals = ntuple(n -> kwargs[_keys[n]], length(_keys))
-    return NamedTuple{_keys}(_vals)
-end
-
 """
     mesh(positions, faces[, facetype = GLTriangleFace, vertex_attributes...])
 
@@ -61,10 +55,12 @@ function mesh(
     ) where {FT <: AbstractFace}
 
     fs = decompose(facetype, faces)
-    va = drop_nothing_kwargs(vertex_attributes)
 
-    if facetype != FT
-        va = NamedTuple{keys(va)}(convert_facetype.(facetype, values(va)))
+    va = Dict{Symbol, VertexAttributeType}()
+    for k in keys(vertex_attributes)
+        if !isnothing(vertex_attributes[k])
+            va[k] = convert_facetype(facetype, vertex_attributes[k])
+        end
     end
 
     return Mesh(positions, fs; va...)
@@ -76,34 +72,22 @@ function mesh(
         attributes...
     ) where {D, T, FT <: AbstractFace}
     
-    va = drop_nothing_kwargs(attributes)
-
-    N = length(mesh.position)
-    for name in keys(attributes)
-        attr = attributes[name]
-        if (attr isa AbstractVector) && (length(attr) < N)
-            error("Added Attribute $name has length $(length(attr)) but should have at least length $N.")
-        end # Mesh constructor checks faceviews already
+    va = Dict{Symbol, VertexAttributeType}()
+    for k in keys(attributes)
+        isnothing(attributes[k]) || setindex!(va, attributes[k], k)
     end
 
-    if FT == facetype
-        if isempty(va) && GeometryBasics.pointtype(mesh) == pointtype
-            return mesh
-        else
-            # 1. add vertex attributes, 2. convert position attribute
-            va = merge(vertex_attributes(mesh), va)
-            va = merge(va, (position = decompose(pointtype, va.position),))
-            return Mesh(va, faces(mesh), mesh.views)
-        end
+    if isempty(va) && (GeometryBasics.pointtype(mesh) == pointtype) && (FT == facetype)
+        return mesh
     else
         # 1. add vertex attributes, 2. convert position attribute
         va = merge(vertex_attributes(mesh), va)
-        va = merge(va, (position = decompose(pointtype, va.position),))
+        va[:position] = decompose(pointtype, va[:position])
 
         # Resolve facetype conversions of FaceViews
-        if facetype != FT
-            va = NamedTuple{keys(va)}(convert_facetype.(facetype, values(va)))
-            end
+        for (k, v) in va
+            va[k] = convert_facetype(facetype, v)
+        end
 
         # update main face type
         f, views = decompose(facetype, faces(mesh), mesh.views)
@@ -221,13 +205,13 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 
         # Check that all meshes use the same VertexAttributes
         # Could also do this via typing the function, but maybe error is nice?
-        names = propertynames(m1.vertex_attributes)
-        idx = findfirst(m -> propertynames(m.vertex_attributes) != names, meshes)
+        names = keys(m1.vertex_attributes)
+        idx = findfirst(m -> keys(m.vertex_attributes) != names, meshes)
         if idx !== nothing
             error(
                 "Cannot merge meshes with different vertex attributes. " * 
                 "First missmatch between meshes[1] with $names and " * 
-                "meshes[$idx] with $(propertynames(meshes[idx]))."
+                "meshes[$idx] with $(keys(vertex_attributes(meshes[idx])))."
             )
         end
 
@@ -246,9 +230,9 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         if consistent_face_views
 
             # All the same kind of face, can just merge
-
-            new_attribs = NamedTuple{names}(map(names) do name
-                return mapreduce(m -> getproperty(m, name), vcat, meshes)
+            
+            new_attribs = Dict{Symbol, VertexAttributeType}(map(collect(names)) do name
+                return name => mapreduce(m -> getproperty(m, name), vcat, meshes)
             end)
             fs = reduce(vcat, faces.(meshes))
 
@@ -299,22 +283,21 @@ function clear_faceviews(mesh::Mesh)
     pushfirst!(names, :position)
     all_fs = tuple(main_fs, other_fs...)
     
+    # need to avoid self-overwrite
+    for key in keys(va)
+        va[key] = deepcopy(values(va[key]))
+    end
+    
     if isempty(mesh.views)
 
         new_fs, maps = merge_vertex_indices(all_fs)
 
         named_maps = NamedTuple{tuple(names...)}(maps)
 
-        new_va = NamedTuple(map(collect(keys(va))) do name
-            attrib = va[name]
-            if name === :position
-                return name => attrib[named_maps[name]]
-            elseif haskey(named_maps, name)
-                return name => attrib.data[named_maps[name]]
-            else
-                return name => attrib
-            end
-        end)
+        new_va = Dict{Symbol, VertexAttributeType}()
+        for (name, attrib) in va
+            new_va[name] = attrib[get(named_maps, name, maps[1])]
+        end
 
         return Mesh(new_va, new_fs)
 
@@ -322,16 +305,10 @@ function clear_faceviews(mesh::Mesh)
 
         new_fs = sizehint!(eltype(main_fs)[], length(main_fs))
         new_views = sizehint!(UnitRange{Int}[], length(mesh.views))
-        new_va = NamedTuple(map(collect(keys(va))) do name
-            attrib = va[name]
-            if name == :position
-                return name => sizehint!(eltype(attrib)[], length(attrib))
-            elseif name in names
-                return name => sizehint!(eltype(attrib.data)[], length(attrib.data))
-            else # doesn't need remapping so we just add it here
-                return name => attrib
-            end
-        end)
+        new_va = Dict{Symbol, VertexAttributeType}()
+        for (name, attrib) in va
+            new_va[name] = sizehint!(eltype(attrib)[], length(attrib))
+        end
 
         vertex_index_counter = eltype(first(main_fs))(1)
 
@@ -340,12 +317,9 @@ function clear_faceviews(mesh::Mesh)
 
             vertex_index_counter += length(maps[1])
             
-            for (name, map) in zip(names, maps)
-                if name == :position
-                    append!(new_va[name], va[name][map])
-                else
-                    append!(new_va[name], va[name].data[map])
-                end
+            for name in keys(new_va)
+                map = maps[something(findfirst(==(name), names), 1)]
+                append!(new_va[name], va[name][map])
             end
 
             # add new faces and new view

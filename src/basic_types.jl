@@ -323,10 +323,28 @@ Base.:(==)(a::FaceView, b::FaceView) = (values(a) == values(b)) && (faces(a) == 
 #       mesh faces stay in sync
 convert_facetype(::Type{FT}, x::AbstractVector) where {FT <: AbstractFace} = x
 function convert_facetype(::Type{FT}, x::FaceView) where {FT <: AbstractFace}
-    if eltype(x) != FT
+    if eltype(faces(x)) != FT
         return FaceView(values(x), decompose(FT, faces(x)))
     end
     return x
+end
+
+function verify(fs::AbstractVector{FT}, fv::FaceView, name = nothing) where {FT <: AbstractFace}
+    if isconcretetype(FT) && (FT == facetype(fv))
+        return true
+    end
+
+    if length(faces(fv)) != length(fs)
+        error("Number of faces given in FaceView $(length(faces(fv))) does not match reference $(length(fs))")
+    end
+    
+    for (i, (f1, f2)) in enumerate(zip(faces(fv), fs))
+        if length(f1) != length(f2)
+            error("Length of face $i = $(length(f1)) does not match reference with $(length(f2))")
+        end
+    end
+
+    return true
 end
 
 # Dodgy definitions... (since attributes can be FaceView or Array it's often 
@@ -370,58 +388,50 @@ The concrete AbstractMesh type.
 struct Mesh{
         Dim, T <: Real, # TODO: Number?
         FT <: AbstractFace,
-        Names,
-        VAT <: Tuple{AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
         FVT <: AbstractVector{FT}
     } <: AbstractMesh{Dim, T}
 
-    vertex_attributes::NamedTuple{Names, VAT}
+    vertex_attributes::Dict{Symbol, VertexAttributeType} 
     connectivity::FVT
     views::Vector{UnitRange{Int}}
 
     function Mesh(
-            va::NamedTuple{Names, VAT}, 
+            va::Dict{Symbol, VertexAttributeType}, 
             fs::FVT,
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
-        ) where {
-            D, T, FT <: AbstractFace, Names,
-            VAT <: Tuple{AbstractVector{Point{D, T}}, Vararg{VertexAttributeType}},
-            FVT <: AbstractVector{FT}
-        }
+        ) where {FT <: AbstractFace, FVT <: AbstractVector{FT}}
 
         # verify type
-        if first(Names) !== :position
-            error("The first vertex attribute should be a 'position' but is a '$(first(Names))'.")
+        if !haskey(va, :position )
+            error("Vertex attributes must have a :position attribute.")
         end
 
-        if :normals in Names
+        if haskey(va, :normals)
             @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-            names = map(name -> ifelse(name === :normals, :normal, name), Names)
-            va = NamedTuple{names}(values(va))
+            va[:normal] = pop!(va, :normal)
         end
 
         # verify that faces of FaceViews match `fs` (in length per face)
-        for (name, attrib) in pairs(va)
+        N = maximum(f -> value(maximum(f)), fs)
+        for (name, attrib) in va
             name == :position && continue
 
             if attrib isa FaceView
-                if isconcretetype(FT) && (FT == facetype(attrib))
-                    continue
+                try
+                    verify(fs, attrib)
+                catch e
+                    @error "Failed to verify $name attribute:"
+                    rethrow(e)
                 end
-
-                if length(attrib.faces) != length(fs)
-                    error("Number of faces defined for $name $(length(attrib.faces)) does not match position $(length(fs))")
-                end
-                
-                for (i, (f1, f2)) in enumerate(zip(attrib.faces, fs))
-                    if length(f1) != length(f2)
-                        error("Length of face $name[$i] = $(length(f1)) does not match position[$i] = $(length(f2))")
-                    end
-                end
+            else
+                length(attrib) < N && error("Failed to verify $name attribute:\nFaces address $N vertex attributes but only $(length(attrib)) are present.")
             end
         end
 
-        return new{D, T, FT, keys(va), VAT, FVT}(va, fs, views)
+        D = length(eltype(va[:position]))
+        T = eltype(eltype(va[:position]))
+
+        return new{D, T, FT, FVT}(va, fs, views)
     end
 end
 
@@ -432,9 +442,9 @@ end
 @inline function Base.hasproperty(mesh::Mesh, field::Symbol)
     if field === :normals
         @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
-        return hasfield(mesh, :normal)
+        return hasproperty(mesh, :normal)
     end
-    return hasproperty(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
+    return haskey(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
 end
 @inline function Base.getproperty(mesh::Mesh, field::Symbol)
     if hasfield(Mesh, field)
@@ -443,11 +453,11 @@ end
         @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
         return getproperty(mesh, :normal)
     else
-        return getproperty(getfield(mesh, :vertex_attributes), field)
+        return getindex(getfield(mesh, :vertex_attributes), field)
     end
 end
 @inline function Base.propertynames(mesh::Mesh)
-    return (fieldnames(Mesh)..., propertynames(getfield(mesh, :vertex_attributes))...)
+    return (fieldnames(Mesh)..., keys(getfield(mesh, :vertex_attributes))...)
 end
 
 coordinates(mesh::Mesh) = mesh.position
@@ -468,14 +478,31 @@ function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
+function add_vertex_attribute!(mesh::Mesh, val::AbstractVector, name::Symbol)
+    @boundscheck begin
+        N = maximum(f -> value(maximum(f)), faces(mesh))
+        length(val) < N && error("Given vertex data not large enough to be adressed by all faces ($N required, $(length(val)) given)")
+    end
+    mesh.vertex_attributes[name] = val
+    return mesh
+end
+
+function add_vertex_attribute!(mesh::Mesh, val::FaceView, name::Symbol)
+    @boundscheck verify(faces(mesh), val)
+    mesh.vertex_attributes[name] = val
+    return mesh
+end
+
 function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
-    return Mesh(NamedTuple(attributes), faces, views)
+    return Mesh(Dict{Symbol, VertexAttributeType}(attributes), faces, views)
 end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
               faces::AbstractVector{<:AbstractFace}; 
               views = UnitRange{Int}[], kwargs...) where {Dim, T}
-    return Mesh((position = points, kwargs...), faces, views)
+    va = Dict{Symbol, VertexAttributeType}(kwargs)
+    va[:position] = points
+    return Mesh(va, faces, views)
 end
 
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
@@ -484,10 +511,9 @@ function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
 end
 
 function Mesh(; kwargs...)
-    fs = faces(kwargs[:position])
-    va = NamedTuple{keys(kwargs)}(
-        map(k -> k == :position ? values(kwargs[k]) : kwargs[k], keys(kwargs))
-    )
+    va = Dict{Symbol, VertexAttributeType}(kwargs)
+    fs = faces(va[:position]::FaceView)
+    va[:position] = values(va[:position])
     return Mesh(va, fs)
 end
 
@@ -543,10 +569,10 @@ Mesh(mesh::Mesh) = mesh
 
 # Shorthand types
 # used in meshes.jl
-const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
+const SimpleMesh{N, T, FT} = Mesh{N, T, FT, Vector{FT}}
 const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
 #
-const NormalMesh{N, T, FT}   = Mesh{N, T, FT, (:position, :normal), Tuple{Vector{Point{N, T}}, Vector{Vec3f}}, Vector{FT}}
-const NormalUVMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal, :uv), Tuple{Vector{Point{N, T}}, Vector{Vec3f}, Vector{Vec2f}}, Vector{FT}}
-const GLNormalMesh{N}   = NormalMesh{N, Float32, GLTriangleFace}
-const GLNormalUVMesh{N} = NormalUVMesh{N, Float32, GLTriangleFace}
+# const NormalMesh{N, T, FT}   = Mesh{N, T, FT, (:position, :normal), Tuple{Vector{Point{N, T}}, Vector{Vec3f}}, Vector{FT}}
+# const NormalUVMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal, :uv), Tuple{Vector{Point{N, T}}, Vector{Vec3f}, Vector{Vec2f}}, Vector{FT}}
+# const GLNormalMesh{N}   = NormalMesh{N, Float32, GLTriangleFace}
+# const GLNormalUVMesh{N} = NormalUVMesh{N, Float32, GLTriangleFace}
