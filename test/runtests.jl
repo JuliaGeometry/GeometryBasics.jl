@@ -8,14 +8,13 @@ using Extents
 
 @testset "GeometryBasics" begin
 @testset "algorithms" begin
-    @test_broken false
-    # cube = Rect(Vec3f(-0.5), Vec3f(1))
-    # cube_faces = decompose(TriangleFace{Int}, faces(cube))
-    # cube_vertices = decompose(Point{3,Float32}, cube)
-    # @test area(cube_vertices, cube_faces) == 6
-    # mesh = Mesh(cube_vertices, cube_faces)
-    # @test GeometryBasics.volume(mesh) ≈ 1
-    # @test GeometryBasics.volume(cube) ≈ 1
+    cube = Rect(Vec3f(-0.5), Vec3f(1))
+    cube_faces = decompose(TriangleFace{Int}, faces(cube))
+    cube_vertices = decompose(Point{3,Float32}, cube)
+    @test area(cube_vertices, cube_faces) == 6
+    mesh = Mesh(cube_vertices, cube_faces)
+    @test GeometryBasics.volume(mesh) ≈ 1
+    @test GeometryBasics.volume(cube) ≈ 1
 
     rect = Rect(1, 2, 7.5, 2.0)
     @test GeometryBasics.area(rect) ≈ 15
@@ -52,8 +51,6 @@ end
     @testset "Mesh with metadata" begin
        m = triangle_mesh(Sphere(Point3f(0), 1))
        m_meta = MetaMesh(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
-       @test_broken m_meta.boundingbox === Rect(1.0, 1.0, 2.0, 2.0)
-       @test_broken propertynames(m_meta) == (:boundingbox,)
        @test m_meta[:boundingbox] === Rect(1.0, 1.0, 2.0, 2.0)
        @test collect(keys(m_meta)) == [:boundingbox,]
     end
