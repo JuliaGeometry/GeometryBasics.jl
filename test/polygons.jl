@@ -1,6 +1,6 @@
 @testset "Polygon" begin
     @testset "from points" begin
-        points = connect([1, 2, 3, 4, 5, 6], PointPoint2f(2))
+        points = connect([1, 2, 3, 4, 5, 6], Point2f(2))
         polygon = Polygon(points)
         @test polygon == Polygon(points)
     end

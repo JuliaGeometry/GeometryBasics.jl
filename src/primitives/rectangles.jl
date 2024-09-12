@@ -544,21 +544,30 @@ centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 # Rect2 decomposition
 
 function faces(rect::Rect2, nvertices=(2, 2))
-    w, h = nvertices
-    idx = LinearIndices(nvertices)
-    quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
-    return ivec((quad(i, j) for i in 1:(w - 1), j in 1:(h - 1)))
+    if nvertices == (2, 2)
+        return [QuadFace(1,2,3,4)]
+    else
+        w, h = nvertices
+        idx = LinearIndices(nvertices)
+        quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
+        return [quad(i, j) for i in 1:(w - 1), j in 1:(h - 1)]
+    end
 end
 
-function coordinates(rect::Rect2, nvertices=(2, 2))
+function coordinates(rect::Rect2{T}, nvertices=(2, 2)) where {T}
     mini, maxi = extrema(rect)
-    xrange, yrange = LinRange.(mini, maxi, nvertices)
-    return [Point(x, y) for y in yrange for x in xrange]
+    if nvertices == (2, 2)
+        return Point2{T}[mini, (maxi[1], mini[2]), maxi, (mini[1], maxi[2])]
+    else
+        xrange, yrange = LinRange.(mini, maxi, nvertices)
+        return [Point(x, y) for y in yrange for x in xrange]
+    end
 end
 
-function texturecoordinates(rect::Rect2, nvertices=(2, 2))
-    xrange, yrange = LinRange.((0, 1), (1, 0), nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+function texturecoordinates(rect::Rect2{T}, nvertices=(2, 2)) where {T}
+    ps = coordinates(Rect2{T}(0, 0, 1, 1), nvertices)
+    ps .= Vec2{T}(0, 1) .+ Vec2{T}(1, -1) .* ps
+    return ps
 end
 
 function normals(rect::Rect2, nvertices=(2, 2))
