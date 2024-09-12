@@ -283,11 +283,6 @@ function clear_faceviews(mesh::Mesh)
     pushfirst!(names, :position)
     all_fs = tuple(main_fs, other_fs...)
     
-    # need to avoid self-overwrite
-    for key in keys(va)
-        va[key] = deepcopy(values(va[key]))
-    end
-    
     if isempty(mesh.views)
 
         new_fs, maps = merge_vertex_indices(all_fs)
@@ -296,7 +291,7 @@ function clear_faceviews(mesh::Mesh)
 
         new_va = Dict{Symbol, VertexAttributeType}()
         for (name, attrib) in va
-            new_va[name] = attrib[get(named_maps, name, maps[1])]
+            new_va[name] = values(attrib)[get(named_maps, name, maps[1])]
         end
 
         return Mesh(new_va, new_fs)
@@ -307,7 +302,7 @@ function clear_faceviews(mesh::Mesh)
         new_views = sizehint!(UnitRange{Int}[], length(mesh.views))
         new_va = Dict{Symbol, VertexAttributeType}()
         for (name, attrib) in va
-            new_va[name] = sizehint!(eltype(attrib)[], length(attrib))
+            new_va[name] = sizehint!(eltype(values(attrib))[], length(attrib))
         end
 
         vertex_index_counter = eltype(first(main_fs))(1)
@@ -319,7 +314,7 @@ function clear_faceviews(mesh::Mesh)
             
             for name in keys(new_va)
                 map = maps[something(findfirst(==(name), names), 1)]
-                append!(new_va[name], va[name][map])
+                append!(new_va[name], values(va[name])[map])
             end
 
             # add new faces and new view

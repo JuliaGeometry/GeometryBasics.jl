@@ -44,7 +44,8 @@ end
             @test mesh.normal === normals
             @test mesh.position === points
             @test GeometryBasics.faces(mesh) === tfaces
-            @test propertynames(mesh) == (:vertex_attributes, :connectivity, :views, :position, :normal, :stress)
+            # TODO: Is the order variable with Dict?
+            @test propertynames(mesh) == (:vertex_attributes, :connectivity, :views, :normal, :position, :stress)
         end
     end
 

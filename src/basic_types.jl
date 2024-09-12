@@ -412,7 +412,7 @@ struct Mesh{
         end
 
         # verify that faces of FaceViews match `fs` (in length per face)
-        N = maximum(f -> value(maximum(f)), fs)
+        N = maximum(f -> value(maximum(f)), fs, init = 0)
         for (name, attrib) in va
             name == :position && continue
 
@@ -434,10 +434,6 @@ struct Mesh{
         return new{D, T, FT, FVT}(va, fs, views)
     end
 end
-
-# TODO: what shorthands could be useful?
-# const GLMesh{D, T} = Mesh{D, T, GLTriangleFace}
-# const SimpleGLMesh{D, T} = Mesh{D, T, GLTriangleFace, (:position,)}
 
 @inline function Base.hasproperty(mesh::Mesh, field::Symbol)
     if field === :normals
