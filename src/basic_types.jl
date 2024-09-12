@@ -48,8 +48,22 @@ const TriangleFace{T} = NgonFace{3,T}
 const QuadFace{T} = NgonFace{4,T}
 const GLTriangleFace = TriangleFace{GLIndex}
 
-function Base.show(io::IO, x::TriangleFace{T}) where {T}
-    return print(io, "TriangleFace(", join(x, ", "), ")")
+function Base.show(io::IO, x::NgonFace{N, T}) where {N, T}
+    if N == 2
+        name = "LineFace{$T}"
+    elseif N == 3
+        if T == GLIndex
+            name = "GLTriangleFace"
+        else
+            name = "TriangleFace{$T}"
+        end
+    elseif N == 4
+        name = "QuadFace{$T}"
+    else
+        name = "NgonFace{$N, $T}"
+    end
+
+    return print(io, name, "(", join(value.(x), ", "), ")")
 end
 
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
