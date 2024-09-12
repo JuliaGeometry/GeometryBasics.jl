@@ -78,10 +78,13 @@ function mesh(
     
     va = drop_nothing_kwargs(attributes)
 
-    # N = length(mesh.position)
-    # if !all(attr -> length(attr) == N, values(va))
-    #     error("At least one of the given vertex attributes does not match `length(mesh.positon) = $N`.")
-    # end
+    N = length(mesh.position)
+    for name in keys(attributes)
+        attr = attributes[name]
+        if (attr isa AbstractVector) && (length(attr) < N)
+            error("Added Attribute $name has length $(length(attr)) but should have at least length $N.")
+        end # Mesh constructor checks faceviews already
+    end
 
     if FT == facetype
         if isempty(va) && GeometryBasics.pointtype(mesh) == pointtype

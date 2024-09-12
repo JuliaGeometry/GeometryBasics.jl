@@ -37,100 +37,107 @@ end
     # Sanity Check
     # TODO: extend
     m = Mesh(
-        [GeometryBasics.MultiFace(position = QuadFace(1, 2, 3, 4), normal = QuadFace(1,1,1,1))],
-        position = Point2f[(0, 0), (1, 0), (1, 1), (0, 1)],
-        normal = [Vec3f(0,0,1)]
+        position = GeometryBasics.FaceView(Point2f[(0, 0), (1, 0), (1, 1), (0, 1)], [QuadFace(1,2,3,4)]),
+        normal   = GeometryBasics.FaceView([Vec3f(0,0,1)], [QuadFace(1)])
     )
     
-    m2 = GeometryBasics.merge_vertex_indices(m)
+    m2 = GeometryBasics.clear_faceviews(m)
 
-    @test faces(m) isa AbstractVector{<: GeometryBasics.MultiFace}
-    @test propertynames(eltype(faces(m))) == keys(GeometryBasics.vertex_attributes(m))
+    @test faces(m) == [QuadFace(1,2,3,4)]
+    @test coordinates(m) == Point2f[(0, 0), (1, 0), (1, 1), (0, 1)]
+    @test normals(m) == GeometryBasics.FaceView([Vec3f(0,0,1)], [QuadFace(1)])
     @test isempty(m.views)
 
-    @test faces(m2) isa AbstractVector{<: QuadFace}
+    @test faces(m2)  == [QuadFace(1,2,3,4)]
     @test coordinates(m2) == coordinates(m)
     @test normals(m2) != normals(m)
-    @test normals(m2) == [only(normals(m)) for _ in 1:4]
+    @test normals(m2) == [only(values(normals(m))) for _ in 1:4]
     @test isempty(m2.views)
 end
 
 @testset "complex merge" begin
     rects = [Rect3f(Point3f(x, y, z), Vec3f(0.5)) for x in -1:1 for y in -1:1 for z in -1:1]
-    multiface_meshes = map(rects) do r
+    direct_meshes = map(rects) do r
         GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
     end
-    mfm = merge(multiface_meshes)
+    dm = merge(direct_meshes)
     
-    @test GeometryBasics.facetype(mfm) == GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
-    @test length(faces(mfm)) == 27 * 6 # 27 rects, 6 quad faces
-    @test length(normals(mfm)) == 27 * 6
-    @test length(coordinates(mfm)) == 27 * 8
-    @test !allunique([idx for f in faces(mfm) for idx in f.position])
-    @test !allunique([idx for f in faces(mfm) for idx in f.normal])
+    @test GeometryBasics.facetype(dm) == QuadFace{Int64}
+    @test length(faces(dm)) == 27 * 6 # 27 rects, 6 quad faces
+    @test length(normals(dm)) == 27 * 6
+    @test length(coordinates(dm)) == 27 * 8
+    @test normals(dm) isa GeometryBasics.FaceView
+    @test coordinates(dm) isa Vector
+    @test !allunique([idx for f in faces(dm) for idx in f])
+    @test !allunique([idx for f in faces(dm.normal) for idx in f])
     
-    vertexface_meshes = map(rects) do r
+    indirect_meshes = map(rects) do r
         GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
     end
-    vfm = merge(vertexface_meshes)
+    im = merge(indirect_meshes)
 
-    @test GeometryBasics.facetype(vfm) == QuadFace{Int64}
-    @test length(faces(vfm)) == 27 * 6           # 27 rects, 6 quad faces each
-    @test length(normals(vfm)) == 27 * 6 * 4     # 27 rects, 6 faces, 4 normals each
-    @test length(coordinates(vfm)) == 27 * 8 * 3 # 27 rects, 8 points, 3 duplications (for 3 attached quad faces)
-    @test allunique([idx for f in faces(vfm) for idx in f])
+    @test im == dm
 
-    mixed_meshes = map(multiface_meshes, vertexface_meshes) do mfm, vfm
-        rand() > 0.5 ? mfm : vfm 
+    converted_meshes = map(rects) do r
+        m = GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
+        GeometryBasics.clear_faceviews(m)
+    end
+    cm = merge(converted_meshes)
+
+    @test GeometryBasics.facetype(cm) == QuadFace{Int64}
+    @test length(faces(cm)) == 27 * 6 # 27 rects, 6 quad faces
+    @test length(normals(cm)) == 27 * 6 * 4 # duplicate 4x across face
+    @test length(coordinates(cm)) == 27 * 8 * 3 # duplicate 3x across shared vertex
+    @test normals(cm) isa Vector
+    @test coordinates(cm) isa Vector
+    @test allunique([idx for f in faces(cm) for idx in f])
+    
+
+    mixed_meshes = map(direct_meshes, converted_meshes) do dm, cm
+        rand() > 0.5 ? dm : cm 
     end
     mm = merge(mixed_meshes)
 
-    @test GeometryBasics.facetype(mm) == QuadFace{Int64}
-    @test length(faces(mm)) == 27 * 6           # 27 rects, 6 quad faces each
-    @test length(normals(mm)) == 27 * 6 * 4     # 27 rects, 6 faces, 4 normals each
-    @test length(coordinates(mm)) == 27 * 8 * 3 # 27 rects, 8 points, 3 duplications (for 3 attached quad faces)
-    @test allunique([idx for f in faces(mm) for idx in f])
-    @test mm == vfm
+    @test mm == cm
 end
 
 @testset "mesh() constructors" begin
     r = Rect3d(Point3d(-1), Vec3d(2))
 
     @testset "prerequisites" begin
-        ps = collect(coordinates(r))
+        ps = coordinates(r)
         @test length(ps) == 8
         @test ps isa Vector{Point3d}
-        ns = collect(normals(r))
+        ns = normals(r)
         @test length(ns) == 6
-        @test ns isa Vector{Vec3f}
-        uvs = collect(texturecoordinates(r))
+        @test ns isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{QuadFace{Int64}}}
+        uvs = texturecoordinates(r)
         @test length(uvs) == 8
         @test_broken uvs isa Vector{Vec2f}
-        fs = collect(faces(r))
+        fs = faces(r)
         @test length(fs) == 6
-        @test fs isa Vector{GeometryBasics.NormalUVFace{4, Int64, QuadFace{Int64}}}
+        @test fs isa Vector{QuadFace{Int64}}
     end
 
     @testset "normal_mesh()" begin
-        # TODO: simplify?
-        FT = GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
-        m = normal_mesh(r, pointtype = Point3f, normaltype = Vec3f, facetype = FT)
+        m = normal_mesh(r, pointtype = Point3f, normaltype = Vec3f)
+        m = GeometryBasics.clear_faceviews(m)
         
         @test hasproperty(m, :position)
         @test coordinates(m) isa Vector{Point3f}
-        @test length(coordinates(m)) == 8
+        @test length(coordinates(m)) == 24
         @test GeometryBasics.pointtype(m) == Point3f
 
         @test hasproperty(m, :normal)
         @test normals(m) isa Vector{Vec3f}
-        @test length(normals(m)) == 6
+        @test length(normals(m)) == 24
 
         @test !hasproperty(m, :uv)
         @test texturecoordinates(m) === nothing
 
-        @test faces(m) isa Vector{FT}
-        @test length(faces(m)) == 6
-        @test GeometryBasics.facetype(m) == FT
+        @test faces(m) isa Vector{GLTriangleFace}
+        @test length(faces(m)) == 12
+        @test GeometryBasics.facetype(m) == GLTriangleFace
     end
 
     @testset "normal_uv_mesh()" begin
@@ -141,16 +148,16 @@ end
 
         @test hasproperty(m, :position)
         @test coordinates(m) isa Vector{Point3d}
-        @test length(coordinates(m)) == 24
+        @test length(coordinates(m)) == 8
         @test GeometryBasics.pointtype(m) == Point3d
 
         @test hasproperty(m, :normal)
-        @test normals(m) isa Vector{Vec3d}
-        @test length(normals(m)) == 24
+        @test normals(m) isa GeometryBasics.FaceView{Vec3d, Vector{Vec3d}, Vector{QuadFace{Int32}}}
+        @test length(normals(m)) == 6
 
         @test hasproperty(m, :uv)
         @test texturecoordinates(m) isa Vector{Vec3d}
-        @test length(texturecoordinates(m)) == 24
+        @test length(texturecoordinates(m)) == 8
 
         @test faces(m) isa Vector{QuadFace{Int32}}
         @test length(faces(m)) == 6
@@ -199,24 +206,23 @@ end
     end
 
     @testset "mesh(mesh)" begin
-        FT = GeometryBasics.NormalFace{4, Int64, QuadFace{Int64}}
-        m = GeometryBasics.mesh(r, pointtype = Point3f, normal = normals(r), facetype = FT)
+        m = GeometryBasics.mesh(r, pointtype = Point3f, normal = normals(r), facetype = QuadFace{Int64})
 
         # Should be hit by normal_mesh as well...
         @test coordinates(m) isa Vector{Point3f}
         @test length(coordinates(m)) == 8
-        @test normals(m) isa Vector{Vec3f}
+        @test normals(m) isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{QuadFace{Int64}}}
         @test length(normals(m)) == 6
         @test !hasproperty(m, :uv)
         @test texturecoordinates(m) === nothing
-        @test faces(m) isa Vector{FT}
+        @test faces(m) isa Vector{QuadFace{Int64}}
         @test length(faces(m)) == 6
 
-        # shouldn't be able to add vertex attributes when they aren't synchronized
+        # Shoudl throw because uv's don't match length(position) or have faces
         @test_throws ErrorException GeometryBasics.mesh(m, uv = Vec3f[])
 
-        # Can convert face type - should remap
-        m2 = GeometryBasics.mesh(m, facetype = QuadFace{Int32})
+        # remap vertex attributes to merge faceviews into one face array
+        m2 = GeometryBasics.clear_faceviews(m)
 
         @test coordinates(m2) isa Vector{Point3f}
         @test length(coordinates(m2)) == 24
@@ -224,14 +230,11 @@ end
         @test length(normals(m2)) == 24
         @test !hasproperty(m2, :uv)
         @test texturecoordinates(m2) === nothing
-        @test faces(m2) isa Vector{QuadFace{Int32}}
+        @test faces(m2) isa Vector{QuadFace{Int64}}
         @test length(faces(m2)) == 6
 
-        # remap + decompose face and then adding vertex attribute is fine
-        m2 = GeometryBasics.mesh(m, facetype = GLTriangleFace)
-        # should be same length as other vertices...
-        @test_throws ErrorException GeometryBasics.mesh(m2, uv = Vec3f[])
-        m2 = GeometryBasics.mesh(m2, uv = decompose(Point3f, m2))
+        # convert face type and add uvs
+        m2 = GeometryBasics.mesh(m2, facetype = GLTriangleFace, uv = decompose(Point3f, m2))
 
         @test coordinates(m2) isa Vector{Point3f}
         @test length(coordinates(m2)) == 24
@@ -241,7 +244,6 @@ end
         @test length(texturecoordinates(m2)) == 24
         @test faces(m2) isa Vector{GLTriangleFace}
         @test length(faces(m2)) == 12
-
 
     end
 end

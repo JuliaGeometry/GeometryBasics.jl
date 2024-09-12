@@ -317,6 +317,7 @@ Base.values(x::FaceView) = x.data
 facetype(x::FaceView) = eltype(x.faces)
 Base.getindex(x::FaceView, f::AbstractFace) = getindex(values(x), f)
 Base.isempty(x::FaceView) = isempty(values(x))
+Base.:(==)(a::FaceView, b::FaceView) = (values(a) == values(b)) && (faces(a) == faces(b))
 
 # TODO: maybe underscore this as it requires care to make sure all FaceViews and
 #       mesh faces stay in sync
@@ -399,15 +400,6 @@ struct Mesh{
             va = NamedTuple{names}(values(va))
         end
 
-        if va.position isa FaceView
-            if fs != faces(va.position)
-                error("position faces do not match gives faces")
-            end
-            va = NamedTuple(map(keys(va)) do key
-                return key => (key == :position ? values(va[key]) : va[key])
-            end)
-        end
-
         # verify that faces of FaceViews match `fs` (in length per face)
         for (name, attrib) in pairs(va)
             name == :position && continue
@@ -464,16 +456,16 @@ normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-# TODO: maybe instead of this:
-#   mesh.attrib -> FaceView (get or construct)
-#   faceview[i] -> values(faceview)[faces(faceview)[i]]
-#   this would maybe clash with other functions of faceview though...
-# Base.getindex(mesh::Mesh, i::Integer) = mesh[mesh.connectivity[i]]
+Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.connectivity[i]]
 Base.length(mesh::Mesh) = length(mesh.connectivity)
 
 function Base.:(==)(a::Mesh, b::Mesh)
     return (a.vertex_attributes == b.vertex_attributes) && 
            (faces(a) == faces(b)) && (a.views == b.views)
+end
+
+function Base.iterate(mesh::Mesh, i=1)
+    return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
 function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
@@ -489,6 +481,14 @@ end
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
               facetype=TriangleFace, skip=1)
     return Mesh(points, connect(faces, facetype, skip))
+end
+
+function Mesh(; kwargs...)
+    fs = faces(kwargs[:position])
+    va = NamedTuple{keys(kwargs)}(
+        map(k -> k == :position ? values(kwargs[k]) : kwargs[k], keys(kwargs))
+    )
+    return Mesh(va, fs)
 end
 
 

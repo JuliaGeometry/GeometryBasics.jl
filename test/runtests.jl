@@ -6,8 +6,6 @@ using GeoInterface
 using GeoJSON
 using Extents
 
-using GeometryBasics: MultiFace
-
 @testset "GeometryBasics" begin
 @testset "algorithms" begin
     @test_broken false
@@ -178,7 +176,7 @@ end
     @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
     primitive = Rect3(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normal) isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{GLTriangleFace}}
 
     points = decompose(Point2f, Circle(Point2f(0), 1))
     tmesh = triangle_mesh(points)
