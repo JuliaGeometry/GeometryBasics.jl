@@ -550,7 +550,7 @@ function faces(rect::Rect2, nvertices=(2, 2))
         w, h = nvertices
         idx = LinearIndices(nvertices)
         quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
-        return [quad(i, j) for i in 1:(w - 1), j in 1:(h - 1)]
+        return [quad(i, j) for j in 1:(h - 1) for i in 1:(w - 1)]
     end
 end
 

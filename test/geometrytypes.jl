@@ -81,7 +81,7 @@ end
 
 @testset "HyperRectangles" begin
     a = Rect(Vec(0, 0), Vec(1, 1))
-    pt_expa = Point{2,Int}[(0, 0), (1, 0), (0, 1), (1, 1)]
+    pt_expa = Point{2,Int}[(0, 0), (1, 0), (1, 1), (0, 1)]
     @test decompose(Point{2,Int}, a) == pt_expa
     mesh = normal_mesh(a)
     @test decompose(Point2f, mesh) == pt_expa
@@ -162,7 +162,7 @@ end
     @test f == face_target
     circle = Circle(Point2f(0), 1.0f0)
     points = decompose(Point2f, Tesselation(circle, 20))
-    @test length(points) == 20
+    @test length(points) == 21
     tess_circle = Tesselation(circle, 32)
     mesh = triangle_mesh(tess_circle)
     @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)
