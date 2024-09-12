@@ -561,14 +561,3 @@ meta(@nospecialize(m)) = NamedTuple()
 meta(mesh::MetaMesh) = getfield(mesh, :meta)
 Mesh(mesh::MetaMesh) = getfield(mesh, :mesh)
 Mesh(mesh::Mesh) = mesh
-
-
-# Shorthand types
-# used in meshes.jl
-const SimpleMesh{N, T, FT} = Mesh{N, T, FT, Vector{FT}}
-const SimpleTriangleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
-#
-# const NormalMesh{N, T, FT}   = Mesh{N, T, FT, (:position, :normal), Tuple{Vector{Point{N, T}}, Vector{Vec3f}}, Vector{FT}}
-# const NormalUVMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal, :uv), Tuple{Vector{Point{N, T}}, Vector{Vec3f}, Vector{Vec2f}}, Vector{FT}}
-# const GLNormalMesh{N}   = NormalMesh{N, Float32, GLTriangleFace}
-# const GLNormalUVMesh{N} = NormalUVMesh{N, Float32, GLTriangleFace}

@@ -108,8 +108,7 @@ end
 function triangle_mesh(
         primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}};
         pointtype = Point{N, Float32}, facetype = GLTriangleFace
-    )::SimpleTriangleMesh{N} where {N} # TODO: is the output type doing anything here?
-
+    ) where {N}
     return mesh(primitive; pointtype = pointtype, facetype = facetype)
 end
 
