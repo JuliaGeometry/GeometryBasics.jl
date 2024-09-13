@@ -62,8 +62,8 @@ using Test, GeometryBasics
             ], [
                 GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5), 
                 GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5), 
-                QuadFace{Int64}(1, 1, 2, 2), QuadFace{Int64}(2, 2, 3, 3), 
-                QuadFace{Int64}(3, 3, 4, 4), QuadFace{Int64}(4, 4, 1, 1), 
+                QuadFace{Int64}(1, 2, 2, 1), QuadFace{Int64}(2, 3, 3, 2), 
+                QuadFace{Int64}(3, 4, 4, 3), QuadFace{Int64}(4, 1, 1, 4), 
                 GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6), 
                 GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6)
             ]
