@@ -392,7 +392,7 @@ struct Mesh{
     } <: AbstractMesh{Dim, T}
 
     vertex_attributes::Dict{Symbol, VertexAttributeType} 
-    connectivity::FVT
+    faces::FVT
     views::Vector{UnitRange{Int}}
 
     function Mesh(
@@ -457,13 +457,13 @@ end
 end
 
 coordinates(mesh::Mesh) = mesh.position
-faces(mesh::Mesh) = mesh.connectivity
+faces(mesh::Mesh) = mesh.faces
 normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.connectivity[i]]
-Base.length(mesh::Mesh) = length(mesh.connectivity)
+Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
+Base.length(mesh::Mesh) = length(mesh.faces)
 
 function Base.:(==)(a::Mesh, b::Mesh)
     return (a.vertex_attributes == b.vertex_attributes) && 
