@@ -35,13 +35,10 @@ using Test, GeometryBasics
 
         @test decompose(Point3{Float64}, Tesselation(s, 8)) ≈ positions
 
-        _faces = [
-            TriangleFace(9, 1, 2), TriangleFace(9, 2, 3), TriangleFace(9, 3, 4), 
-            TriangleFace(9, 4, 1), TriangleFace(1, 5, 6), TriangleFace(1, 6, 2), 
-            TriangleFace(2, 6, 7), TriangleFace(2, 7, 3), TriangleFace(3, 7, 8), 
-            TriangleFace(3, 8, 4), TriangleFace(4, 8, 5), TriangleFace(4, 5, 1), 
-            TriangleFace(10, 5, 6), TriangleFace(10, 6, 7), TriangleFace(10, 7, 8), 
-            TriangleFace(10, 8, 5)]
+        _faces = TriangleFace[
+            (9, 2, 1), (9, 3, 2), (9, 4, 3), (9, 1, 4), (1, 2, 6), (1, 6, 5), 
+            (2, 3, 7), (2, 7, 6), (3, 4, 8), (3, 8, 7), (4, 1, 5), (4, 5, 8), 
+            (10, 5, 6), (10, 6, 7), (10, 7, 8), (10, 8, 5)]
 
         @test _faces == decompose(TriangleFace{Int}, Tesselation(s, 8))
 
