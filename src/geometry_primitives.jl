@@ -8,6 +8,11 @@ end
 
 ##
 # conversion & decompose
+"""
+    convert_simplex(::Type{TargetType}, x)
+
+Used to convert one object into another in `decompose(::Type{TargetType}, xs)`.
+"""
 convert_simplex(::Type{T}, x::T) where {T} = (x,)
 convert_simplex(::Type{Vec{N, T}}, x::Vec{N, T}) where {N, T} = x
 
@@ -116,13 +121,12 @@ function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
 end
 
 """
-The unnormalized normal of three vertices.
+    orthogonal_vector(p1, p2, p3)
+
+Calculates an orthogonal vector `cross(p2 - p1, p3 - p1)` to a plane described
+by 3 points p1, p2, p3. 
 """
-function orthogonal_vector(v1, v2, v3)
-    a = v2 .- v1
-    b = v3 .- v1
-    return cross(a, b)
-end
+orthogonal_vector(p1, p2, p3) = cross(p2 .- p1, p3 .- p1)
 
 """
     normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])

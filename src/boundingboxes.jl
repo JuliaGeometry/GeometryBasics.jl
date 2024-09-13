@@ -3,7 +3,9 @@ function Rect(geometry::AbstractArray{<:Point{N,T}}) where {N,T}
 end
 
 """
-Construct a HyperRectangle enclosing all points.
+    Rect(points::AbstractArray{<: Point})
+
+Construct a bounding box countaining all the given points.
 """
 function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     N2, T2 = length(PT), eltype(PT)
@@ -23,6 +25,11 @@ function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     end
 end
 
+"""
+    Rect(primitive::GeometryPrimitive)
+
+Construct a bounding box for the given primitive.
+"""
 function Rect(primitive::GeometryPrimitive{N,T}) where {N,T}
     return Rect{N,T}(primitive)
 end

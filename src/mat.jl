@@ -1,6 +1,12 @@
 import LinearAlgebra: inv, det
 import Random
 
+"""
+    Mat{R, C, T, L} <: AbstractMatrix{T}
+
+GeometryBasics type for statically sized matrices. `R` is the number of rows, 
+`C` columns, T the eltype and `L = R * C` the total number of elements.
+"""
 struct Mat{Row, Column, T, L} <: AbstractMatrix{T}
     values::NTuple{L, T}
     function Mat{R, C, T}(values::NTuple{L, T}) where {R, C, T, L}
@@ -57,6 +63,22 @@ Base.values(m::Mat) = m.values
 
 Base.copy(mat::Mat) = deepcopy(mat)
 
+"""
+    Mat{R, C, T[, L]}(args::Union{UniformScaling, Tuple, AbstractMatrix})
+    Mat{R, C}(args::Union{Tuple, AbstractMatrix})
+    Mat{C}(args::Tuple)
+
+Constructs a static Matrix from the given inputs. Can also take multiple numeric
+args. If only one size is given the matrix is assumed to be square.
+
+### Aliases
+
+|        |`T`         |`Float64` |`Float32` |`Int`     |`UInt`    |
+|--------|------------|----------|----------|----------|----------|
+|`N`     |`Mat{N,T}`  |`Matd{N}` |`Matf{N}` |`Mati{N}` |`Matui{N}`|
+|`2`     |`Mat2{T}`   |`Mat2d`   |`Mat2f`   |`Mat2i`   |`Mat2ui`  |
+|`3`     |`Mat3{T}`   |`Mat3d`   |`Mat3f`   |`Mat3i`   |`Mat3ui`  |
+"""
 function Mat{C, R, T}(::LinearAlgebra.UniformScaling) where {C, R, T}
     idx = CartesianIndices((R, C))
     data = ntuple(C * R) do i

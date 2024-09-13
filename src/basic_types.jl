@@ -1,22 +1,29 @@
 """
-Abstract Geometry in R{Dim} with Number type T
+    abstract type AbstractGeometry{Dimension, T<:Number}
+
+Base type for geometry types like GeometryPrimites and Polytopes.
 """
 abstract type AbstractGeometry{Dim,T<:Number} end
 abstract type GeometryPrimitive{Dim,T} <: AbstractGeometry{Dim,T} end
 Base.ndims(::AbstractGeometry{Dim}) where {Dim} = Dim
 
 """
-Geometry made of N connected points. Connected as one flat geometry, it makes a Ngon / Polygon.
-Connected as volume it will be a Simplex / Tri / Cube.
-Note That `Polytope{N} where N == 3` denotes a Triangle both as a Simplex or Ngon.
+    Polytope{Dim, T} <: AbstractGeometry{Dim, T}
+
+A Polytope is the generalization of a Polygon to higher dimensions, i.e. a 
+geometric object consisting of flat faces.
+
+A `Polygon` and `Ngon` are both 2D `Polytope`s. A `Simplex` is the simplest
+`Polytope` in arbitrary dimensions.
 """
 abstract type Polytope{Dim,T} <: AbstractGeometry{Dim,T} end
 abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 
 """
-    AbstractFace{N, T} <: StaticVector{N, T}
+    AbstractFace{N_indices, T} <: StaticVector{N_indices, T}
 
-Parent type for all faces. You should inherit from one of the child types instead.
+Parent type for all face types. The standard face type is typically a 
+`GLTriangleFace = NgonFace{3, GLIndex}`.
 """
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
 abstract type AbstractSimplexFace{N,T} <: AbstractFace{N,T} end
@@ -37,11 +44,19 @@ end
 const TetrahedronFace{T} = SimplexFace{4,T}
 Face(::Type{<:SimplexFace{N}}, ::Type{T}) where {N,T} = SimplexFace{N,T}
 
-"""
-Face index, connecting points to form an Ngon
-"""
 
 @fixed_vector NgonFace = AbstractNgonFace
+
+"""
+    NgonFace{N, T}
+
+A planar face connecting N vertices. Shorthands include:
+- `LineFace{T} = NgonFace{2,T}`
+- `TriangleFace{T} = NgonFace{3,T}`
+- `QuadFace{T} = NgonFace{4,T}`
+- `GLTriangleFace = TriangleFace{GLIndex}`
+"""
+NgonFace
 
 const LineFace{T} = NgonFace{2,T}
 const TriangleFace{T} = NgonFace{3,T}
@@ -74,12 +89,16 @@ Face(F::Type{NgonFace{N,FT}}, ::Type{T}) where {FT,N,T} = F
 @propagate_inbounds Base.iterate(x::Polytope, i) = iterate(coordinates(x), i)
 
 """
-Fixed Size Polygon, e.g.
+    Ngon{D, T, N}(points::NTuple{N, Point{D, T}})
+
+Defines a flat polygon (without holes) in D dimensional space using N points, e.g.:
 - N 1-2 : Illegal!
 - N = 3 : Triangle
 - N = 4 : Quadrilateral (or Quad, Or tetragon)
 - N = 5 : Pentagon
 - ...
+
+For polygons with holes, see `Polygon`.
 """
 struct Ngon{Dim, T<:Real, N} <: AbstractPolygon{Dim,T}
     points::NTuple{N, Point{Dim, T}}
@@ -99,6 +118,8 @@ Base.length(::Type{<:NNgon{N}}) where {N} = N
 Base.length(::NNgon{N}) where {N} = N
 
 """
+    Polytope(::Type{<: Point}, ::Type{<: AbstractNgonFace})
+
 The Ngon Polytope element type when indexing an array of points with a SimplexFace
 """
 function Polytope(::Type{Point{Dim,T}},
@@ -107,9 +128,11 @@ function Polytope(::Type{Point{Dim,T}},
 end
 
 """
+    Polytope(::Type{<: Ngon}, P::Type{<: Point})
+
 The fully concrete Ngon type, when constructed from a point type!
 """
-function Polytope(::Type{<:NNgon{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
+function Polytope(::Type{<:Ngon{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
     return Ngon{NDim,T,N}
 end
 
@@ -139,6 +162,8 @@ function coordinates(lines::AbstractArray{Line{Dim,T}}) where {Dim,T}
 end
 
 """
+    Simplex{D, T<:Real, N}(points::NTuple{N, Point{D, T}})
+
 A `Simplex` is a generalization of an N-dimensional tetrahedra and can be thought
 of as a minimal convex set containing the specified points.
 
@@ -174,6 +199,8 @@ Base.length(::Type{<:NSimplex{N}}) where {N} = N
 Base.length(::NSimplex{N}) where {N} = N
 
 """
+    Polytope(::Type{Point{Dim,T}}, ::Type{<:AbstractSimplexFace{N}})
+
 The Simplex Polytope element type when indexing an array of points with a SimplexFace
 """
 function Polytope(::Type{Point{Dim,T}}, ::Type{<:AbstractSimplexFace{N}}) where {N,Dim,T}
@@ -181,6 +208,8 @@ function Polytope(::Type{Point{Dim,T}}, ::Type{<:AbstractSimplexFace{N}}) where 
 end
 
 """
+    Polytope(::Type{<:NSimplex{N}}, P::Type{Point{NDim,T}})
+
 The fully concrete Simplex type, when constructed from a point type!
 """
 function Polytope(::Type{<:NSimplex{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
@@ -193,6 +222,8 @@ Base.show(io::IO, x::Line) = print(io, "Line(", x[1], " => ", x[2], ")")
     Polygon(exterior::AbstractVector{<:Point})
     Polygon(exterior::AbstractVector{<:Point}, interiors::Vector{<:AbstractVector{<:Point}})
 
+Constructs a polygon from a set of exterior points. If interiors are given, each
+of them cuts away from the Polygon.
 """
 struct Polygon{Dim,T<:Real} <: AbstractPolygon{Dim,T}
     exterior::Vector{Point{Dim, T}}
@@ -242,6 +273,8 @@ end
 
 """
     MultiPolygon(polygons::AbstractPolygon)
+
+A collection of polygons
 """
 struct MultiPolygon{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     polygons::Vector{<:AbstractPolygon{Dim,T}}
@@ -257,7 +290,8 @@ Base.length(mp::MultiPolygon) = length(mp.polygons)
 
 """
     LineString(points::AbstractVector{<:Point})
-A LineString is a geometry of connected line segments
+
+A LineString is a collection of points connected by line segments.
 """
 struct LineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     points::Vector{Point{Dim, T}}
@@ -295,7 +329,17 @@ Base.size(mpt::MultiPoint) = size(mpt.points)
 Base.length(mpt::MultiPoint) = length(mpt.points)
 
 
+"""
+    FaceView(data, faces)
 
+A FaceView is alternative to passing a vertex attribute directly to a mesh. It 
+bundles `data` with a different set of `faces` which replace the default faces
+of a mesh. Doing this allows you to have the `data` in a different order from 
+vertices in the mesh, potentially avoiding duplication.
+
+You can get the data of a FaceView with `values(faceview)` and the faces with
+`faces(faceview)`.
+"""
 struct FaceView{T, AVT <: AbstractVector{T}, FVT <: AbstractVector{<: AbstractFace}}
     data::AVT
     faces::FVT
@@ -312,7 +356,6 @@ function Base.vcat(a::FaceView, b::FaceView)
 end
 
 faces(x::FaceView) = x.faces
-# attribute(x::FaceView) = x.data
 Base.values(x::FaceView) = x.data
 facetype(x::FaceView) = eltype(x.faces)
 Base.getindex(x::FaceView, f::AbstractFace) = getindex(values(x), f)
@@ -375,15 +418,16 @@ end
 """
     AbstractMesh
 
-An abstract mesh is a collection of Polytope elements (Simplices / Ngons).
-The connections are defined via faces(mesh), the coordinates of the elements are returned by
-coordinates(mesh). Arbitrary meta information can be attached per point or per face
+An abstract mesh is a collection of Polytope elements (Simplices / Ngons). The 
+connections are defined via faces(mesh) and the coordinates of the elements are 
+returned by coordinates(mesh).
 """
 abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
 
 """
-    Mesh <: AbstractMesh{Element}
-The concrete AbstractMesh type.
+    Mesh{D, T, FaceType, FaceArrayType} <: AbstractMesh{D, T} <: AbstractGeometry{D, T}
+
+The type of a concrete mesh. It can hold arbitrary vertex data (including FaceView's).
 """
 struct Mesh{
         Dim, T <: Real, # TODO: Number?
@@ -460,6 +504,13 @@ coordinates(mesh::Mesh) = mesh.position
 faces(mesh::Mesh) = mesh.faces
 normals(mesh::Mesh) = hasproperty(mesh, :normal) ? mesh.normal : nothing
 texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
+
+"""
+    vertex_attributes(mesh::Mesh)
+
+Returns a dictionairy containing the vertex attributes of the given mesh. 
+Mutating these will change the mesh.
+"""
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
 Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
@@ -489,6 +540,28 @@ function add_vertex_attribute!(mesh::Mesh, val::FaceView, name::Symbol)
     return mesh
 end
 
+"""
+    Mesh(faces[; views, attributes...])
+    Mesh(positions, faces[; views])
+    Mesh(positions, faces::AbstractVector{<: Integer}[; facetype = TriangleFace, skip = 1])
+    Mesh(; attributes...)
+
+Constructs a mesh from the given arguments.
+
+If `positions` are given explicitly, they are merged with other vertex attributes 
+under the name `position`. Otherwise they must be part of `attributes`. If `faces`
+are not given `attributes.position` must be a FaceView.
+
+Any other vertex attribute can be either an `AbstractVector` or a `FaceView` 
+thereof. Every vertex attribute that is an `AbstractVector` must be sufficiently
+large to be indexable by `mesh.faces`. Every vertex attribute that is a `FaceView`
+must contain similar faces to `mesh.faces`, i.e. contain the same number of faces
+and have faces of matching length.
+
+`views` can be defined optionally to implicitly split the mesh into multi 
+sub-meshes. This is done by providing ranges for indexing faces which correspond
+to the sub-meshes. By default this is left empty.
+"""
 function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
     return Mesh(Dict{Symbol, VertexAttributeType}(attributes), faces, views)
 end
@@ -513,12 +586,28 @@ function Mesh(; kwargs...)
     return Mesh(va, fs)
 end
 
-
 struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}} <: AbstractMesh{Dim, T}
     mesh::M
     meta::Dict{Symbol, Any}
 end
 
+
+"""
+    MetaMesh(mesh; metadata...)
+    MetaMesh(positions, faces; metadata...)
+
+Constructs a MetaMesh either from another `mesh` or by constructing another mesh
+with the given `positions` and `faces`. Any keyword arguments given will be
+stored in the `meta` field in `MetaMesh`.
+
+This struct is meant to be used for storage of non-vertex data. Any vertex 
+related data should be stored as a vertex attribute in `Mesh`. 
+
+The metadata added to the MetaMesh can be manipulated with Dict-like operations 
+(getindex, setindex!, get, delete, keys, etc). Vertex attributes can be accessed 
+via fields and the same getters as mesh. The mesh itself can be retrieved with 
+`Mesh(metamesh)`.
+"""
 function MetaMesh(mesh::AbstractMesh; kwargs...)
     MetaMesh(mesh, Dict{Symbol, Any}(kwargs))
 end
@@ -527,7 +616,7 @@ function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Abstr
     MetaMesh(Mesh(points, faces), Dict{Symbol, Any}(kwargs))
 end
 
-# TODO: Do we want to access meta here?
+
 @inline function Base.hasproperty(mesh::MetaMesh, field::Symbol)
     return hasfield(MetaMesh, field) || hasproperty(getfield(mesh, :mesh), field)
 end

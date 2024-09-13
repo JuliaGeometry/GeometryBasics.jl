@@ -3,6 +3,12 @@ using LinearAlgebra
 import Random
 import Base: setindex
 
+"""
+    StaticVector{N, T} <: AbstractVector{T}
+
+An abstract type for GeometryBasics statically sized Vectors. These are used
+for Point, Vec and Face types.
+"""
 abstract type StaticVector{N, T} <: AbstractVector{T} end
 function similar_type end
 
@@ -285,3 +291,43 @@ include("generated-aliases.jl")
 
 export Mat, Vec, Point, unit
 export Vecf, Pointf
+
+
+"""
+    Vec{N, T}(args...)
+    Vec{N, T}(args::Union{AbstractVector, Tuple, NTuple, StaticVector})
+
+Constructs a Vec of length `N` from the given arguments. 
+
+Note that Point and Vec don't follow strict mathematical definitions. Instead 
+we allow them to be used interchangeably.
+
+## Aliases
+
+|        |`T`         |`Float64` |`Float32` |`Int`     |`UInt`    |
+|--------|------------|----------|----------|----------|----------|
+|`N`     |`Vec{N,T}`  |`Vecd{N}` |`Vecf{N}` |`Veci{N}` |`Vecui{N}`|
+|`2`     |`Vec2{T}`   |`Vec2d`   |`Vec2f`   |`Vec2i`   |`Vec2ui`  |
+|`3`     |`Vec3{T}`   |`Vec3d`   |`Vec3f`   |`Vec3i`   |`Vec3ui`  |
+"""
+Vec
+
+
+"""
+    Point{N, T}(args...)
+    Point{N, T}(args::Union{AbstractVector, Tuple, NTuple, StaticVector})
+
+Constructs a Point of length `N` from the given arguments. 
+
+Note that Point and Vec don't follow strict mathematical definitions. Instead 
+we allow them to be used interchangeably.
+
+## Aliases
+
+|        |`T`         |`Float64` |`Float32` |`Int`     |`UInt`    |
+|--------|------------|----------|----------|----------|----------|
+|`N`     |`Point{N,T}`|`Pointd{N}`|`Pointf{N}`|`Pointi{N}`|`Pointui{N}`|
+|`2`     |`Point2{T}` |`Point2d` |`Point2f` |`Point2i` |`Point2ui`|
+|`3`     |`Point3{T}` |`Point3d` |`Point3f` |`Point3i` |`Point3ui`|
+"""
+Point

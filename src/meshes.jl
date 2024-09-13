@@ -1,15 +1,15 @@
 """
-    mesh(primitive::GeometryPrimitive;
-         pointtype=Point, facetype=GLTriangle,
-         uv=nothing, normaltype=nothing)
+    mesh(primitive::GeometryPrimitive[; pointtype = Point, facetype = GLTriangleFace, vertex_attributes...])
 
-Creates a mesh from `primitive`.
+Creates a mesh from a given `primitive` with the given `pointtype` and `facetype`. 
 
-Uses the element types from the keyword arguments to create the attributes.
-The attributes that have their type set to nothing are not added to the mesh.
-Note, that this can be an `Int` or `Tuple{Int, Int}``, when the primitive is grid based.
-It also only losely correlates to the number of vertices, depending on the algorithm used.
-#TODO: find a better number here!
+This method only generates positions and faces from the primitive. Additional
+vertex attributes like normals and texture coordinates can be given as extra
+keyword arguments.
+
+Note that vertex attributes that are `nothing` get removed before creating a mesh.
+
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
 function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleFace, vertex_attributes...)
     positions = decompose(pointtype, primitive)
@@ -44,9 +44,9 @@ end
 Creates a mesh from the given positions and faces. Other vertex attributes like
 normals and texture coordinates can be added as keyword arguments.
 
-By default the generated mesh uses `GLTriangleFace`. If the input faces are of 
-type `MultiFace` they will get converted appropriately, which may cause 
-reordering and duplication of positions and other vertex attributes.
+Note that vertex attributes that are `nothing` get removed before creating a mesh.
+
+See also:[`normal_mesh`](@ref)
 """
 function mesh(
         positions::AbstractVector{<:Point}, 
@@ -66,6 +66,14 @@ function mesh(
     return Mesh(positions, fs; va...)
 end
 
+"""
+    mesh(mesh::Mesh[; pointtype = Point, facetype = GLTriangleFace, vertex_attributes...]
+
+Recreates the given `mesh` with the given `pointtype`, `facetype` and vertex 
+attributes. If the new mesh would match the old mesh, the old mesh is returned instead.
+
+Note that vertex attributes that are `nothing` get removed before creating a mesh.
+"""
 function mesh(
         mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
         facetype::Type{<: AbstractFace} = GLTriangleFace,
@@ -96,8 +104,7 @@ function mesh(
 end
 
 """
-    mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace,
-         normaltype=nothing)
+    mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace)
 
 Create a mesh from a polygon given as a vector of points, using triangulation.
 """
@@ -105,6 +112,14 @@ function mesh(polygon::AbstractVector{P}; pointtype=P, facetype=GLTriangleFace) 
     return mesh(Polygon(polygon); pointtype=pointtype, facetype=facetype)
 end
 
+"""
+    triangle_mesh(primitive::GeometryPrimitive[; pointtype = Point, facetype = GLTriangleFace])
+
+Creates a simple triangle mesh from a given `primitive` with the given `pointtype`
+and `facetype`. 
+
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
+"""
 function triangle_mesh(
         primitive::Union{AbstractGeometry{N}, AbstractVector{<: Point{N}}};
         pointtype = Point{N, Float32}, facetype = GLTriangleFace
@@ -112,21 +127,17 @@ function triangle_mesh(
     return mesh(primitive; pointtype = pointtype, facetype = facetype)
 end
 
-
 pointtype(::Mesh{D, T}) where {D, T} = Point{D, T}
 facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
 
-function triangle_mesh(primitive::Mesh{N}; pointtype = Point{N, Float32}) where {N}
-    # already target type:
-    if GeometryBasics.pointtype(primitive) === pointtype && 
-            GeometryBasics.facetype(primitive) === GLTriangleFace
-        return primitive
-    else
-        return mesh(primitive; pointtype = pointtype, facetype = GLTriangleFace)
-    end
-end
+"""
+    uv_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f])
 
+Creates a triangle mesh with texture coordinates from a given `primitive`. The 
+`pointtype`, `facetype` and `uvtype` are set by the correspondering keyword arguments. 
 
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
+"""
 function uv_mesh(
         primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
         uvtype = Vec2f, facetype = GLTriangleFace
@@ -138,6 +149,15 @@ function uv_mesh(
     )
 end
 
+"""
+    uv_normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f, normaltype = Vec3f])
+
+Creates a triangle mesh with texture coordinates and normals from a given 
+`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
+by the correspondering keyword arguments. 
+
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
+"""
 function uv_normal_mesh(
         primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
         uvtype = Vec2f, normaltype = Vec3f, facetype = GLTriangleFace
@@ -150,6 +170,15 @@ function uv_normal_mesh(
     )
 end
 
+"""
+    uv_normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f, normaltype = Vec3f])
+
+Creates a triangle mesh with texture coordinates and normals from a given 
+`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
+by the correspondering keyword arguments. 
+
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
+"""
 function normal_mesh(
         points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; 
         pointtype = Point3f, normaltype = Vec3f, facetype = GLTriangleFace
@@ -159,6 +188,14 @@ function normal_mesh(
     return Mesh(_faces, position = _points, normal = normals(_points, _faces, normaltype))
 end
 
+"""
+    normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, normaltype = Vec3f])
+
+Creates a triangle mesh with normals from a given `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
+by the correspondering keyword arguments. 
+
+See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
+"""
 function normal_mesh(
         primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
         normaltype = Vec3f, facetype = GLTriangleFace
@@ -169,29 +206,40 @@ function normal_mesh(
         pointtype = pointtype, facetype = facetype)
 end
 
+
+# TODO: What are these doing here? Shouldn't they be defined on a Tetrahedron if
+#       they are for tetrahedron?
+# """
+#     volume(triangle)
+
+# Calculate the signed volume of one tetrahedron. Be sure the orientation of your
+# surface is right.
+# """
+# function volume(triangle::Triangle)
+#     v1, v2, v3 = triangle
+#     sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
+#     return sig * abs(v1 ⋅ (v2 × v3)) / 6
+# end
+
+# """
+#     volume(mesh)
+
+# Calculate the signed volume of all tetrahedra. Be sure the orientation of your
+# surface is right.
+# """
+# function volume(mesh::Mesh)
+#     return sum(volume, mesh)
+# end
+
+
 """
-    volume(triangle)
+    merge(meshes::AbstractVector{Mesh})
 
-Calculate the signed volume of one tetrahedron. Be sure the orientation of your
-surface is right.
+Generates a new mesh containing all the data of the individual meshes.
+
+If all meshes are consistent in their use of FaceViews they will be preserved. 
+Otherwise all of them will be converted with `clear_faceviews(mesh)`.
 """
-function volume(triangle::Triangle)
-    v1, v2, v3 = triangle
-    sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
-    return sig * abs(v1 ⋅ (v2 × v3)) / 6
-end
-
-"""
-    volume(mesh)
-
-Calculate the signed volume of all tetrahedra. Be sure the orientation of your
-surface is right.
-"""
-function volume(mesh::Mesh)
-    return sum(volume, mesh)
-end
-
-
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
         return Mesh(Point3f[], GLTriangleFace[])
@@ -271,6 +319,13 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
     end
 end
 
+"""
+    clear_faceviews(mesh::Mesh)
+
+Returns the given `mesh` if it contains no FaceViews. Otherwise, generates a new
+mesh that contains no FaceViews, reordering and duplicating vertex atttributes
+as necessary. 
+"""
 function clear_faceviews(mesh::Mesh)
     main_fs = faces(mesh)
     va = vertex_attributes(mesh)
