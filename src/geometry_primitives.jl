@@ -125,7 +125,7 @@ function orthogonal_vector(v1, v2, v3)
 end
 
 """
-    normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[, target_type = Vec3{T}])
+    normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
 
 Compute vertex normals from the given `positions` and `faces`.
 
@@ -137,6 +137,10 @@ normalized again to produce a vertex normal.
 function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
                  normaltype=Vec{3,T}) where {T,F<:NgonFace}
     return normals(vertices, faces, normaltype)
+end
+
+function normals(primitive::GeometryPrimitive{3, T}; normaltype=Vec{3,T}) where {T}
+    return normals(coordinates(primitive), faces(primitive), normaltype)
 end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
@@ -167,10 +171,18 @@ involved vertex. The direction of the face normal is based on winding direction
 and assumed counter-clockwise faces. At the end the summed face normals are 
 normalized again to produce a vertex normal.
 """
-face_normals(primitive) = face_normals(coordinates(primitive), faces(primitive))
+function face_normals(primitive::GeometryPrimitive{3, T}; normaltype = Vec{3, T}) where {T}
+    return face_normals(coordinates(primitive), faces(primitive), normaltype)
+end
 
-@generated function face_normals(positions::AbstractVector{<:Point{3}}, fs::AbstractVector{F},
-        ::Type{NormalType} = Vec3f) where {F<:NgonFace,NormalType}
+function face_normals(
+        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace}; 
+        normaltype = Vec3{T}) where {T}
+    return face_normals(positions, fs, normaltype)
+end
+    
+@generated function face_normals(positions::AbstractVector{<:Point3}, fs::AbstractVector{F},
+        ::Type{NormalType}) where {F<:NgonFace,NormalType}
     
     # If the facetype is not concrete it likely varies and we need to query it 
     # doing the iteration
