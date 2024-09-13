@@ -125,12 +125,14 @@ function orthogonal_vector(v1, v2, v3)
 end
 
 """
-```
-normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
-                    faces::Vector{Face{FD,FT,FO}},
-                    NT = Normal{3, VT})
-```
-Compute all vertex normals.
+    normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[, target_type = Vec3{T}])
+
+Compute vertex normals from the given `positions` and `faces`.
+
+This runs through all faces, computing a face normal each and adding it to every
+involved vertex. The direction of the face normal is based on winding direction 
+and assumed counter-clockwise faces. At the end the summed face normals are 
+normalized again to produce a vertex normal.
 """
 function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
                  normaltype=Vec{3,T}) where {T,F<:NgonFace}
@@ -139,6 +141,7 @@ end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
                  ::Type{NormalType}) where {F<:NgonFace,NormalType}
+                 
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]
@@ -151,4 +154,39 @@ function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
     end
     normals_result .= normalize.(normals_result)
     return normals_result
+end
+
+
+"""
+    face_normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[, target_type = Vec3{T}])
+
+Compute vertex normals from the given `positions` and `faces`.
+
+This runs through all faces, computing a face normal each and adding it to every
+involved vertex. The direction of the face normal is based on winding direction 
+and assumed counter-clockwise faces. At the end the summed face normals are 
+normalized again to produce a vertex normal.
+"""
+face_normals(primitive) = face_normals(coordinates(primitive), faces(primitive))
+
+@generated function face_normals(positions::AbstractVector{<:Point{3}}, fs::AbstractVector{F},
+        ::Type{NormalType} = Vec3f) where {F<:NgonFace,NormalType}
+    
+    # If the facetype is not concrete it likely varies and we need to query it 
+    # doing the iteration
+    FT = ifelse(isconcretetype(F), :($F), :(typeof(f)))
+
+    quote
+        normals = sizehint!(Vec3f[], length(fs))
+        faces   = sizehint!(F[], length(fs))
+
+        for f in fs
+            ps = positions[f]
+            n = GeometryBasics.orthogonal_vector(ps[1], ps[2], ps[3])
+            push!(normals, n)
+            push!(faces, $(FT)(length(normals)))
+        end
+
+        return FaceView(normals, faces)
+    end
 end
