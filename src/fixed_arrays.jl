@@ -41,6 +41,13 @@ macro fixed_vector(name_parent)
             return $(VecT){N,T1}(ntuple(i -> convert(T1, x[i]), N))
         end
 
+        # fix ambiguity
+        $(VecT){1}(x::AbstractVector{T}) where {T} = $(VecT){1,T}(x)
+        function $(VecT){1,T1}(x::AbstractVector{T2}) where {T1,T2}
+            @assert 1 <= length(x)
+            return $(VecT){1,T1}((x[1],))
+        end
+
         # StaticVector conversion
         $(VecT)(x::StaticVector{N, T}) where {N,T} = $(VecT){N, T}(x)
         $(VecT){N}(x::StaticVector{N2, T}) where {N,N2,T} = $(VecT){N,T}(x)

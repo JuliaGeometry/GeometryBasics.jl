@@ -165,8 +165,8 @@ inv(A::Mat{1, 1, T, 1}) where T = @inbounds return Mat{1, 1, T, 1}(inv(A[1]))
 function inv(A::Mat{2, 2, T, L}) where {T, L}
     determinant = det(A)
     @inbounds return Mat{2, 2, T}(
-        (A[2,2] /determinant, -A[2,1]/determinant),
-        (-A[1,2]/determinant, A[1,1] /determinant)
+         A[2,2] / determinant, -A[2,1] / determinant,
+        -A[1,2] / determinant,  A[1,1] / determinant
     )
 end
 function inv(A::Mat{3, 3, T, L}) where {T, L}

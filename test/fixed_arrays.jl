@@ -130,4 +130,18 @@ end
         end
 
     end
+
+    for N in 1:4
+        @testset "math $N x $N" begin
+            bm = rand(N, N) + I
+            sm = Mat{N, N}(bm)
+            bv = rand(N)
+            sv = Vec{N, Float64}(bv)
+            @test bm == Matrix(sm)
+            @test det(bm) ≈ det(sm)
+            @test inv(bm) ≈ Matrix(inv(sm))
+            @test collect(transpose(bm)) ≈ Matrix(transpose(sm))
+            @test bm * bv ≈ collect(sm * sv)
+        end
+    end
 end
