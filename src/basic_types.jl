@@ -132,7 +132,10 @@ end
 
 The fully concrete Ngon type, when constructed from a point type!
 """
-function Polytope(::Type{<:Ngon{N}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
+function Polytope(::Type{<:Ngon{_D, _T, N}}, P::Type{Point{NDim,T}}) where {N,NDim,T, _D,_T}
+    return Ngon{NDim,T,N}
+end
+function Polytope(::Type{<:Ngon{_D, _T, N} where {_D,_T}}, P::Type{Point{NDim,T}}) where {N,NDim,T}
     return Ngon{NDim,T,N}
 end
 
