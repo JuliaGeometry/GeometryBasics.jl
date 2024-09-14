@@ -144,6 +144,50 @@ end
     end
 end
 
+@testset "Interface" begin
+    ps = rand(Point2f, 10)
+    ns = rand(Vec3f, 10)
+    uvs = FaceView(rand(Vec2f, 4), GLTriangleFace.(1:4))
+    fs = GLTriangleFace[(1,2,3), (3,4,5), (5,6,7), (8,9,10)]
+
+    m = Mesh(ps, fs, normal = ns, uv = uvs)
+    
+    @test vertex_attributes(m) == getfield(m, :vertex_attributes)
+    @test coordinates(m) == vertex_attributes(m)[:position]
+    @test normals(m) == vertex_attributes(m)[:normal]
+    @test texturecoordinates(m) == vertex_attributes(m)[:uv]
+    @test faces(m) == getfield(m, :faces)
+
+    @test m.vertex_attributes == getfield(m, :vertex_attributes)
+    @test m.position == vertex_attributes(m)[:position]
+    @test m.normal == vertex_attributes(m)[:normal]
+    @test m.uv == vertex_attributes(m)[:uv]
+    @test m.faces == getfield(m, :faces)
+
+    @test hasproperty(m, :vertex_attributes)
+    @test hasproperty(m, :position)
+    @test hasproperty(m, :normal)
+    @test hasproperty(m, :uv)
+    @test hasproperty(m, :faces)
+
+    mm = MetaMesh(m, name = "test")
+
+    @test Mesh(mm) == m
+    @test haskey(mm, :name)
+    @test get(mm, :name) == "test"
+    @test mm[:name] == "test"
+    @test !haskey(mm, :foo)
+    @test get!(mm, :foo, "bar") == "bar"
+    @test haskey(mm, :foo)
+    @test keys(mm) == keys(getfield(mm, :meta))
+
+    @test vertex_attributes(mm) == getfield(m, :vertex_attributes)
+    @test coordinates(mm) == vertex_attributes(m)[:position]
+    @test normals(mm) == vertex_attributes(m)[:normal]
+    @test texturecoordinates(mm) == vertex_attributes(m)[:uv]
+    @test faces(mm) == getfield(m, :faces)
+end
+
 @testset "mesh() constructors" begin
     r = Rect3d(Point3d(-1), Vec3d(2))
 
