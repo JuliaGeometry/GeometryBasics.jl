@@ -101,6 +101,49 @@ end
     @test mm == cm
 end
 
+@testset "Mesh Constructor" begin
+    ps = rand(Point2f, 10)
+    ns = rand(Vec3f, 10)
+    fs = GLTriangleFace[(1,2,3), (3,4,5), (5,6,7), (8,9,10)]
+
+    @testset "Extracting faces from position FaceView" begin
+        # can't extract from array
+        @test_throws TypeError Mesh(position = ps, normal = ns)
+    
+        m = Mesh(position = FaceView(ps, fs), normal = ns)
+        @test coordinates(m) == ps
+        @test normals(m) == ns
+        @test faces(m) == fs
+    end
+
+    @testset "Verifaction" begin
+        # enough vertices present
+        @test_throws ErrorException Mesh(rand(Point2f, 7), fs)
+        m = Mesh(rand(Point2f, 12), fs)
+        @test length(m.position) == 12
+        @test length(m.faces) == 4
+        
+        @test_throws ErrorException Mesh(ps, fs, normal = rand(Vec3f, 8))
+        m = Mesh(ps, fs, normal = rand(Vec3f, 12))
+        @test length(m.position) == 10
+        @test length(m.normal) == 12
+        @test length(m.faces) == 4
+
+        # valid FaceView (enough faces, vertices, matching dims)
+        @test_throws ErrorException Mesh(ps, fs, normal = FaceView(ns, GLTriangleFace[]))
+        @test_throws ErrorException Mesh(ps, fs, normal = FaceView(Vec3f[], fs))
+        @test_throws ErrorException Mesh(ps, fs, normal = FaceView(ns, QuadFace{Int}.(1:4)))
+        m = Mesh(ps, fs, normal = FaceView(rand(Vec3f, 9), TriangleFace{Int64}.(1:2:8)))
+        @test length(m.position) == 10
+        @test length(values(m.normal)) == 9
+        @test length(faces(m.normal)) == 4
+        @test length(m.faces) == 4
+
+        msg = "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
+        @test_warn msg Mesh(ps, fs, normals = ns)
+    end
+end
+
 @testset "mesh() constructors" begin
     r = Rect3d(Point3d(-1), Vec3d(2))
 

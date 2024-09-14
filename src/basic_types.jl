@@ -376,14 +376,19 @@ function convert_facetype(::Type{FT}, x::FaceView) where {FT <: AbstractFace}
 end
 
 function verify(fs::AbstractVector{FT}, fv::FaceView, name = nothing) where {FT <: AbstractFace}
+    if length(faces(fv)) != length(fs)
+        error("Number of faces given in FaceView $(length(faces(fv))) does not match reference $(length(fs))")
+    end
+
+    N = maximum(f -> value(maximum(f)), faces(fv), init = 0)
+    if length(values(fv)) < N
+        error("FaceView addresses $N vertices with faces, but only has $(length(values(fv))).")
+    end
+
     if isconcretetype(FT) && (FT == facetype(fv))
         return true
     end
 
-    if length(faces(fv)) != length(fs)
-        error("Number of faces given in FaceView $(length(faces(fv))) does not match reference $(length(fs))")
-    end
-    
     for (i, (f1, f2)) in enumerate(zip(faces(fv), fs))
         if length(f1) != length(f2)
             error("Length of face $i = $(length(f1)) does not match reference with $(length(f2))")
@@ -455,20 +460,17 @@ struct Mesh{
 
         if haskey(va, :normals)
             @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-            va[:normal] = pop!(va, :normal)
+            va[:normal] = pop!(va, :normals)
         end
 
         # verify that faces of FaceViews match `fs` (in length per face)
         N = maximum(f -> value(maximum(f)), fs, init = 0)
         for (name, attrib) in va
-            name == :position && continue
-
             if attrib isa FaceView
                 try
                     verify(fs, attrib)
                 catch e
-                    @error "Failed to verify $name attribute:"
-                    rethrow(e)
+                    rethrow(ErrorException("Failed to verify $name attribute:\n" * e.msg))
                 end
             else
                 length(attrib) < N && error("Failed to verify $name attribute:\nFaces address $N vertex attributes but only $(length(attrib)) are present.")
