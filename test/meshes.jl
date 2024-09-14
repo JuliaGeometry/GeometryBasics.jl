@@ -140,7 +140,7 @@ end
         @test length(m.faces) == 4
 
         msg = "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-        @test_warn msg Mesh(ps, fs, normals = ns)
+        @test_logs (:warn, msg) Mesh(ps, fs, normals = ns)
     end
 end
 
