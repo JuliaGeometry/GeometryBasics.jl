@@ -201,6 +201,12 @@ end
     points = decompose(Point2f, Circle(Point2f(0), 1))
     m = GeometryBasics.mesh(points)
     @test coordinates(m) === points
+
+    fs = [QuadFace(1,2,3,4), QuadFace(3,4,5,6), QuadFace(7,8,9,10)]
+    views = [1:2, 3:3]
+    new_fs, new_views = decompose(GLTriangleFace, fs, views)
+    @test new_fs == GLTriangleFace[(1, 2, 3), (1, 3, 4), (3, 4, 5), (3, 5, 6), (7, 8, 9), (7, 9, 10)]
+    @test new_views == [1:4, 5:6]
 end
 
 @testset "convert mesh + meta" begin

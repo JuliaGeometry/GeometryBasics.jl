@@ -162,7 +162,7 @@ function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) 
         return collect_with_eltype(F, fs), views
     else
         output = F[]
-        new_views = UnitRange{Int}[]
+        new_views = sizehint!(UnitRange{Int}[], length(views))
         for range in views
             start = length(output) + 1
             collect_with_eltype!(output, view(fs, range))
