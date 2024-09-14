@@ -308,6 +308,8 @@ end
     include("geointerface.jl")
 end
 
+include("polygons.jl")
+
 using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
