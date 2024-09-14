@@ -160,10 +160,6 @@ function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
     return normals(vertices, faces, normaltype)
 end
 
-function normals(primitive::GeometryPrimitive{3, T}; normaltype=Vec{3,T}) where {T}
-    return normals(coordinates(primitive), faces(primitive), normaltype)
-end
-
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
                  ::Type{NormalType}) where {F<:NgonFace,NormalType}
                  
@@ -185,17 +181,9 @@ end
 """
     face_normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[, target_type = Vec3{T}])
 
-Compute vertex normals from the given `positions` and `faces`.
-
-This runs through all faces, computing a face normal each and adding it to every
-involved vertex. The direction of the face normal is based on winding direction 
-and assumed counter-clockwise faces. At the end the summed face normals are 
-normalized again to produce a vertex normal.
+Compute face normals from the given `positions` and `faces` and returns an
+appropriate `FaceView`.
 """
-function face_normals(primitive::GeometryPrimitive{3, T}; normaltype = Vec{3, T}) where {T}
-    return face_normals(coordinates(primitive), faces(primitive), normaltype)
-end
-
 function face_normals(
         positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace}; 
         normaltype = Vec3{T}) where {T}

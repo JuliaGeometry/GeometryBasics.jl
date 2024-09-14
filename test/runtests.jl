@@ -298,7 +298,7 @@ end
 @testset "Face normals" begin
     r = Rect3f(Point3f(0), Vec3f(1))
     ns = normals(r)
-    @test GeometryBasics.face_normals(r) == ns
+    @test GeometryBasics.face_normals(coordinates(r), faces(r)) == ns
 end
 
 @testset "Tests from GeometryTypes" begin
