@@ -437,6 +437,30 @@ function merge_vertex_indices(
 end
 
 
+"""
+    split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
+
+Creates a new mesh containing `faces(mesh)[range]` for each range in `views`.
+This also removes unused vertices.
+"""
+function split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
+    return map(views) do idxs
+        new_fs, maps = merge_vertex_indices((view(faces(mesh), idxs),))
+        new_va = Dict{Symbol, VertexAttributeType}()
+
+        for (k, v) in vertex_attributes(mesh)
+            if v isa FaceView
+                _fs, _maps = merge_vertex_indices((view(faces(v), idxs),))
+                new_va[k] = FaceView(values(v)[_maps[1]], _fs)
+            else
+                new_va[k] = v[maps[1]]
+            end
+        end
+
+        return Mesh(new_va, new_fs)
+    end
+end
+
 
 function map_coordinates(f, mesh::Mesh)
     result = copy(mesh)
