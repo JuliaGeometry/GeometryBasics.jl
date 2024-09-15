@@ -298,7 +298,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                 if isempty(mesh.views)
                     push!(views, idx+1 : idx+N)
                 else
-                    append!(views, (view + idx for view in mesh.views))
+                    append!(views, (view .+ idx for view in mesh.views))
                 end
     
                 idx += N
