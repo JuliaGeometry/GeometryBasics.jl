@@ -72,7 +72,10 @@ end
     @test !allunique([idx for f in faces(dm.normal) for idx in f])
     
     indirect_meshes = map(rects) do r
-        GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
+        m = GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
+        # Also testing merge of meshes with views
+        push!(m.views, 1:length(faces(m)))
+        m
     end
     im = merge(indirect_meshes)
 
@@ -93,8 +96,8 @@ end
     @test allunique([idx for f in faces(cm) for idx in f])
     
 
-    mixed_meshes = map(direct_meshes, converted_meshes) do dm, cm
-        rand() > 0.5 ? dm : cm 
+    mixed_meshes = map(direct_meshes, indirect_meshes, converted_meshes) do dm, im, cm
+        rand((dm, im, cm)) # (with FaceView, with mesh.views & FaceView, w/o FaceView)
     end
     mm = merge(mixed_meshes)
 
