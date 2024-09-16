@@ -248,9 +248,9 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 
         # Check that all meshes use the same VertexAttributes
         # Could also do this via typing the function, but maybe error is nice?
-        names = keys(m1.vertex_attributes)
-        idx = findfirst(m -> keys(m.vertex_attributes) != names, meshes)
-        if idx !== nothing
+        names = keys(vertex_attributes(m1))
+        if !all(m -> keys(vertex_attributes(m)) == names, meshes)
+            idx = findfirst(m -> keys(vertex_attributes(m)) != names, meshes)
             error(
                 "Cannot merge meshes with different vertex attributes. " * 
                 "First missmatch between meshes[1] with $names and " * 
@@ -276,16 +276,17 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
             new_attribs = NamedTuple{names}(map(names) do name
                 return reduce(vcat, getproperty.(meshes, name))
             end)
+            # fs = reduce(vcat, faces.(meshes))
             fs = reduce(vcat, faces.(meshes))
 
             # TODO: is the type difference in offset bad?
             idx = length(faces(m1))
-            offset = length(coordinates(m1))::Int # TODO: unnecessary
+            offset = length(coordinates(m1))
             views = isempty(m1.views) ? UnitRange{Int64}[1:idx] : copy(m1.views)
             
-            Ns = length.(faces.(meshes))
-            Ms = length.(coordinates.(meshes))::Vector{Int} # TODO: unnecessary
-            for (mesh, N, M) in Iterators.drop(zip(meshes, Ns, Ms), 1)
+            for mesh in Iterators.drop(meshes, 1)
+                N = length(faces(mesh))
+
                 # update face indices
                 for i = idx .+ (1:N)
                     # TODO: face + Int changes type to Int
@@ -302,7 +303,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                 end
     
                 idx += N
-                offset += M
+                offset += length(coordinates(mesh))
             end
 
             return Mesh(new_attribs, fs, views)
