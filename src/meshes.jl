@@ -240,7 +240,7 @@ Otherwise all of them will be converted with `clear_faceviews(mesh)`.
 """
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
-        return Mesh(Point3f[], GLTriangleFace[])
+        return Mesh{3, Float32, GLTriangleFace, Vector{GLTriangleFace}}(Point3f[], GLTriangleFace[])
 
     elseif length(meshes) == 1
         return meshes[1]
@@ -275,34 +275,36 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         if consistent_face_views
 
             # All the same kind of face, can just merge
-            
             new_attribs = Dict{Symbol, VertexAttributeType}(map(collect(names)) do name
-                return name => mapreduce(m -> getproperty(m, name), vcat, meshes)
+                return name => reduce(vcat, getproperty.(meshes, name))
             end)
             fs = reduce(vcat, faces.(meshes))
 
             # TODO: is the type difference in offset bad?
             idx = length(faces(m1))
-            offset = length(coordinates(m1))
-            views = isempty(m1.views) ? [1:idx] : copy(m1.views)
+            offset = length(coordinates(m1))::Int
+            views = isempty(m1.views) ? UnitRange{Int64}[1:idx] : copy(m1.views)
             
-            for mesh in Iterators.drop(meshes, 1)
+            Ns = length.(faces.(meshes))
+            Ms = length.(coordinates.(meshes))::Vector{Int}
+            for (mesh, N, M) in Iterators.drop(zip(meshes, Ns, Ms), 1)
                 # update face indices
-                N = length(faces(mesh))
                 for i = idx .+ (1:N)
                     # TODO: face + Int changes type to Int
-                    fs[i] = typeof(fs[i])(fs[i] + offset)
+                    fs[i] = typeof(fs[i])(fs[i] .+ offset)
                 end
 
                 # add views
                 if isempty(mesh.views)
                     push!(views, idx+1 : idx+N)
                 else
-                    append!(views, (view .+ idx for view in mesh.views))
+                    for view in mesh.views
+                        push!(views, view .+ idx)
+                    end
                 end
     
                 idx += N
-                offset += length(coordinates(mesh))
+                offset += M
             end
 
             return Mesh(new_attribs, fs, views)
