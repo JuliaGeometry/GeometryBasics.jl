@@ -440,18 +440,26 @@ The type of a concrete mesh. It can hold arbitrary vertex data (including FaceVi
 struct Mesh{
         Dim, T <: Real, # TODO: Number?
         FT <: AbstractFace,
+        Names,
+        VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
         FVT <: AbstractVector{FT}
     } <: AbstractMesh{Dim, T}
 
-    vertex_attributes::Dict{Symbol, VertexAttributeType} 
+    vertex_attributes::NamedTuple{Names, VAT}
     faces::FVT
     views::Vector{UnitRange{Int}}
 
     function Mesh(
-            va::Dict{Symbol, VertexAttributeType}, 
+            vertex_attributes::NamedTuple{Names, VAT}, 
             fs::FVT,
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
-        ) where {FT <: AbstractFace, FVT <: AbstractVector{FT}}
+        ) where {
+            FT <: AbstractFace, FVT <: AbstractVector{FT}, Names, Dim, T,
+            VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}}
+        }
+
+        va = vertex_attributes
+        names = Names
 
         # verify type
         if !haskey(va, :position )
@@ -460,12 +468,13 @@ struct Mesh{
 
         if haskey(va, :normals)
             @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-            va[:normal] = pop!(va, :normals)
+            names = ntuple(i -> ifelse(names[i] == :normal, :normal, names[i]), length(names))
+            va = NamedTuple{names}(values(va))
         end
 
         # verify that faces of FaceViews match `fs` (in length per face)
         N = maximum(f -> value(maximum(f)), fs, init = 0)
-        for (name, attrib) in va
+        for (name, attrib) in pairs(va)
             if attrib isa FaceView
                 try
                     verify(fs, attrib)
@@ -477,10 +486,7 @@ struct Mesh{
             end
         end
 
-        D = length(eltype(va[:position]))
-        T = eltype(eltype(va[:position]))
-
-        return new{D, T, FT, FVT}(va, fs, views)
+        return new{Dim, T, FT, names, VAT, FVT}(va, fs, views)
     end
 end
 
@@ -489,7 +495,7 @@ end
         @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
         return hasproperty(mesh, :normal)
     end
-    return haskey(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
+    return hasproperty(getfield(mesh, :vertex_attributes), field) || hasfield(Mesh, field)
 end
 @inline function Base.getproperty(mesh::Mesh, field::Symbol)
     if hasfield(Mesh, field)
@@ -498,11 +504,11 @@ end
         @warn "mesh.normals has been deprecated in favor of mesh.normal to bring it in line with mesh.position and mesh.uv"
         return getproperty(mesh, :normal)
     else
-        return getindex(getfield(mesh, :vertex_attributes), field)
+        return getproperty(getfield(mesh, :vertex_attributes), field)
     end
 end
 @inline function Base.propertynames(mesh::Mesh)
-    return (fieldnames(Mesh)..., keys(getfield(mesh, :vertex_attributes))...)
+    return (fieldnames(Mesh)..., propertynames(getfield(mesh, :vertex_attributes))...)
 end
 
 coordinates(mesh::Mesh) = mesh.position
@@ -530,21 +536,6 @@ function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
-function add_vertex_attribute!(mesh::Mesh, val::AbstractVector, name::Symbol)
-    @boundscheck begin
-        N = maximum(f -> value(maximum(f)), faces(mesh))
-        length(val) < N && error("Given vertex data not large enough to be adressed by all faces ($N required, $(length(val)) given)")
-    end
-    mesh.vertex_attributes[name] = val
-    return mesh
-end
-
-function add_vertex_attribute!(mesh::Mesh, val::FaceView, name::Symbol)
-    @boundscheck verify(faces(mesh), val)
-    mesh.vertex_attributes[name] = val
-    return mesh
-end
-
 """
     Mesh(faces[; views, attributes...])
     Mesh(positions, faces[; views])
@@ -568,14 +559,13 @@ sub-meshes. This is done by providing ranges for indexing faces which correspond
 to the sub-meshes. By default this is left empty.
 """
 function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
-    return Mesh(Dict{Symbol, VertexAttributeType}(attributes), faces, views)
+    return Mesh(NamedTuple(attributes), faces, views)
 end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
               faces::AbstractVector{<:AbstractFace}; 
               views = UnitRange{Int}[], kwargs...) where {Dim, T}
-    va = Dict{Symbol, VertexAttributeType}(kwargs)
-    va[:position] = points
+    va = (position = points, kwargs...)
     return Mesh(va, faces, views)
 end
 
@@ -585,9 +575,10 @@ function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
 end
 
 function Mesh(; kwargs...)
-    va = Dict{Symbol, VertexAttributeType}(kwargs)
-    fs = faces(va[:position]::FaceView)
-    va[:position] = values(va[:position])
+    fs = faces(kwargs[:position]::FaceView)
+    va = NamedTuple{keys(kwargs)}(map(keys(kwargs)) do k
+        return k == :position ? values(kwargs[k]) : kwargs[k]
+    end)
     return Mesh(va, fs)
 end
 

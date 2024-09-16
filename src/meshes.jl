@@ -56,12 +56,10 @@ function mesh(
 
     fs = decompose(facetype, faces)
 
-    va = Dict{Symbol, VertexAttributeType}()
-    for k in keys(vertex_attributes)
-        if !isnothing(vertex_attributes[k])
-            va[k] = convert_facetype(facetype, vertex_attributes[k])
-        end
-    end
+    names = keys(vertex_attributes)
+    valid_names = filter(name -> !isnothing(vertex_attributes[name]), names)
+    vals = convert_facetype.(Ref(facetype), getindex.(Ref(vertex_attributes), valid_names))
+    va = NamedTuple{valid_names}(vals)
 
     return Mesh(positions, fs; va...)
 end
@@ -80,22 +78,22 @@ function mesh(
         attributes...
     ) where {D, T, FT <: AbstractFace}
     
-    va = Dict{Symbol, VertexAttributeType}()
-    for k in keys(attributes)
-        isnothing(attributes[k]) || setindex!(va, attributes[k], k)
-    end
+    names = keys(attributes)
+    valid_names = filter(name -> !isnothing(attributes[name]), names)
 
-    if isempty(va) && (GeometryBasics.pointtype(mesh) == pointtype) && (FT == facetype)
+    if isempty(valid_names) && (GeometryBasics.pointtype(mesh) == pointtype) && (FT == facetype)
         return mesh
     else
-        # 1. add vertex attributes, 2. convert position attribute
+        vals = getindex.(Ref(attributes), valid_names)
+        va = NamedTuple{valid_names}(vals)
+    
+        # add vertex attributes
         va = merge(vertex_attributes(mesh), va)
-        va[:position] = decompose(pointtype, va[:position])
-
-        # Resolve facetype conversions of FaceViews
-        for (k, v) in va
-            va[k] = convert_facetype(facetype, v)
-        end
+        # convert position attribute and facetypes in FaceViews
+        va = NamedTuple{keys(va)}(map(keys(va)) do name
+            val = name == :position ? decompose(pointtype, va[:position]) : va[name]
+            return convert_facetype(facetype, val)
+        end)
 
         # update main face type
         f, views = decompose(facetype, faces(mesh), mesh.views)
@@ -275,18 +273,18 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         if consistent_face_views
 
             # All the same kind of face, can just merge
-            new_attribs = Dict{Symbol, VertexAttributeType}(map(collect(names)) do name
-                return name => reduce(vcat, getproperty.(meshes, name))
+            new_attribs = NamedTuple{names}(map(names) do name
+                return reduce(vcat, getproperty.(meshes, name))
             end)
             fs = reduce(vcat, faces.(meshes))
 
             # TODO: is the type difference in offset bad?
             idx = length(faces(m1))
-            offset = length(coordinates(m1))::Int
+            offset = length(coordinates(m1))::Int # TODO: unnecessary
             views = isempty(m1.views) ? UnitRange{Int64}[1:idx] : copy(m1.views)
             
             Ns = length.(faces.(meshes))
-            Ms = length.(coordinates.(meshes))::Vector{Int}
+            Ms = length.(coordinates.(meshes))::Vector{Int} # TODO: unnecessary
             for (mesh, N, M) in Iterators.drop(zip(meshes, Ns, Ms), 1)
                 # update face indices
                 for i = idx .+ (1:N)
@@ -330,11 +328,11 @@ function clear_faceviews(mesh::Mesh)
     main_fs = faces(mesh)
     va = vertex_attributes(mesh)
 
-    names = filter(name -> va[name] isa FaceView, collect(keys(va)))
+    names = filter(name -> va[name] isa FaceView, keys(va))
     isempty(names) && return mesh
 
     other_fs = faces.(getproperty.((mesh,), names))
-    pushfirst!(names, :position)
+    names = (:position, names...)
     all_fs = tuple(main_fs, other_fs...)
     
     if isempty(mesh.views)
@@ -343,10 +341,9 @@ function clear_faceviews(mesh::Mesh)
 
         named_maps = NamedTuple{tuple(names...)}(maps)
 
-        new_va = Dict{Symbol, VertexAttributeType}()
-        for (name, attrib) in va
-            new_va[name] = values(attrib)[get(named_maps, name, maps[1])]
-        end
+        new_va = NamedTuple{keys(va)}(map(keys(va)) do name
+            values(va[name])[get(named_maps, name, maps[1])]
+        end)
 
         return Mesh(new_va, new_fs)
 
@@ -354,10 +351,9 @@ function clear_faceviews(mesh::Mesh)
 
         new_fs = sizehint!(eltype(main_fs)[], length(main_fs))
         new_views = sizehint!(UnitRange{Int}[], length(mesh.views))
-        new_va = Dict{Symbol, VertexAttributeType}()
-        for (name, attrib) in va
-            new_va[name] = sizehint!(eltype(values(attrib))[], length(attrib))
-        end
+        new_va = NamedTuple{keys(va)}(map(keys(va)) do name
+            sizehint!(similar(values(va[name]), 0), length(va[name]))
+        end)
 
         vertex_index_counter = eltype(first(main_fs))(1)
 
@@ -448,16 +444,17 @@ This also removes unused vertices.
 function split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
     return map(views) do idxs
         new_fs, maps = merge_vertex_indices((view(faces(mesh), idxs),))
-        new_va = Dict{Symbol, VertexAttributeType}()
-
-        for (k, v) in vertex_attributes(mesh)
+        
+        names = keys(vertex_attributes(mesh))
+        new_va = NamedTuple{names}(map(names) do name
+            v = getproperty(mesh, name)
             if v isa FaceView
                 _fs, _maps = merge_vertex_indices((view(faces(v), idxs),))
-                new_va[k] = FaceView(values(v)[_maps[1]], _fs)
+                return FaceView(values(v)[_maps[1]], _fs)
             else
-                new_va[k] = v[maps[1]]
+                return v[maps[1]]
             end
-        end
+        end)
 
         return Mesh(new_va, new_fs)
     end
