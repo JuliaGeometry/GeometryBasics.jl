@@ -105,6 +105,11 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
     end
 end
 
+# without a function barrier you get a lot of allocations from runtime types
+function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
+    return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
+end
+
 function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
@@ -114,7 +119,7 @@ function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
         return LineString([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
     else
         T = promote_type(typeof(x), typeof(y))
-        return LineString([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+        return LineString(_collect_with_type(Point{2, T}, geom))
     end
 end
 
