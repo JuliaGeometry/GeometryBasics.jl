@@ -240,7 +240,7 @@ Otherwise all of them will be converted with `clear_faceviews(mesh)`.
 """
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
-        return Mesh{3, Float32, GLTriangleFace, Vector{GLTriangleFace}}(Point3f[], GLTriangleFace[])
+        return Mesh(Point3f[], GLTriangleFace[])
 
     elseif length(meshes) == 1
         return meshes[1]
