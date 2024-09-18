@@ -308,13 +308,13 @@ function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2{IT}}) where {T,IT<
     return ((mini[1] + 1):(mini[1] + wh[1]), (mini[2] + 1):(mini[2] + wh[2]))
 end
 
-function minmax(p::StaticVector, vmin, vmax)
+function Base.minmax(p::StaticVector, vmin, vmax)
     any(isnan, p) && return (vmin, vmax)
     return min.(p, vmin), max.(p, vmax)
 end
 
 # Annoying special case for view(Vector{Point}, Vector{Face})
-function minmax(tup::Tuple, vmin, vmax)
+function Base.minmax(tup::Tuple, vmin, vmax)
     for p in tup
         any(isnan, p) && continue
         vmin = min.(p, vmin)

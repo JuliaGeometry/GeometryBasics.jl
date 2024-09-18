@@ -461,6 +461,17 @@ function split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
     end
 end
 
+"""
+    remove_duplicates(faces)
+
+Uses a Dict to remove duplicates from the given `faces`.
+"""
+function remove_duplicates(fs::AbstractVector{FT}) where {FT <: AbstractFace}
+    hashmap = Dict{FT, Nothing}()
+    foreach(k -> setindex!(hashmap, nothing, k), fs)
+    return collect(keys(hashmap))
+end
+
 
 function map_coordinates(f, mesh::Mesh)
     result = copy(mesh)
