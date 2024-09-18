@@ -313,15 +313,16 @@ function Base.minmax(p::StaticVector, vmin, vmax)
     return min.(p, vmin), max.(p, vmax)
 end
 
+# TODO: doesn't work regardless
 # Annoying special case for view(Vector{Point}, Vector{Face})
-function Base.minmax(tup::Tuple, vmin, vmax)
-    for p in tup
-        any(isnan, p) && continue
-        vmin = min.(p, vmin)
-        vmax = max.(p, vmax)
-    end
-    return vmin, vmax
-end
+# function Base.minmax(tup::Tuple, vmin, vmax)
+#     for p in tup
+#         any(isnan, p) && continue
+#         vmin = min.(p, vmin)
+#         vmax = max.(p, vmax)
+#     end
+#     return vmin, vmax
+# end
 
 function positive_widths(rect::Rect{N,T}) where {N,T}
     mini, maxi = minimum(rect), maximum(rect)
