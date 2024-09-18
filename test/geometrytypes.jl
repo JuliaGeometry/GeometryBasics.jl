@@ -138,16 +138,31 @@ NFace = NgonFace
 end
 
 @testset "Normals" begin
-    # Needs to be reworked
-    @test_broken false
-    
-    # r = centered(Rect3{Float64})
-    # n64 = [n for n in normals(r) for _ in 1:4]
-    # n32 = map(Vec{3,Float32}, n64)
-    # m32 = normal_mesh(r)
-    # m64 = normal_mesh(r, pointtype = Point3d)
-    # @test normals(coordinates(m32), GeometryBasics.faces(m32)) == n32
-    # @test normals(coordinates(m64), GeometryBasics.faces(m64)) == n64
+    # per face normals
+    r = Rect3f(Point3f(0), Vec3f(1))
+    ns = face_normals(coordinates(r), faces(r))
+    ux = unit(Vec3f, 1); uy = unit(Vec3f, 2); uz = unit(Vec3f, 3)
+    @test ns == normals(r)
+    @test values(ns) == [-ux, ux, -uy, uy, -uz, uz]
+
+    # typing
+    ux = unit(Vec3d, 1); uy = unit(Vec3d, 2); uz = unit(Vec3d, 3)
+    ns = face_normals(decompose(Point3d, r), faces(r))
+    @test ns isa FaceView{Vec3d}
+    @test values(ns) == [-ux, ux, -uy, uy, -uz, uz]
+
+    # Mixed
+    c = Cylinder(Point3f(0), Point3f(0,0,1), 0.5f0)
+    ns = normals(c)
+    # caps without mantle
+    f_ns = face_normals(coordinates(c), filter!(f -> f isa TriangleFace, faces(c)))
+    @test all(n -> n == values(ns)[end-1], values(f_ns)[1:15])
+    @test all(n -> n == values(ns)[end], values(f_ns)[16:end])
+    # Mantle without caps
+    v_ns = normals(coordinates(c), filter!(f -> f isa QuadFace, faces(c)))[1:end-2]
+    @test values(ns)[1:15] ≈ v_ns[1:15]
+    @test values(ns)[1:15] ≈ v_ns[16:30] # repeated via FaceView in ns
+
 end
 
 @testset "HyperSphere" begin

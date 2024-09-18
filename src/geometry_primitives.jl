@@ -160,15 +160,15 @@ function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
     return normals(vertices, faces, normaltype)
 end
 
-function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
-                 ::Type{NormalType}) where {F<:NgonFace,NormalType}
+function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
+                 ::Type{NormalType}) where {NormalType}
                  
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(v[1], v[2], v[3])
-        for i in 1:length(F)
+        for i in 1:length(face)
             fi = face[i]
             normals_result[fi] = normals_result[fi] .+ n
         end
@@ -198,14 +198,14 @@ end
     FT = ifelse(isconcretetype(F), :($F), :(typeof(f)))
 
     quote
-        normals = sizehint!(Vec3f[], length(fs))
-        faces   = sizehint!(F[], length(fs))
+        normals = resize!(NormalType[], length(fs))
+        faces   = resize!(F[], length(fs))
 
-        for f in fs
+        for (i, f) in enumerate(fs)
             ps = positions[f]
             n = GeometryBasics.orthogonal_vector(ps[1], ps[2], ps[3])
-            push!(normals, n)
-            push!(faces, $(FT)(length(normals)))
+            normals[i] = normalize(n)
+            faces[i] = $(FT)(i)
         end
 
         return FaceView(normals, faces)

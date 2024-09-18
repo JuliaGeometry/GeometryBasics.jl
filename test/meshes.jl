@@ -35,7 +35,6 @@ end
 
 @testset "Vertex Index Remapping" begin
     # Sanity Check
-    # TODO: extend
     m = Mesh(
         position = GeometryBasics.FaceView(Point2f[(0, 0), (1, 0), (1, 1), (0, 1)], [QuadFace(1,2,3,4)]),
         normal   = GeometryBasics.FaceView([Vec3f(0,0,1)], [QuadFace(1)])

@@ -44,7 +44,6 @@ end
             @test mesh.normal === normals
             @test mesh.position === points
             @test GeometryBasics.faces(mesh) === tfaces
-            # TODO: Is the order variable with Dict?
             @test propertynames(mesh) == (:vertex_attributes, :faces, :views, :position, :normal, :stress)
         end
     end
@@ -293,12 +292,6 @@ end
     @test <=(x, x1)
     @test !>(x, x1)
     @test <(x, x1)
-end
-
-@testset "Face normals" begin
-    r = Rect3f(Point3f(0), Vec3f(1))
-    ns = normals(r)
-    @test GeometryBasics.face_normals(coordinates(r), faces(r)) == ns
 end
 
 @testset "Tests from GeometryTypes" begin
