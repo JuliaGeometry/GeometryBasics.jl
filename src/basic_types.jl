@@ -536,6 +536,10 @@ function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
 
+function Base.convert(::Type{<: Mesh{D, T, FT}}, m::Mesh{D}) where {D, T <: Real, FT <: AbstractFace}
+    return mesh(m, pointtype = Point{D, T}, facetype = FT)
+end
+
 """
     Mesh(faces[; views, attributes...])
     Mesh(positions, faces[; views])
