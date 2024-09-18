@@ -13,6 +13,7 @@ A `Rect{D, T} = HyperRectangle{D, T}` is a D-dimensional axis-aligned
 hyperrectangle defined by an origin and a size.
 
 ```@repl rects
+using GeometryBasics
 r1 = HyperRectangle{4, Float64}(Point{4, Float64}(0), Vec{4, Float64}(1))
 r2 = Rect3f(Point3f(-1), Vec3f(2))
 r3 = Rect2i(0, 0, 1, 1)
