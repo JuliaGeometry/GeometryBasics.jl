@@ -1,6 +1,6 @@
 module GeometryBasics
 
-using IterTools, LinearAlgebra
+using IterTools, LinearAlgebra, StaticArrays
 using GeoInterface
 import Extents
 using EarCut_jll

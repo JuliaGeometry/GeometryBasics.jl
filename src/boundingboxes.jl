@@ -13,7 +13,7 @@ function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     vmin = Point{N2,T2}(typemax(T2))
     vmax = Point{N2,T2}(typemin(T2))
     for p in geometry
-        vmin, vmax = minmax(p, vmin, vmax)
+        vmin, vmax = _minmax(p, vmin, vmax)
     end
     o = vmin
     w = vmax - vmin

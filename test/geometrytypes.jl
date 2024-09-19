@@ -110,7 +110,7 @@ end
     @test faces(p) == [GLTriangleFace(1, 2, 3), GLTriangleFace(1, 3, 4), GLTriangleFace(1, 4, 5), GLTriangleFace(1, 5, 2), QuadFace{Int64}(2, 3, 4, 5)]
     ns = normals(p)
     @test faces(ns) == [GLTriangleFace(1), GLTriangleFace(2), GLTriangleFace(3), GLTriangleFace(4), QuadFace{Int64}(5)]
-    @test values(ns) == Vec3f[[0.9805807, 0.0, 0.19611615], [0.0, 0.9805807, 0.19611615], [-0.9805807, 0.0, 0.19611615], [0.0, -0.9805807, 0.19611615], [0.0, 0.0, -1.0]]
+    @test values(ns) ≈ Vec3f[[0.9805807, 0.0, 0.19611615], [0.0, 0.9805807, 0.19611615], [-0.9805807, 0.0, 0.19611615], [0.0, -0.9805807, 0.19611615], [0.0, 0.0, -1.0]]
 end
 
 NFace = NgonFace

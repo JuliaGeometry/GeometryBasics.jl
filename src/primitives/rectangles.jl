@@ -308,7 +308,7 @@ function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2{IT}}) where {T,IT<
     return ((mini[1] + 1):(mini[1] + wh[1]), (mini[2] + 1):(mini[2] + wh[2]))
 end
 
-function Base.minmax(p::StaticVector, vmin, vmax)
+function _minmax(p::StaticVector, vmin, vmax)
     any(isnan, p) && return (vmin, vmax)
     return min.(p, vmin), max.(p, vmax)
 end
@@ -567,7 +567,7 @@ end
 
 function texturecoordinates(rect::Rect2{T}, nvertices=(2, 2)) where {T}
     ps = coordinates(Rect2{T}(0, 0, 1, 1), nvertices)
-    ps .= Vec2{T}(0, 1) .+ Vec2{T}(1, -1) .* ps
+    ps = [Vec2{T}(0, 1) .+ Vec2{T}(1, -1) .* p for p in ps]
     return ps
 end
 
