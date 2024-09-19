@@ -633,11 +633,21 @@ function Mesh(; kwargs...)
     return Mesh(va, fs)
 end
 
+# Shorthand types
+const SimpleMesh{N, T, FT} = Mesh{N, T, FT, (:position,), Tuple{Vector{Point{N, T}}}, Vector{FT}}
+const NormalMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal), Tuple{Vector{Point{N, T}}, Vector{Vec3f}}, Vector{FT}}
+const NormalUVMesh{N, T, FT} = Mesh{N, T, FT, (:position, :normal, :uv), Tuple{Vector{Point{N, T}}, Vector{Vec3f}, Vector{Vec2f}}, Vector{FT}}
+
+const GLSimpleMesh{N} = SimpleMesh{N, Float32, GLTriangleFace}
+const GLNormalMesh{N}   = NormalMesh{N, Float32, GLTriangleFace}
+const GLNormalUVMesh{N} = NormalUVMesh{N, Float32, GLTriangleFace}
+
+
+
 struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}} <: AbstractMesh{Dim, T}
     mesh::M
     meta::Dict{Symbol, Any}
 end
-
 
 """
     MetaMesh(mesh; metadata...)
