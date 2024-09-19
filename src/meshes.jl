@@ -236,7 +236,7 @@ Generates a new mesh containing all the data of the individual meshes.
 If all meshes are consistent in their use of FaceViews they will be preserved. 
 Otherwise all of them will be converted with `clear_faceviews(mesh)`.
 """
-function Base.merge(meshes::AbstractVector{<:Mesh})
+function Base.merge(meshes::AbstractVector{<:Mesh{D}}) where {D}
     return if isempty(meshes)
         return Mesh(Point3f[], GLTriangleFace[])
 
