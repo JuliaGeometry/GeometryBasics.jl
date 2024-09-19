@@ -143,7 +143,8 @@ end
 Calculates an orthogonal vector `cross(p2 - p1, p3 - p1)` to a plane described
 by 3 points p1, p2, p3. 
 """
-orthogonal_vector(p1, p2, p3) = cross(p2 .- p1, p3 .- p1)
+orthogonal_vector(p1, p2, p3) = cross(p2 - p1, p3 - p1)
+orthogonal_vector(::Type{VT}, p1, p2, p3) where {VT} = orthogonal_vector(VT(p1), VT(p2), VT(p3))
 
 """
     normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
@@ -167,7 +168,7 @@ function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: 
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
-        n = orthogonal_vector(v[1], v[2], v[3])
+        n = orthogonal_vector(NormalType, v[1], v[2], v[3])
         for i in 1:length(face)
             fi = face[i]
             normals_result[fi] = normals_result[fi] .+ n
@@ -203,7 +204,7 @@ end
 
         for (i, f) in enumerate(fs)
             ps = positions[f]
-            n = GeometryBasics.orthogonal_vector(ps[1], ps[2], ps[3])
+            n = orthogonal_vector(NormalType, ps[1], ps[2], ps[3])
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)
         end
