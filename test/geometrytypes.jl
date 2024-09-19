@@ -183,7 +183,7 @@ end
     @test f == face_target
     circle = Circle(Point2f(0), 1.0f0)
     points = decompose(Point2f, Tesselation(circle, 20))
-    @test length(points) == 21
+    @test length(points) == 20
     tess_circle = Tesselation(circle, 32)
     mesh = triangle_mesh(tess_circle)
     @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)

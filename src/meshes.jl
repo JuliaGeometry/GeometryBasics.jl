@@ -20,13 +20,15 @@ function mesh(primitive::AbstractGeometry; pointtype=Point, facetype=GLTriangleF
         _fs = positions.faces
         isnothing(faces(primitive)) || @error("A primitive should not define `faces` and use a FaceView for `coordinates()`. Using faces from FaceView.")
     else
-        _fs = faces(primitive)
+        # This tries `faces(prim)` first, then triangulation with the natural
+        # position type of the primitive.
+        _fs = decompose(facetype, primitive)
     end
 
     # If faces returns nothing for primitive, we try to triangulate!
     if isnothing(_fs)
         if eltype(positions) <: Point2
-            # triangulation.jl
+            # try triangulation with the converted positions as a last attempt
             fs = decompose(facetype, positions)
         else
             error("No triangulation for $(typeof(primitive))")
