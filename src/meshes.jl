@@ -236,7 +236,7 @@ Generates a new mesh containing all the data of the individual meshes.
 If all meshes are consistent in their use of FaceViews they will be preserved. 
 Otherwise all of them will be converted with `clear_faceviews(mesh)`.
 """
-function Base.merge(meshes::AbstractVector{<:Mesh{D}}) where {D}
+function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
         return Mesh(Point3f[], GLTriangleFace[])
 
@@ -271,12 +271,18 @@ function Base.merge(meshes::AbstractVector{<:Mesh{D}}) where {D}
         @label DOUBLE_BREAK
 
         if consistent_face_views
-
+            
             # All the same kind of face, can just merge
             new_attribs = NamedTuple{names}(map(names) do name
-                return reduce(vcat, getproperty.(meshes, name))
+                if name === :position
+                    D = maximum(ndims, meshes)
+                    T = mapreduce(m -> eltype(pointtype(m)), promote_type, meshes)
+                    PT = Point{D, T}
+                    return reduce(vcat, decompose.(PT, meshes))
+                else
+                    return reduce(vcat, getproperty.(meshes, name))
+                end
             end)
-            # fs = reduce(vcat, faces.(meshes))
             fs = reduce(vcat, faces.(meshes))
 
             # TODO: is the type difference in offset bad?
