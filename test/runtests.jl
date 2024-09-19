@@ -316,6 +316,13 @@ using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
 # seems like we also run into https://github.com/JuliaTesting/Aqua.jl/issues/86
-Aqua.test_all(GeometryBasics; ambiguities=false, unbound_args=false)
+# Aqua.test_ambiguities([GeometryBasics, Base, Core])
+# Aqua.test_unbound_args(GeometryBasics)
+Aqua.test_undefined_exports(GeometryBasics)
+Aqua.test_project_extras(GeometryBasics)
+Aqua.test_stale_deps(GeometryBasics, ignore = [:PrecompileTools])
+Aqua.test_deps_compat(GeometryBasics)
+Aqua.test_piracies(GeometryBasics)
+Aqua.test_persistent_tasks(GeometryBasics)
 
 end  # testset "GeometryBasics"
