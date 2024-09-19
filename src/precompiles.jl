@@ -36,5 +36,9 @@ using PrecompileTools: @setup_workload, @compile_workload
         inv(M)
         M[1, Vec(1, 3)]
         M * Vec(1,2,3)
+
+        Point2f(0.5, 0.1) in Triangle(Point2f(0), Point2f(0.5, 1), Point2f(1, 0))
+        decompose(GLTriangleFace, [Point2f(0), Point2f(0.5, 1), Point2f(1, 0)])
+        Point3f(0.5, 0, 1f0) in r 
     end
 end
