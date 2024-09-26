@@ -526,7 +526,7 @@ struct Mesh{
                 try
                     verify(fs, attrib)
                 catch e
-                    rethrow(ErrorException("Failed to verify $name attribute:\n" * e.msg))
+                    rethrow(ErrorException("Failed to verify $name attribute:\n$(e.msg)"))
                 end
             else
                 length(attrib) < N && error("Failed to verify $name attribute:\nFaces address $N vertex attributes but only $(length(attrib)) are present.")
