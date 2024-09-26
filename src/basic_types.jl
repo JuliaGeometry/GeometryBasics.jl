@@ -690,10 +690,10 @@ end
 
 # TODO: or via getindex?
 Base.haskey(mesh::MetaMesh, key::Symbol) = haskey(getfield(mesh, :meta), key)
-Base.get(f, mesh::MetaMesh, key::Symbol) = get(f, getfield(mesh, :meta), key)
-Base.get!(f, mesh::MetaMesh, key::Symbol) = get!(f, getfield(mesh, :meta), key)
-Base.get(mesh::MetaMesh, key::Symbol, default = nothing) = get(getfield(mesh, :meta), key, default)
-Base.get!(mesh::MetaMesh, key::Symbol, default = nothing) = get!(getfield(mesh, :meta), key, default)
+Base.get(f::Base.Callable, mesh::MetaMesh, key::Symbol) = get(f, getfield(mesh, :meta), key)
+Base.get!(f::Base.Callable, mesh::MetaMesh, key::Symbol) = get!(f, getfield(mesh, :meta), key)
+Base.get(mesh::MetaMesh, key::Symbol, default) = get(getfield(mesh, :meta), key, default)
+Base.get!(mesh::MetaMesh, key::Symbol, default) = get!(getfield(mesh, :meta), key, default)
 Base.getindex(mesh::MetaMesh, key::Symbol) = getindex(getfield(mesh, :meta), key)
 Base.setindex!(mesh::MetaMesh, value, key::Symbol) = setindex!(getfield(mesh, :meta), value, key)
 Base.delete!(mesh::MetaMesh, key::Symbol) = delete!(getfield(mesh, :meta), key)

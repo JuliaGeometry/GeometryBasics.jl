@@ -98,9 +98,6 @@ macro fixed_vector(name_parent)
             end
         end
 
-        Base.@pure StaticArrays.Size(::Type{$(name){S,Any}}) where {S} = Size(S)
-        Base.@pure StaticArrays.Size(::Type{$(name){S,T}}) where {S,T} = Size(S)
-
         Base.@propagate_inbounds function Base.getindex(v::$(name){S,T}, i::Int) where {S,T}
             return v.data[i]
         end
