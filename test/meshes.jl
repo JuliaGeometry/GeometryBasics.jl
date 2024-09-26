@@ -176,7 +176,7 @@ end
 
     @test Mesh(mm) == m
     @test haskey(mm, :name)
-    @test get(mm, :name) == "test"
+    @test get(mm, :name, nothing) == "test"
     @test mm[:name] == "test"
     @test !haskey(mm, :foo)
     @test get!(mm, :foo, "bar") == "bar"
