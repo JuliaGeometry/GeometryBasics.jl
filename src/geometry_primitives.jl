@@ -96,10 +96,12 @@ end
 collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
 collect_with_eltype(::Type{T}, vec::FaceView{T}) where {T} = vec
-collect_with_eltype(::Type{T}, iter) where {T} = collect_with_eltype!(T[], iter)
 
+function collect_with_eltype(::Type{T}, iter) where {T}
+    return collect_with_eltype!(Vector{T}(undef, 0), iter)
+end
 function collect_with_eltype(::Type{T}, iter::FaceView) where {T}
-    return FaceView(collect_with_eltype!(T[], iter.data), iter.faces)
+    return FaceView(collect_with_eltype!(Vector{T}(undef, 0), iter.data), iter.faces)
 end
 
 function collect_with_eltype!(target::AbstractVector{T}, vec::AbstractVector{T}) where {T}
