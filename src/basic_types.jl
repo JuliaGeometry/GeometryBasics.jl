@@ -382,10 +382,20 @@ Base.length(mpt::MultiPoint) = length(mpt.points)
 """
     FaceView(data, faces)
 
-A FaceView is alternative to passing a vertex attribute directly to a mesh. It 
-bundles `data` with a different set of `faces` which replace the default faces
-of a mesh. Doing this allows you to have the `data` in a different order from 
-vertices in the mesh, potentially avoiding duplication.
+A FaceView is an alternative to passing a vertex attributes directly to a mesh. 
+It bundles `data` with a new set of `faces` which may index that data differently
+from the faces defined in a mesh. This can be useful to avoid duplication of data.
+
+For example, `data` can be defined per face by giving each face just one (repeated)
+index:
+```julia
+per_face_normals = FaceView(
+    normals,                 # one per face
+    FT.(eachindex(normals))  # with FT = facetype(mesh)
+)
+```
+
+To remove `FaceView`s from a mesh, e.g. for rendering, use `clear_faceviews(mesh)`.
 
 You can get the data of a FaceView with `values(faceview)` and the faces with
 `faces(faceview)`.

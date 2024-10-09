@@ -53,7 +53,7 @@ As a minimal example consider a mesh that is just one triangle, i.e. 3 position 
 Let's say we want to add a flat color to the triangle.
 In this case we only have one color, but our face refers to 3 different vertices (3 different positions).
 To avoid duplicating the color data, we can instead define a new triangle face `TriangleFace(1)` and add the color attribute as a `FaceView([color], [TriangleFace(1)])`.
-If we ever need the mesh to be defined with just one common set of faces, i.e. no FaceView and appropriately duplicated vertex data, we can use `GeometryBasics.clear_faceviews(mesh)` to generate it.
+If we ever need the mesh to be defined with just one common set of faces, i.e. no FaceView and appropriately duplicated vertex data, we can use `clear_faceviews(mesh)` to generate it.
 
 On a larger scale this can be useful for memory and performance reason, e.g. when you do calculations with vertex attributes.
 It can also simplify some definitions, like for example `Rect3`.
