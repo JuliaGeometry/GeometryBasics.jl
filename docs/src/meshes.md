@@ -8,12 +8,14 @@ A `Mesh` is defined by the following struct:
 
 ```julia
 struct Mesh{
-        Dim, PositionElType <: Real,
+        Dim, T <: Real, # TODO: Number?
         FT <: AbstractFace,
+        Names,
+        VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
         FVT <: AbstractVector{FT}
     } <: AbstractMesh{Dim, T}
 
-    vertex_attributes::Dict{Symbol, Union{FaceView, AbstractVector}} 
+    vertex_attributes::NamedTuple{Names, VAT}
     faces::FVT
     views::Vector{UnitRange{Int}}
 end
