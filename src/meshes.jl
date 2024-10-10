@@ -237,6 +237,9 @@ Generates a new mesh containing all the data of the individual meshes.
 
 If all meshes are consistent in their use of FaceViews they will be preserved. 
 Otherwise all of them will be converted with `clear_faceviews(mesh)`.
+
+This function will generate `views` in the new mesh which correspond to the 
+inputs of this function.
 """
 function Base.merge(meshes::AbstractVector{<:Mesh})
     return if isempty(meshes)
@@ -331,7 +334,8 @@ end
 
 Returns the given `mesh` if it contains no FaceViews. Otherwise, generates a new
 mesh that contains no FaceViews, reordering and duplicating vertex atttributes
-as necessary. 
+as necessary. If the mesh has `views` they will be adjusted as needed to produce
+the same submeshes.
 """
 function clear_faceviews(mesh::Mesh)
     main_fs = faces(mesh)
