@@ -10,6 +10,12 @@ The default decomposition implemented by GeoemtryBasics are:
 - `decompose_uv([::Type{<: Vec},] source) = decompose([::Type{UV{<: Vec}}},] source)` which collects data with `texturecoordinates(source)` and converts it to the given Vec type. This function also exists with `UVW` texture coordinates.
 - `decompose(::Type{<: AbstractFace}, source)` which collects data with `faces(source)` and converts it to the given face type. 
 
+### Extending decompose
+
+For `decompose` to work there needs to be a conversion from some element type to some target type. 
+GeometryBasics relies on `GeometryBasics.convert_simplex(TargetType, value)` for this.
+If you want to add new types to decompose, e.g. a new face type, you will need to add a method to that function.
+
 ## Primitive decomposition
 
 GeometryBasics defines an interface to decompose geometry primitives into vertex attributes and faces.
