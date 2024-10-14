@@ -180,6 +180,10 @@ function decompose(::Type{Point}, primitive::AbstractGeometry{Dim,T}) where {Dim
     return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
 
+function decompose(::Type{Point{Dim}}, primitive::AbstractGeometry{Dim,T}) where {Dim,T}
+    return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
+end
+
 function decompose(::Type{PointT{T}}, primitive::AbstractGeometry{Dim}) where {Dim, T}
     return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
