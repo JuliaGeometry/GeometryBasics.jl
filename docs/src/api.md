@@ -2,7 +2,7 @@
 
 ## Exports
 
-```@autodocs; canonical=false
+```@autodocs
 Modules = [GeometryBasics]
 Order   = [:module, :constant, :type, :function, :macro]
 Public  = true
@@ -11,7 +11,7 @@ Private = false
 
 ## Private
 
-```@autodocs; canonical=false
+```@autodocs
 Modules = [GeometryBasics]
 Order   = [:module, :constant, :type, :function, :macro]
 Public  = false

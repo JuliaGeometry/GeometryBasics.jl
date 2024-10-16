@@ -4,7 +4,7 @@ GeometryBasics defines two mesh types to work with - `Mesh` and `MetaMesh`
 
 ## Mesh
 
-```@docs
+```@docs; canonical=false
 Mesh
 ```
 
