@@ -526,7 +526,7 @@ AbstractVector must match in length. For FaceViews, the number of faces needs to
 
 See also: [`vertex_attributes`](@ref), [`coordinates`](@ref), [`normals`](@ref), 
 [`texturecoordinates`](@ref), [`decompose`](@ref), [`FaceView`](@ref), 
-[`clear_faceviews`](@ref)
+[`expand_faceviews`](@ref)
 
 The `faces` field is a collection `<: AbstractVector{FaceType}` containing faces 
 that describe how vertices are connected. Typically these are `(GL)TriangleFace`s
