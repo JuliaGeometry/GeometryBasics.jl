@@ -63,7 +63,7 @@ jobs:
             Pkg.develop(PackageSpec(path=pwd()))
             pkg"add MeshIO#ff/GeometryBasics_refactor MakieCore#breaking-0.22 Makie#breaking-0.22 GLMakie#breaking-0.22"
             Pkg.instantiate()'
-      - run: julia --project=docs docs/make.jl
+      - run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
