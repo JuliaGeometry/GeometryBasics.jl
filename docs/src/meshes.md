@@ -20,7 +20,7 @@ You can also grab the contents of `mesh.vertex_attributes` as if they were field
 ### FaceView
 
 
-```@docs; canoniical=false
+```@docs; canonical=false
 FaceView
 ```
 
