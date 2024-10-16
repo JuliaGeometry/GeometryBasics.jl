@@ -382,9 +382,9 @@ Base.length(mpt::MultiPoint) = length(mpt.points)
 """
     FaceView(data, faces)
 
-A FaceView is an alternative to passing a vertex attributes directly to a mesh. 
+A FaceView is an alternative to passing a vertex attribute directly to a mesh. 
 It bundles `data` with a new set of `faces` which may index that data differently
-from the faces defined in a mesh. This can be useful to avoid duplication of data.
+from the faces defined in a mesh. This can be useful to avoid duplication in `data`.
 
 For example, `data` can be defined per face by giving each face just one (repeated)
 index:
@@ -395,7 +395,9 @@ per_face_normals = FaceView(
 )
 ```
 
-To remove `FaceView`s from a mesh, e.g. for rendering, use `clear_faceviews(mesh)`.
+If you need a mesh with strictly per-vertex data, e.g. for rendering, you can use 
+`expand_faceviews(mesh)` to convert every vertex attribute to be per-vertex. This
+will duplicate data and reorder faces as needed.
 
 You can get the data of a FaceView with `values(faceview)` and the faces with
 `faces(faceview)`.
@@ -715,7 +717,8 @@ with the given `positions` and `faces`. Any keyword arguments given will be
 stored in the `meta` field in `MetaMesh`.
 
 This struct is meant to be used for storage of non-vertex data. Any vertex 
-related data should be stored as a vertex attribute in `Mesh`. 
+related data should be stored as a vertex attribute in `Mesh`. One example of such 
+data is material data, which is defined per view in `mesh.views`, i.e. per submesh.
 
 The metadata added to the MetaMesh can be manipulated with Dict-like operations 
 (getindex, setindex!, get, delete, keys, etc). Vertex attributes can be accessed 
