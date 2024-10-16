@@ -1,7 +1,7 @@
 using Test, Random, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
-using GeometryBasics: MetaMesh, add_meta, pop_meta
+using GeometryBasics: MetaMesh
 using GeoInterface
 using GeoJSON
 using Extents
@@ -36,23 +36,23 @@ end
             tfaces = TetrahedronFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8)]
             normals = rand(Vec{3, Float64}, 8)
             stress = LinRange(0, 1, 8)
-            mesh = MetaMesh(points, tfaces; normals = normals, stress = stress)
+            mesh = Mesh(points, tfaces; normal = normals, stress = stress)
 
             @test hasproperty(mesh, :stress)
-            @test hasproperty(mesh, :normals)
+            @test hasproperty(mesh, :normal)
             @test mesh.stress === stress
-            @test mesh.normals === normals
-            @test mesh.normals === normals
+            @test mesh.normal === normals
+            @test mesh.position === points
             @test GeometryBasics.faces(mesh) === tfaces
-            @test propertynames(mesh) == (:normals, :stress)
+            @test propertynames(mesh) == (:vertex_attributes, :faces, :views, :position, :normal, :stress)
         end
     end
 
     @testset "Mesh with metadata" begin
        m = triangle_mesh(Sphere(Point3f(0), 1))
        m_meta = MetaMesh(m; boundingbox=Rect(1.0, 1.0, 2.0, 2.0))
-       @test m_meta.boundingbox === Rect(1.0, 1.0, 2.0, 2.0)
-       @test propertynames(m_meta) == (:boundingbox,)
+       @test m_meta[:boundingbox] === Rect(1.0, 1.0, 2.0, 2.0)
+       @test collect(keys(m_meta)) == [:boundingbox,]
     end
 end
 
@@ -130,14 +130,17 @@ end
         f = connect([1, 2, 3, 4], SimplexFace{4})
         mesh = Mesh(points, f)
         @test collect(mesh) == [Tetrahedron(points...)]
-
+        @test faces(mesh) == [TetrahedronFace{Int64}(1,2,3,4)]
+        @test decompose(LineFace{Int64}, mesh) == LineFace{Int64}[(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
+        @test decompose(GLTriangleFace, mesh) == GLTriangleFace[(2, 3, 4), (1, 3, 4), (1, 2, 4), (1, 2, 3)]
+        
         points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
         ns = rand(Vec3f, 8)
         uv = rand(Vec2f, 8)
         mesh = Mesh(points, tfaces)
         meshuv = MetaMesh(points, tfaces; uv=uv)
-        meshuvnormal = MetaMesh(points, tfaces; normals=ns, uv=uv)
+        meshuvnormal = MetaMesh(points, tfaces; normal=ns, uv=uv)
         t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
 
         m = GeometryBasics.mesh(t; pointtype=Point3f, facetype=QuadFace{Int})
@@ -173,7 +176,7 @@ end
     @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
     primitive = Rect3(0, 0, 0, 1, 1, 1)
     m_normal = normal_mesh(primitive)
-    @test GeometryBasics.normals(m_normal) isa Vector{Vec3f}
+    @test GeometryBasics.normals(m_normal) isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{GLTriangleFace}}
 
     points = decompose(Point2f, Circle(Point2f(0), 1))
     tmesh = triangle_mesh(points)
@@ -186,61 +189,29 @@ end
 
     @test texturecoordinates(m) == nothing
     r2 = Rect2(0.0, 0.0, 1.0, 1.0)
-    @test collect(texturecoordinates(r2)) == [(0.0, 1.0), (1.0, 1.0), (0.0, 0.0), (1.0, 0.0)]
+    @test collect(texturecoordinates(r2)) == Point2f[(0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
     r3 = Rect3(0.0, 0.0, 1.0, 1.0, 2.0, 2.0)
     @test first(texturecoordinates(r3)) == Vec3(0, 0, 0)
     uv = decompose_uv(m)
-    @test Rect(Point.(uv)) == Rect(0, 0, 1, 1)
+    @test_broken false # Rect(Point.(uv)) == Rect(0, 0, 1, 1) # decompose_uv must now produces 2D uvs
+    uvw = GeometryBasics.decompose_uvw(m)
+    @test Rect(Point.(uvw)) == Rect(Point3f(0), Vec3f(1))
 
     points = decompose(Point2f, Circle(Point2f(0), 1))
     m = GeometryBasics.mesh(points)
     @test coordinates(m) === points
+
+    fs = [QuadFace(1,2,3,4), QuadFace(3,4,5,6), QuadFace(7,8,9,10)]
+    views = [1:2, 3:3]
+    new_fs, new_views = decompose(GLTriangleFace, fs, views)
+    @test new_fs == GLTriangleFace[(1, 2, 3), (1, 3, 4), (3, 4, 5), (3, 5, 6), (7, 8, 9), (7, 9, 10)]
+    @test new_views == [1:4, 5:6]
 end
 
 @testset "convert mesh + meta" begin
     m = uv_normal_mesh(Circle(Point2f(0), 1f0))
     # For 2d primitives normal is just the upvector
-    m.normals == [Vec3f(0, 0, 1) for p in coordinates(m)]
-end
-
-@testset "convert mesh + meta" begin
-    m = uv_normal_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
-    m_normal = add_meta(m; normals = decompose_normals(m))
-    # make sure we don't loose the uv
-    @test hasproperty(m_normal, :uv)
-    # Make sure we don't create any copies
-    @test coordinates(m) === coordinates(m_normal)
-    @test m.normals == m_normal.normals
-    @test m.uv === m_normal.uv
-
-    m = uv_mesh(Rect3f(Vec3f(-1), Vec3f(1, 2, 3)))
-    m_normal = add_meta(m, normals = decompose_normals(m))
-    @test hasproperty(m_normal, :uv)
-    @test coordinates(m) === coordinates(m_normal)
-    @test decompose_normals(m) == GeometryBasics.normals(m_normal)
-    # uv stays untouched, since we don't specify the element type in normalmesh
-    @test m.uv === m_normal.uv
-end
-
-@testset "modifying meta" begin
-    xx = rand(10)
-    points = rand(Point3f, 10)
-    m = MetaMesh(points, GLTriangleFace[(1,2,3), (3,4,5)]; xx=xx)
-    color = rand(10)
-    m = add_meta(m; color=color)
-
-    @test hasproperty(m, :xx)
-    @test hasproperty(m, :color)
-
-    @test m.xx === xx
-    @test m.color === color
-
-    m, colpopt = GeometryBasics.pop_meta(m, :color)
-    m, xxpopt = GeometryBasics.pop_meta(m, :xx)
-
-    @test propertynames(m) == ()
-    @test colpopt === color
-    @test xxpopt === xx
+    @test m.normal == [Vec3f(0, 0, 1) for p in coordinates(m)]
 end
 
 @testset "mesh conversion" begin
@@ -339,10 +310,19 @@ end
     include("geointerface.jl")
 end
 
+include("polygons.jl")
+
 using Aqua
 # Aqua tests
 # Intervals brings a bunch of ambiquities unfortunately
 # seems like we also run into https://github.com/JuliaTesting/Aqua.jl/issues/86
-Aqua.test_all(GeometryBasics; ambiguities=false, unbound_args=false)
+# Aqua.test_ambiguities([GeometryBasics, Base, Core])
+# Aqua.test_unbound_args(GeometryBasics)
+Aqua.test_undefined_exports(GeometryBasics)
+Aqua.test_project_extras(GeometryBasics)
+Aqua.test_stale_deps(GeometryBasics, ignore = [:PrecompileTools])
+Aqua.test_deps_compat(GeometryBasics)
+Aqua.test_piracies(GeometryBasics)
+Aqua.test_persistent_tasks(GeometryBasics)
 
 end  # testset "GeometryBasics"

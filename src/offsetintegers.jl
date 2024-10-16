@@ -19,23 +19,18 @@ raw(x::Integer) = x
 value(x::OffsetInteger{O,T}) where {O,T} = raw(x) - O
 value(x::Integer) = x
 
-function to_subscript(io::IO, x::Int)
-    if x in 0:9
-        print(io, Char(0x2080+x))
-    elseif x < 0
-        print(io, Char(0x208B)); to_subscript(io, abs(x))
-    else # positive + more than one digit
-        for d in reverse(digits(x))
-            to_subscript(io, d)
-        end
+function Base.show(io::IO, oi::OIT) where {O, T, OIT <: OffsetInteger{O, T}}
+    if OIT === GLIndex
+        typename = "GLIndex"
+    elseif O == 0
+        typename = "OneIndex{$T}"
+    elseif O == 1
+        typename = "ZeroIndex{$T}"
+    else
+        typename = "OffsetInteger{$O, $T}"
     end
-end
 
-function Base.show(io::IO, oi::OffsetInteger{O}) where {O}
-    o = O < 0 ? "ₒ₊" : "ₒ₋"
-    print(io, "<$(value(oi))$o")
-    to_subscript(io, abs(O))
-    print(io, ">")
+    print(io, typename, "(", value(oi), ")")
     return
 end
 
@@ -92,3 +87,5 @@ function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
 end
 
 Base.@pure pure_max(x1, x2) = x1 > x2 ? x1 : x2
+
+Base.hash(o::OffsetInteger{O}, h::UInt) where {O} = hash(o.i, hash(O, h))

@@ -1,40 +1,27 @@
 """
-    Cylinder{N, T}
+    Cylinder{T}(origin::Point3, extremity::Point3, radius)
 
-A `Cylinder` is a 2D rectangle or a 3D cylinder defined by its origin point,
-its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
+A `Cylinder` is a 3D primitive defined by an `origin`, an `extremity` (end point)
+and a `radius`.
 """
-struct Cylinder{N,T} <: GeometryPrimitive{N,T}
-    origin::Point{N,T}
-    extremity::Point{N,T}
+struct Cylinder{T} <: GeometryPrimitive{3, T}
+    origin::Point3{T}
+    extremity::Point3{T}
     r::T
 end
 
-"""
-    Cylinder2{T}
-    Cylinder3{T}
-
-A `Cylinder2` or `Cylinder3` is a 2D/3D cylinder defined by its origin point,
-its extremity and a radius. `origin`, `extremity` and `r`, must be specified.
-"""
-const Cylinder2{T} = Cylinder{2,T}
-const Cylinder3{T} = Cylinder{3,T}
-
-origin(c::Cylinder{N,T}) where {N,T} = c.origin
-extremity(c::Cylinder{N,T}) where {N,T} = c.extremity
-radius(c::Cylinder{N,T}) where {N,T} = c.r
-height(c::Cylinder{N,T}) where {N,T} = norm(c.extremity - c.origin)
-direction(c::Cylinder{N,T}) where {N,T} = (c.extremity .- c.origin) ./ height(c)
-
-function rotation(c::Cylinder{2,T}) where {T}
-    d2 = direction(c)
-    u = Vec{3, T}(d2[1], d2[2], T(0))
-    v = Vec{3, T}(u[2], -u[1], T(0))
-    v = normalize(v)
-    return Mat{3, 3, T}(v..., u..., 0, 0, 1)
+function Cylinder(origin::Point3{T1}, extremity::Point3{T2}, radius::T3) where {T1, T2, T3}
+    T = promote_type(T1, T2, T3)
+    Cylinder{T}(origin, extremity, radius)
 end
 
-function rotation(c::Cylinder{3,T}) where {T}
+origin(c::Cylinder) = c.origin
+extremity(c::Cylinder) = c.extremity
+radius(c::Cylinder) = c.r
+height(c::Cylinder) = norm(c.extremity - c.origin)
+direction(c::Cylinder) = (c.extremity .- c.origin) ./ height(c)
+
+function rotation(c::Cylinder{T}) where {T}
     d3 = direction(c)
     u = Vec{3, T}(d3[1], d3[2], d3[3])
     if abs(u[1]) > 0 || abs(u[2]) > 0
@@ -48,60 +35,61 @@ function rotation(c::Cylinder{3,T}) where {T}
     return Mat{3, 3, T}(v..., w..., u...)
 end
 
-function coordinates(c::Cylinder{2,T}, nvertices=(2, 2)) where {T}
-    r = Rect(c.origin[1] - c.r / 2, c.origin[2], c.r, height(c))
-    M = rotation(c)
-    points = coordinates(r, nvertices)
-    vo = to_pointn(Point3{T}, origin(c))
-    return (M * (to_pointn(Point3{T}, point) .- vo) .+ vo for point in points)
+function coordinates(c::Cylinder{T}, nvertices=30) where {T}
+    nvertices += isodd(nvertices)
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+    step = 2pi / nhalf
+    
+    ps = Vector{Point3{T}}(undef, nvertices + 2)
+    for i in 1:nhalf
+        phi = (i-1) * step
+        ps[i] = R * Point3{T}(c.r * cos(phi), c.r * sin(phi), 0) + c.origin
+    end
+    for i in 1:nhalf
+        phi = (i-1) * step
+        ps[i + nhalf] = R * Point3{T}(c.r * cos(phi), c.r * sin(phi), 0) + c.extremity
+    end
+    ps[end-1] = c.origin
+    ps[end] = c.extremity
+
+    return ps
 end
 
-function faces(::Cylinder{2}, nvertices=(2, 2))
-    return faces(Rect(0, 0, 1, 1), nvertices)
+function normals(c::Cylinder, nvertices = 30)
+    nvertices += isodd(nvertices)
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+    step = 2pi / nhalf
+    
+    ns = Vector{Vec3f}(undef, nhalf + 2)
+    for i in 1:nhalf
+        phi = (i-1) * step
+        ns[i] = R * Vec3f(cos(phi), sin(phi), 0)
+    end
+    ns[end-1] = R * Vec3f(0, 0, -1)
+    ns[end] = R * Vec3f(0, 0, 1)
+
+    disk1 = map(i -> GLTriangleFace(nhalf+1), 1:nhalf)
+    mantle = map(i -> QuadFace(i, mod1(i+1, nhalf), mod1(i+1, nhalf), i), 1:nhalf)
+    disk2 = map(i -> GLTriangleFace(nhalf+2), 1:nhalf)
+    fs = vcat(disk1, mantle, disk2)
+
+    return FaceView(ns, fs)
 end
 
-function coordinates(c::Cylinder{3,T}, nvertices=30) where {T}
-    if isodd(nvertices)
-        nvertices = 2 * (nvertices ÷ 2)
-    end
-    nvertices = max(8, nvertices)
-    nbv = nvertices ÷ 2
+function faces(::Cylinder, facets=30)
+    nvertices = facets + isodd(facets)
+    nhalf = div(nvertices, 2)
 
-    M = rotation(c)
-    h = height(c)
-    range = 1:(2 * nbv + 2)
-    function inner(i)
-        return if i == length(range)
-            c.extremity
-        elseif i == length(range) - 1
-            origin(c)
-        else
-            phi = T((2π * (((i + 1) ÷ 2) - 1)) / nbv)
-            up = ifelse(isodd(i), 0, h)
-            (M * Point(c.r * cos(phi), c.r * sin(phi), up)) .+ c.origin
-        end
+    disk1 = map(i -> GLTriangleFace(nvertices+1, mod1(i+1, nhalf), i), 1:nhalf)
+    mantle = map(1:nhalf) do i
+        i1 = mod1(i+1, nhalf)
+        QuadFace(i, i1, i1 + nhalf, i+nhalf)
     end
+    disk2 = map(i -> GLTriangleFace(nvertices+2, i+nhalf, mod1(i+1, nhalf)+nhalf), 1:nhalf)
 
-    return (inner(i) for i in range)
-end
-
-function faces(c::Cylinder{3}, facets=30)
-    isodd(facets) ? facets = 2 * div(facets, 2) : nothing
-    facets < 8 ? facets = 8 : nothing
-    nbv = Int(facets / 2)
-    indexes = Vector{TriangleFace{Int}}(undef, facets)
-    index = 1
-    for j in 1:(nbv - 1)
-        indexes[index] = (index + 2, index + 1, index)
-        indexes[index + 1] = (index + 3, index + 1, index + 2)
-        index += 2
-    end
-    indexes[index] = (1, index + 1, index)
-    indexes[index + 1] = (2, index + 1, 1)
-
-    for i in 1:length(indexes)
-        i % 2 == 1 ? push!(indexes, (indexes[i][1], indexes[i][3], 2 * nbv + 1)) :
-        push!(indexes, (indexes[i][2], indexes[i][1], 2 * nbv + 2))
-    end
-    return indexes
+    return vcat(disk1, mantle, disk2)
 end

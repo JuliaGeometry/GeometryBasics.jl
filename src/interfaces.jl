@@ -1,8 +1,11 @@
 """
     coordinates(geometry)
-Returns the edges/vertices/coordinates of a geometry. Is allowed to return lazy iterators!
-Use `decompose(ConcretePointType, geometry)` to get `Vector{ConcretePointType}` with
-`ConcretePointType` to be something like `Point{3, Float32}`.
+
+Returns the positions/coordinates of a geometry. 
+
+This is allowed to return lazy iterators. Use `decompose(ConcretePointType, geometry)` 
+to get a `Vector{ConcretePointType}` with `ConcretePointType` being something like
+`Point3f`.
 """
 function coordinates(points::AbstractVector{<:Point})
     return points
@@ -10,14 +13,24 @@ end
 
 """
     faces(geometry)
-Returns the face connections of a geometry. Is allowed to return lazy iterators!
-Use `decompose(ConcreteFaceType, geometry)` to get `Vector{ConcreteFaceType}` with
-`ConcreteFaceType` to be something like `TriangleFace{Int}`.
+
+Returns the faces of a geometry. 
+
+This is allowed to return lazy iterators. Use `decompose(ConcreteFaceType, geometry)` 
+to get a `Vector{ConcreteFaceType}` with `ConcreteFaceType` being something like `GLTriangleFace`.
 """
 function faces(f::AbstractVector{<:AbstractFace})
     return f
 end
 
+"""
+    normals(primitive)
+
+Returns the normals of a geometry. 
+
+This is allowed to return lazy iterators. Use `decompose_normals(ConcreteVecType, geometry)` 
+to get a `Vector{ConcreteVecType}` with `ConcreteVecType` being something like `Vec3f`.
+"""
 function normals(primitive, nvertices=nothing; kw...)
     # doesn't have any specific algorithm to generate normals
     # so will be generated from faces + positions
@@ -33,14 +46,25 @@ function faces(primitive, nvertices=nothing; kw...)
     return nothing
 end
 
+"""
+    texturecoordinates(primitive)
+
+Returns the texturecoordinates of a geometry. 
+
+This is allowed to return lazy iterators. Use `decompose_uv(ConcreteVecType, geometry)` 
+(or `decompose_uvw`) to get a `Vector{ConcreteVecType}` with `ConcreteVecType` being 
+something like `Vec2f`.
+"""
 texturecoordinates(primitive, nvertices=nothing) = nothing
 
 """
     Tesselation(primitive, nvertices)
-For abstract geometries, when we generate
-a mesh from them, we need to decide how fine grained we want to mesh them.
-To transport this information to the various decompose methods, you can wrap it
-in the Tesselation object e.g. like this:
+
+When generating a mesh from an abstract geometry, we can typically generate it
+at different levels of detail, i.e. with different amounts of vertices. The 
+`Tesselation` wrapper allows you to specify this level of detail. When generating
+a mesh from a tesselated geometry, the added information will be passed to 
+`coordinates`, `faces`, etc.
 
 ```julia
 sphere = Sphere(Point3f(0), 1)
@@ -48,10 +72,13 @@ m1 = mesh(sphere) # uses a default value for tesselation
 m2 = mesh(Tesselation(sphere, 64)) # uses 64 for tesselation
 length(coordinates(m1)) != length(coordinates(m2))
 ```
+
 For grid based tesselation, you can also use a tuple:
+
 ```julia
 rect = Rect2(0, 0, 1, 1)
 Tesselation(rect, (5, 5))
+```
 """
 struct Tesselation{Dim,T,Primitive,NGrid} <: AbstractGeometry{Dim, T}
     primitive::Primitive
@@ -94,6 +121,20 @@ struct Normal{T} end
 Normal(::Type{T}) where {T} = Normal{T}()
 Normal() = Normal(Vec3f)
 
+"""
+    decompose(::Type{TargetType}, primitive)
+    decompose(::Type{TargetType}, data::AbstractVector)
+
+Dependent on the given type, extracts data from the primtive and converts its 
+eltype to `TargetType`.
+
+Possible `TargetType`s:
+- `<: Point` extracts and converts positions (calling `coordinates()`)
+- `<: AbstractFace` extracts and converts faces (calling `faces()`)
+- `<: Normal{<: Vec}` extracts and converts normals, potentially generating them (calling `normals()`)
+- `<: UV{<: Vec}` extracts and converts 2D texture coordinates, potentially generating them (calling `texturecoordinates()`)
+- `<: UVW{<: Vec}` extracts and converts 3D texture coordinates, potentially generating them (calling `texturecoordinates()`)
+"""
 function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFace}
     f = faces(primitive)
     if isnothing(f)
@@ -104,13 +145,31 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFac
             return nothing
         end
     end
-    return collect_with_eltype(F, f)
+    return decompose(F, f)
 end
-
+  
 function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
     return collect_with_eltype(F, fs)
+end
+
+# TODO: Should this be a completely different function?
+function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractFace}
+    fs = faces(f)
+    isnothing(fs) && error("No faces defined for $(typeof(f))")
+    if isempty(views)
+        return collect_with_eltype(F, fs), views
+    else
+        output = F[]
+        new_views = sizehint!(UnitRange{Int}[], length(views))
+        for range in views
+            start = length(output) + 1
+            collect_with_eltype!(output, view(fs, range))
+            push!(new_views, start:length(output))
+        end
+        return output, new_views
+    end
 end
 
 function decompose(::Type{P}, primitive) where {P<:Point}
@@ -118,6 +177,10 @@ function decompose(::Type{P}, primitive) where {P<:Point}
 end
 
 function decompose(::Type{Point}, primitive::AbstractGeometry{Dim,T}) where {Dim,T}
+    return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
+end
+
+function decompose(::Type{Point{Dim}}, primitive::AbstractGeometry{Dim,T}) where {Dim,T}
     return collect_with_eltype(Point{Dim,T}, coordinates(primitive))
 end
 
@@ -162,6 +225,10 @@ function decompose(UVT::Union{UV{T},UVW{T}}, primitive) where {T}
         # nothing, indicating that texturecoordinates aren't implemented
         positions = decompose(Point, primitive)
         isnothing(positions) && return nothing
+        # We should generate 3D uvw's if uv's are requested
+        # TODO: we should probably enforce that UV has a 2D type and UVW a 3D type
+        (length(T) != length(eltype(positions))) && return nothing
+
         # Let this overlord do the work
         return decompose(UVT, positions)
     end

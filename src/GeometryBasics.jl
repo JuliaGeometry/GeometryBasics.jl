@@ -1,6 +1,6 @@
 module GeometryBasics
 
-using IterTools, LinearAlgebra
+using IterTools, LinearAlgebra, StaticArrays
 using GeoInterface
 import Extents
 using EarCut_jll
@@ -40,10 +40,11 @@ export Triangle
 export AbstractFace, TriangleFace, QuadFace, GLTriangleFace
 export OffsetInteger, ZeroIndex, OneIndex, GLIndex
 export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
-       texturecoordinates
+       texturecoordinates, vertex_attributes
+export clear_faceviews
+export face_normals
 export Tesselation, Normal, UV, UVW
-export AbstractMesh, Mesh, MetaMesh
-export add_meta, pop_meta
+export AbstractMesh, Mesh, MetaMesh, FaceView
 
 
 # all the different predefined mesh types
@@ -56,7 +57,7 @@ export uv_mesh, normal_mesh, uv_normal_mesh
 
 export height, origin, radius, width, widths
 export HyperSphere, Circle, Sphere
-export Cylinder, Cylinder2, Cylinder3, Pyramid, extremity
+export Cylinder, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f, Rectd, Rect2d, Rect3d
 export before, during, meets, overlaps, intersects, finishes
 export centered, direction, area, volume, update
@@ -64,9 +65,8 @@ export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
 export self_intersections, split_intersections
 
-if Base.VERSION >= v"1.4.2"
+if Base.VERSION >= v"1.8"
     include("precompiles.jl")
-    _precompile_()
 end
 
 end # module

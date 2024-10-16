@@ -8,6 +8,11 @@ end
 
 ##
 # conversion & decompose
+"""
+    convert_simplex(::Type{TargetType}, x)
+
+Used to convert one object into another in `decompose(::Type{TargetType}, xs)`.
+"""
 convert_simplex(::Type{T}, x::T) where {T} = (x,)
 convert_simplex(::Type{Vec{N, T}}, x::Vec{N, T}) where {N, T} = x
 
@@ -38,14 +43,19 @@ Triangulate an N-Face into a tuple of triangular faces.
     return v
 end
 
+# TODO: generic?
+function convert_simplex(::Type{TriangleFace{T}}, f::SimplexFace{4}) where {T}
+    TF = TriangleFace{T}
+    return (TF(f[2],f[3],f[4]), TF(f[1],f[3],f[4]), TF(f[1],f[2],f[4]), TF(f[1],f[2],f[3]))
+end
+
 """
     convert_simplex(::Type{Face{2}}, f::Face{N})
 
 Extract all line segments in a Face.
 """
-@generated function convert_simplex(::Type{LineFace{T}},
-                                    f::Union{SimplexFace{N},NgonFace{N}}) where {T,N}
-    2 <= N || error("decompose not implented for N <= 2 yet. N: $N")# other wise degenerate
+@generated function convert_simplex(::Type{LineFace{T}}, f::NgonFace{N}) where {T,N}
+    2 <= N || error("decompose not implemented for N <= 2 yet. N: $N")# other wise degenerate
 
     v = Expr(:tuple)
     for i in 1:(N - 1)
@@ -53,6 +63,18 @@ Extract all line segments in a Face.
     end
     # connect vertices N and 1
     push!(v.args, :(LineFace{$T}(f[$N], f[1])))
+    return v
+end
+
+@generated function convert_simplex(::Type{LineFace{T}}, f::SimplexFace{N}) where {T,N}
+    2 <= N || error("decompose not implemented for N <= 2 yet. N: $N")# other wise degenerate
+
+    v = Expr(:tuple)
+    for i in 1:(N - 1)
+        for j in i+1:N
+            push!(v.args, :(LineFace{$T}(f[$i], f[$j])))
+        end
+    end
     return v
 end
 
@@ -73,9 +95,22 @@ end
 
 collect_with_eltype(::Type{T}, vec::Vector{T}) where {T} = vec
 collect_with_eltype(::Type{T}, vec::AbstractVector{T}) where {T} = collect(vec)
+collect_with_eltype(::Type{T}, vec::FaceView{T}) where {T} = vec
 
 function collect_with_eltype(::Type{T}, iter) where {T}
-    isempty(iter) && return T[]
+    return collect_with_eltype!(Vector{T}(undef, 0), iter)
+end
+function collect_with_eltype(::Type{T}, iter::FaceView) where {T}
+    return FaceView(collect_with_eltype!(Vector{T}(undef, 0), iter.data), iter.faces)
+end
+
+function collect_with_eltype!(target::AbstractVector{T}, vec::AbstractVector{T}) where {T}
+    return append!(target, vec)
+end
+
+function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
+    isempty(iter) && return result
+
     # We need to get `eltype` information from `iter`, it seems to be `Any`
     # most of the time so the eltype checks here don't actually work
     l = if Base.IteratorSize(iter) isa Union{Base.HasShape,Base.HasLength}
@@ -90,57 +125,92 @@ function collect_with_eltype(::Type{T}, iter) where {T}
     else
         0
     end
-    n = 0
-    result = Vector{T}(undef, l)
+
+    # Allow result to be pre-filled for handling faces with mesh.views
+    sizehint!(result, length(result) + l)
+
     for element in iter
         # convert_simplex always returns a tuple,
         # so that e.g. convert(Triangle, quad) can return 2 elements
         for telement in convert_simplex(T, element)
-            n += 1
-            if n > l
-                push!(result, telement)
-            else
-                result[n] = telement
-            end
+            push!(result, telement)
         end
     end
     return result
 end
 
 """
-The unnormalized normal of three vertices.
+    orthogonal_vector(p1, p2, p3)
+
+Calculates an orthogonal vector `cross(p2 - p1, p3 - p1)` to a plane described
+by 3 points p1, p2, p3. 
 """
-function orthogonal_vector(v1, v2, v3)
-    a = v2 .- v1
-    b = v3 .- v1
-    return cross(a, b)
-end
+orthogonal_vector(p1, p2, p3) = cross(p2 - p1, p3 - p1)
+orthogonal_vector(::Type{VT}, p1, p2, p3) where {VT} = orthogonal_vector(VT(p1), VT(p2), VT(p3))
 
 """
-```
-normals{VT,FD,FT,FO}(vertices::Vector{Point{3, VT}},
-                    faces::Vector{Face{FD,FT,FO}},
-                    NT = Normal{3, VT})
-```
-Compute all vertex normals.
+    normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
+
+Compute vertex normals from the given `positions` and `faces`.
+
+This runs through all faces, computing a face normal each and adding it to every
+involved vertex. The direction of the face normal is based on winding direction 
+and assumed counter-clockwise faces. At the end the summed face normals are 
+normalized again to produce a vertex normal.
 """
 function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
                  normaltype=Vec{3,T}) where {T,F<:NgonFace}
     return normals(vertices, faces, normaltype)
 end
 
-function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{F},
-                 ::Type{NormalType}) where {F<:NgonFace,NormalType}
+function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
+                 ::Type{NormalType}) where {NormalType}
+                 
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
-        n = orthogonal_vector(v[1], v[2], v[3])
-        for i in 1:length(F)
+        n = orthogonal_vector(NormalType, v[1], v[2], v[3])
+        for i in 1:length(face)
             fi = face[i]
             normals_result[fi] = normals_result[fi] .+ n
         end
     end
     normals_result .= normalize.(normals_result)
     return normals_result
+end
+
+
+"""
+    face_normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[, target_type = Vec3{T}])
+
+Compute face normals from the given `positions` and `faces` and returns an
+appropriate `FaceView`.
+"""
+function face_normals(
+        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace}; 
+        normaltype = Vec3{T}) where {T}
+    return face_normals(positions, fs, normaltype)
+end
+    
+@generated function face_normals(positions::AbstractVector{<:Point3}, fs::AbstractVector{F},
+        ::Type{NormalType}) where {F<:NgonFace,NormalType}
+    
+    # If the facetype is not concrete it likely varies and we need to query it 
+    # doing the iteration
+    FT = ifelse(isconcretetype(F), :($F), :(typeof(f)))
+
+    quote
+        normals = resize!(NormalType[], length(fs))
+        faces   = resize!(F[], length(fs))
+
+        for (i, f) in enumerate(fs)
+            ps = positions[f]
+            n = orthogonal_vector(NormalType, ps[1], ps[2], ps[3])
+            normals[i] = normalize(n)
+            faces[i] = $(FT)(i)
+        end
+
+        return FaceView(normals, faces)
+    end
 end
