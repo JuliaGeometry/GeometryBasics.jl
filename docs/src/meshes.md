@@ -4,29 +4,9 @@ GeometryBasics defines two mesh types to work with - `Mesh` and `MetaMesh`
 
 ## Mesh
 
-A `Mesh` is defined by the following struct:
-
-```julia
-struct Mesh{
-        Dim, T <: Real, # TODO: Number?
-        FT <: AbstractFace,
-        Names,
-        VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
-        FVT <: AbstractVector{FT}
-    } <: AbstractMesh{Dim, T}
-
-    vertex_attributes::NamedTuple{Names, VAT}
-    faces::FVT
-    views::Vector{UnitRange{Int}}
-end
+```@docs
+Mesh
 ```
-
-`mesh.vertex_attributes` contains all the per-vertex data like positions, normals, texture coordinates, etc.
-They must always contain at least positions.
-`mesh.faces` defines a set of (default) faces to use for each vertex attribute.
-If a vertex attribute is a `FaceView` it carries its own set of faces which are used instead of `mesh.faces`.
-In this case the number of faces and length of each face must match between them.
-`mesh.views` is a set of views into the `mesh.faces` which can be used to separate the mesh into smaller submeshes.
 
 You can get data from a mesh using a few interface functions:
 - `vertex_attributes(mesh) = mesh.vertex_attributes`

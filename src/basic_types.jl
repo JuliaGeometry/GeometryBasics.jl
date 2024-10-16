@@ -540,7 +540,7 @@ results in an empty `views` vector.
 See also: [`merge`](@ref), [`split_mesh`](@ref)
 """
 struct Mesh{
-        Dim, T <: Real, # TODO: Number?
+        Dim, T <: Real,
         FT <: AbstractFace,
         Names,
         VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
