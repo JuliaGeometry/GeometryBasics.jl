@@ -19,23 +19,17 @@ You can also grab the contents of `mesh.vertex_attributes` as if they were field
 
 ### FaceView
 
-As mentioned above, a vertex attribute can be a `FaceView`.
-A `FaceView` is simply defined as a vector of data and a vector of faces:
 
-```julia
-struct FaceView{T, AVT <: AbstractVector{T}, FVT <: AbstractVector{<: AbstractFace}}
-    data::AVT
-    faces::FVT
-end
+```@docs; canoniical=false
+FaceView
 ```
 
-Its purpose is to allow you to add data that needs to be defined per vertex but does not match the vertex structure used by `mesh.faces`.
-
+The purpose of FaceView is to allow you to add data that doesn't use the same vertex indices as `mesh.faces`
 As a minimal example consider a mesh that is just one triangle, i.e. 3 position and one triangle face `TriangleFace(1,2,3)`.
 Let's say we want to add a flat color to the triangle.
 In this case we only have one color, but our face refers to 3 different vertices (3 different positions).
 To avoid duplicating the color data, we can instead define a new triangle face `TriangleFace(1)` and add the color attribute as a `FaceView([color], [TriangleFace(1)])`.
-If we ever need the mesh to be defined with just one common set of faces, i.e. no FaceView and appropriately duplicated vertex data, we can use `clear_faceviews(mesh)` to generate it.
+If we ever need the mesh to be defined with just one common set of faces, i.e. no FaceView and appropriately duplicated vertex data, we can use `expand_faceviews(mesh)` to generate it.
 
 On a larger scale this can be useful for memory and performance reason, e.g. when you do calculations with vertex attributes.
 It can also simplify some definitions, like for example `Rect3`.
@@ -44,17 +38,9 @@ In that case we have 8 positions and 6 normals with FaceViews, or 24 without (as
 
 ## MetaMesh
 
-A `MetaMesh` is given by
-
-```julia
-struct MetaMesh{Dim, T, M <: AbstractMesh{Dim, T}} <: AbstractMesh{Dim, T}
-    mesh::M
-    meta::Dict{Symbol, Any}
-end
+```julia; canonical=false
+MetaMesh
 ```
-
-where `meta` may contain any data you want to include with a mesh.
-For example, you could include group names or material data corresponding to `mesh.views`.
 
 ## How to create a mesh
 

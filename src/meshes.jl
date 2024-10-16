@@ -236,7 +236,7 @@ end
 Generates a new mesh containing all the data of the individual meshes.
 
 If all meshes are consistent in their use of FaceViews they will be preserved. 
-Otherwise all of them will be converted with `clear_faceviews(mesh)`.
+Otherwise all of them will be converted with `expand_faceviews(mesh)`.
 
 This function will generate `views` in the new mesh which correspond to the 
 inputs of this function.
@@ -322,7 +322,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         else # mixed FaceViews and Arrays
 
             # simplify to VertexFace types, then retry merge
-            return merge(clear_faceviews.(meshes))
+            return merge(expand_faceviews.(meshes))
 
         end
 
@@ -330,14 +330,14 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
 end
 
 """
-    clear_faceviews(mesh::Mesh)
+    expand_faceviews(mesh::Mesh)
 
 Returns the given `mesh` if it contains no FaceViews. Otherwise, generates a new
 mesh that contains no FaceViews, reordering and duplicating vertex atttributes
 as necessary. If the mesh has `views` they will be adjusted as needed to produce
 the same submeshes.
 """
-function clear_faceviews(mesh::Mesh)
+function expand_faceviews(mesh::Mesh)
     main_fs = faces(mesh)
     va = vertex_attributes(mesh)
 

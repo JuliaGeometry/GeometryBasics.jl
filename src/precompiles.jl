@@ -9,7 +9,7 @@ using PrecompileTools: @setup_workload, @compile_workload
         c = Circle(Point2f(0), 1)
         m2 = uv_normal_mesh(c, pointtype = Point3f) # hits normal gen
 
-        m = merge([m1, m2]) # hits mixed path, clear_faceviews, then normal path
+        m = merge([m1, m2]) # hits mixed path, expand_faceviews, then normal path
         GeometryBasics.split_mesh(m)
         Rect3d(m)
 

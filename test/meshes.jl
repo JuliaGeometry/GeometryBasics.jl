@@ -40,7 +40,7 @@ end
         normal   = GeometryBasics.FaceView([Vec3f(0,0,1)], [QuadFace(1)])
     )
     
-    m2 = GeometryBasics.clear_faceviews(m)
+    m2 = GeometryBasics.expand_faceviews(m)
 
     @test faces(m) == [QuadFace(1,2,3,4)]
     @test coordinates(m) == Point2f[(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -82,7 +82,7 @@ end
 
     converted_meshes = map(rects) do r
         m = GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
-        GeometryBasics.clear_faceviews(m)
+        GeometryBasics.expand_faceviews(m)
     end
     cm = merge(converted_meshes)
 
@@ -210,7 +210,7 @@ end
 
     @testset "normal_mesh()" begin
         m = normal_mesh(r, pointtype = Point3f, normaltype = Vec3f)
-        m = GeometryBasics.clear_faceviews(m)
+        m = GeometryBasics.expand_faceviews(m)
         
         @test hasproperty(m, :position)
         @test coordinates(m) isa Vector{Point3f}
@@ -311,7 +311,7 @@ end
         @test_throws ErrorException GeometryBasics.mesh(m, uv = Vec3f[])
 
         # remap vertex attributes to merge faceviews into one face array
-        m2 = GeometryBasics.clear_faceviews(m)
+        m2 = GeometryBasics.expand_faceviews(m)
 
         @test coordinates(m2) isa Vector{Point3f}
         @test length(coordinates(m2)) == 24
