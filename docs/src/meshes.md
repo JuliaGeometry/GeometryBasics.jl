@@ -39,7 +39,7 @@ If we ever need the mesh to be defined with just one common set of faces, i.e. n
 
 On a larger scale this can be useful for memory and performance reason, e.g. when you do calculations with vertex attributes.
 It can also simplify some definitions, like for example `Rect3`.
-In that case we have 8 positions and 6 normals with FaceViews, or 24 without (assuming per-face normals). 
+In that case we have 8 positions and 6 normals with FaceViews, or 24 without (assuming per-face normals).
 
 
 ## MetaMesh
@@ -78,3 +78,10 @@ Note that this doesn't remove any data (e.g. hidden or duplicate vertices), and 
 ### MeshIO.jl
 
 The [`MeshIO.jl`](https://github.com/JuliaIO/MeshIO.jl) package provides load/save support for several file formats which store meshes.
+
+```@example
+using GLMakie, GLMakie.FileIO, GeometryBasics
+
+m = load(GLMakie.assetpath("cat.obj"))
+GLMakie.mesh(m; color=load(GLMakie.assetpath("diffusemap.png")), axis=(; show_axis=false))
+```

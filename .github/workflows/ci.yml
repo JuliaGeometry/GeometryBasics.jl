@@ -48,18 +48,20 @@ jobs:
           file: lcov.info
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       JULIA_PKG_SERVER: ""
     steps:
       - uses: actions/checkout@v2
+      - run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev xsettingsd x11-xserver-utils
       - uses: julia-actions/setup-julia@v1
         with:
-          version: "1.7"
+          version: "1.11"
       - run: |
-          julia --project=docs -e '
+          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
+            pkg"MeshIO#ff/GeometryBasics_refactor MakieCore#ff/GeometryBasics_refactor Makie#ff/GeometryBasics_refactor GLMakie#ff/GeometryBasics_refactor"
             Pkg.instantiate()'
       - run: julia --project=docs docs/make.jl
         env:
