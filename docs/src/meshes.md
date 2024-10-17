@@ -69,7 +69,8 @@ To create a mesh one can provide one the following.
 First, let's create four points and four faces. Each face is an integer connecting the points according to their array index.
 
 ```@example
-mypoints = [
+using GeometryBasics, GLMakie
+points = [
      Point3f(0,0,0),
      Point3f(0,0,1),
      Point3f(0,1,0),
@@ -83,40 +84,13 @@ myfaces = [
      TriangleFace(2,3,4)
  ]
 
-mymesh = Mesh(mypoints, myfaces)
+mymesh = Mesh(points, myfaces)
+GLMakie.mesh(mymesh)
 ```
 
-As seen above, the mesh is just a sequence of triangles. Next, let's create a similar `Mesh` by providing the triangles directly.
-
-```@example
-mytriangles = [
-     Triangle(pts[[1,2,3]]...),
-     Triangle(pts[[1,2,4]]...),
-     Triangle(pts[[1,3,4]]...),
-     Triangle(pts[[2,3,4]]...)
- ]
-
-mymesh2 = Mesh(mytriangles)
-GeometryBasics.faces(mymesh)
-```
-
+As seen above, the mesh is just a sequence of points connected by triangle faces. 
 ```@example
 GeometryBasics.coordinates(mymesh)
-```
-
-Note that these functions may not apply to all meshes. For example, `mymesh2`
-above was not created with `Faces` so `faces` will return `nothing`.
-
-```@example
-GeometryBasics.faces(mymesh2)
-```
-
-With [Makie.jl](https://docs.makie.org) and it's backend GLMakie, one can visualize the mesh:
-
-```@example
-using GLMakie
-
-GLMakie.mesh(mymesh)
 ```
 
 
