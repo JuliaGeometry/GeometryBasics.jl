@@ -1,7 +1,6 @@
 #! /usr/bin/env julia
 
 using Documenter
-
 using GeometryBasics
 
 DocMeta.setdocmeta!(GeometryBasics, :DocTestSetup, :(using GeometryBasics); recursive=true)
@@ -11,11 +10,10 @@ makedocs(format=Documenter.HTML(prettyurls=get(ENV, "CI", "false") == "true"),
          pages=[
                 "index.md",
                 "primitives.md",
-                "rectangles.md",
                 "polygons.md",
                 "meshes.md",
                 "decomposition.md",
-                "metadata.md",
+                "static_array_types.md",
                 "api.md"
                ],
          modules=[GeometryBasics])
