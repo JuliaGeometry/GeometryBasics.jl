@@ -208,6 +208,33 @@ function earcut_triangulate(polygon::Vector{Vector{Point{2,Int32}}})
     return unsafe_wrap(Vector{GLTriangleFace}, array[1], array[2]; own=true)
 end
 
+function earcut_triangulate(polygon::Vector{Vector{Point{3, <: Real}}})
+    # Here, we are assuming that the polygon is actually planar,
+    # but the plane is in 3D, and not necessarily the XY plane.
+    # So, we can find the plane of best fit using the first three points of the polygon!
+    p1, p2, p3 = polygon[1][1], polygon[1][2], polygon[1][3]
+    # First, we subtract the points to get two co-planar vectors.
+    v1 = p2 - p1
+    v2 = p3 - p1
+    # The normal vector is the cross product of these vectors.
+    normal = cross(v1, v2)
+    # Then, the x component of the plane is the first coplanar vector,
+    x = v1
+    # and the y component of the plane is the second coplanar vector.
+    y = cross(normal, x)
+
+    # We project every point in the polygon,
+    projected_polygon = map(
+        ring -> map(p -> Point2{Float64}(dot(p, x), dot(p, y)), ring), 
+        polygon
+    )
+
+    # and then call earcut on the new, 2D polygon.  
+    # This only returns a vector of faces, so we don't care about
+    # the actual points.
+    return earcut_triangulate(projected_polygon)
+end
+
 best_earcut_eltype(x) = Float64
 best_earcut_eltype(::Type{Float64}) = Float64
 best_earcut_eltype(::Type{<:AbstractFloat}) = Float32
