@@ -58,58 +58,58 @@ something like `Vec2f`.
 texturecoordinates(primitive, nvertices=nothing) = nothing
 
 """
-    Tesselation(primitive, nvertices)
+    Tessellation(primitive, nvertices)
 
 When generating a mesh from an abstract geometry, we can typically generate it
 at different levels of detail, i.e. with different amounts of vertices. The 
-`Tesselation` wrapper allows you to specify this level of detail. When generating
+`Tessellation` wrapper allows you to specify this level of detail. When generating
 a mesh from a tesselated geometry, the added information will be passed to 
 `coordinates`, `faces`, etc.
 
 ```julia
 sphere = Sphere(Point3f(0), 1)
-m1 = mesh(sphere) # uses a default value for tesselation
-m2 = mesh(Tesselation(sphere, 64)) # uses 64 for tesselation
+m1 = mesh(sphere) # uses a default value for tessellation
+m2 = mesh(Tessellation(sphere, 64)) # uses 64 for tessellation
 length(coordinates(m1)) != length(coordinates(m2))
 ```
 
-For grid based tesselation, you can also use a tuple:
+For grid based tessellation, you can also use a tuple:
 
 ```julia
 rect = Rect2(0, 0, 1, 1)
-Tesselation(rect, (5, 5))
+Tessellation(rect, (5, 5))
 ```
 """
-struct Tesselation{Dim,T,Primitive,NGrid} <: AbstractGeometry{Dim, T}
+struct Tessellation{Dim,T,Primitive,NGrid} <: AbstractGeometry{Dim, T}
     primitive::Primitive
     nvertices::NTuple{NGrid,Int}
 end
 
-function Tesselation(primitive::GeometryPrimitive{Dim,T},
+function Tessellation(primitive::GeometryPrimitive{Dim,T},
                      nvertices::NTuple{N,<:Integer}) where {Dim,T,N}
-    return Tesselation{Dim,T,typeof(primitive),N}(primitive, Int.(nvertices))
+    return Tessellation{Dim,T,typeof(primitive),N}(primitive, Int.(nvertices))
 end
 
-Tesselation(primitive, nvertices::Integer) = Tesselation(primitive, (nvertices,))
+Tessellation(primitive, nvertices::Integer) = Tessellation(primitive, (nvertices,))
 
 # This is a bit lazy, I guess we should just refactor these methods
-# to directly work on Tesselation - but this way it's backward compatible and less
+# to directly work on Tessellation - but this way it's backward compatible and less
 # refactor work :D
-nvertices(tesselation::Tesselation) = tesselation.nvertices
-nvertices(tesselation::Tesselation{T,N,P,1}) where {T,N,P} = tesselation.nvertices[1]
+nvertices(tessellation::Tessellation) = tessellation.nvertices
+nvertices(tessellation::Tessellation{T,N,P,1}) where {T,N,P} = tessellation.nvertices[1]
 
-function coordinates(tesselation::Tesselation)
-    return coordinates(tesselation.primitive, nvertices(tesselation))
+function coordinates(tessellation::Tessellation)
+    return coordinates(tessellation.primitive, nvertices(tessellation))
 end
-faces(tesselation::Tesselation) = faces(tesselation.primitive, nvertices(tesselation))
-normals(tesselation::Tesselation) = normals(tesselation.primitive, nvertices(tesselation))
-function texturecoordinates(tesselation::Tesselation)
-    return texturecoordinates(tesselation.primitive, nvertices(tesselation))
+faces(tessellation::Tessellation) = faces(tessellation.primitive, nvertices(tessellation))
+normals(tessellation::Tessellation) = normals(tessellation.primitive, nvertices(tessellation))
+function texturecoordinates(tessellation::Tessellation)
+    return texturecoordinates(tessellation.primitive, nvertices(tessellation))
 end
 
 ## Decompose methods
 # Dispatch type to make `decompose(UV{Vec2f}, primitive)` work
-# and to pass through tesselation information
+# and to pass through tessellation information
 
 struct UV{T} end
 UV(::Type{T}) where {T} = UV{T}()

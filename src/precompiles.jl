@@ -27,7 +27,7 @@ using PrecompileTools: @setup_workload, @compile_workload
 
         # Other primitives
         uv_normal_mesh(Rect2(0,0,1,1))
-        uv_normal_mesh(Tesselation(Sphere(Point3f(0), 1f0), 3))
+        uv_normal_mesh(Tessellation(Sphere(Point3f(0), 1f0), 3))
         uv_normal_mesh(Cylinder(Point3f(0), Point3f(0,0,1), 1f0))
         uv_normal_mesh(Pyramid(Point3f(0), 1f0, 1f0))
 
