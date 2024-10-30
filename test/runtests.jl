@@ -310,6 +310,12 @@ end
     include("geointerface.jl")
 end
 
+@testset "Deprecations" begin
+    # https://github.com/JuliaLang/julia/issues/38780
+    # @test_warn Tesselation(Rect2f(0, 0, 2, 2), 10)
+    @test Tesselation(Rect2f(0, 0, 2, 2), 10) ==  Tessellation(Rect2f(0, 0, 2, 2), 10)
+end
+
 include("polygons.jl")
 
 using Aqua

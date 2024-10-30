@@ -63,7 +63,7 @@ texturecoordinates(primitive, nvertices=nothing) = nothing
 When generating a mesh from an abstract geometry, we can typically generate it
 at different levels of detail, i.e. with different amounts of vertices. The 
 `Tessellation` wrapper allows you to specify this level of detail. When generating
-a mesh from a tesselated geometry, the added information will be passed to 
+a mesh from a tessellated geometry, the added information will be passed to 
 `coordinates`, `faces`, etc.
 
 ```julia
@@ -84,6 +84,8 @@ struct Tessellation{Dim,T,Primitive,NGrid} <: AbstractGeometry{Dim, T}
     primitive::Primitive
     nvertices::NTuple{NGrid,Int}
 end
+
+Base.@deprecate_binding Tesselation Tessellation
 
 function Tessellation(primitive::GeometryPrimitive{Dim,T},
                      nvertices::NTuple{N,<:Integer}) where {Dim,T,N}
