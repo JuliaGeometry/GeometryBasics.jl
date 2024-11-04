@@ -33,16 +33,16 @@ using Test, GeometryBasics
             (4, 5, 6)
         ]
 
-        @test decompose(Point3{Float64}, Tesselation(s, 8)) ≈ positions
+        @test decompose(Point3{Float64}, Tessellation(s, 8)) ≈ positions
 
         _faces = TriangleFace[
             (9, 2, 1), (9, 3, 2), (9, 4, 3), (9, 1, 4), (1, 2, 6), (1, 6, 5), 
             (2, 3, 7), (2, 7, 6), (3, 4, 8), (3, 8, 7), (4, 1, 5), (4, 5, 8), 
             (10, 5, 6), (10, 6, 7), (10, 7, 8), (10, 8, 5)]
 
-        @test _faces == decompose(TriangleFace{Int}, Tesselation(s, 8))
+        @test _faces == decompose(TriangleFace{Int}, Tessellation(s, 8))
 
-        m = triangle_mesh(Tesselation(s, 8))
+        m = triangle_mesh(Tessellation(s, 8))
         @test m === triangle_mesh(m)
         @test GeometryBasics.faces(m) == decompose(GLTriangleFace, _faces)
         @test GeometryBasics.coordinates(m) ≈ positions
@@ -69,7 +69,7 @@ using Test, GeometryBasics
             ]
         )
 
-        @test ns == decompose_normals(Tesselation(s, 8))
+        @test ns == decompose_normals(Tessellation(s, 8))
 
         muv = uv_mesh(s)
         @test !hasproperty(muv, :uv) # not defined yet
@@ -168,7 +168,7 @@ end
 @testset "HyperSphere" begin
     sphere = Sphere{Float32}(Point3f(0), 1.0f0)
 
-    points = decompose(Point, Tesselation(sphere, 3))
+    points = decompose(Point, Tessellation(sphere, 3))
     point_target = Point{3,Float32}[[0.0, 0.0, 1.0], [1.0, 0.0, 6.12323e-17],
                                     [1.22465e-16, 0.0, -1.0], [-0.0, 0.0, 1.0],
                                     [-1.0, 1.22465e-16, 6.12323e-17],
@@ -177,14 +177,14 @@ end
                                     [1.22465e-16, -2.99952e-32, -1.0]]
     @test points ≈ point_target
 
-    f = decompose(TriangleFace{Int}, Tesselation(sphere, 3))
+    f = decompose(TriangleFace{Int}, Tessellation(sphere, 3))
     face_target = TriangleFace{Int}[[1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5], [4, 5, 8],
                                     [4, 8, 7], [5, 6, 9], [5, 9, 8]]
     @test f == face_target
     circle = Circle(Point2f(0), 1.0f0)
-    points = decompose(Point2f, Tesselation(circle, 20))
+    points = decompose(Point2f, Tessellation(circle, 20))
     @test length(points) == 20
-    tess_circle = Tesselation(circle, 32)
+    tess_circle = Tessellation(circle, 32)
     mesh = triangle_mesh(tess_circle)
     @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)
 end
