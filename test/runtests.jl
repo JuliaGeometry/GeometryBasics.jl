@@ -141,7 +141,7 @@ end
         mesh = Mesh(points, tfaces)
         meshuv = MetaMesh(points, tfaces; uv=uv)
         meshuvnormal = MetaMesh(points, tfaces; normal=ns, uv=uv)
-        t = Tesselation(Rect2f(0, 0, 2, 2), (30, 30))
+        t = Tessellation(Rect2f(0, 0, 2, 2), (30, 30))
 
         m = GeometryBasics.mesh(t; pointtype=Point3f, facetype=QuadFace{Int})
         m2 = GeometryBasics.mesh(m, facetype=QuadFace{GLIndex})
@@ -308,6 +308,12 @@ end
 
 @testset "GeoInterface" begin
     include("geointerface.jl")
+end
+
+@testset "Deprecations" begin
+    # https://github.com/JuliaLang/julia/issues/38780
+    # @test_warn Tesselation(Rect2f(0, 0, 2, 2), 10)
+    @test Tesselation(Rect2f(0, 0, 2, 2), 10) ==  Tessellation(Rect2f(0, 0, 2, 2), 10)
 end
 
 include("polygons.jl")

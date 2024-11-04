@@ -6,7 +6,7 @@
     end
 
     rect = Rect2f(0, 0, 1, 1)
-    hole = Tesselation(Circle(Point2f(0.5), 0.2), 8)
+    hole = Tessellation(Circle(Point2f(0.5), 0.2), 8)
     poly2 = Polygon(decompose(Point2f, rect), [decompose(Point2f, hole)])
     poly1 = Polygon(rect, [hole])
     @test poly1 == poly2
