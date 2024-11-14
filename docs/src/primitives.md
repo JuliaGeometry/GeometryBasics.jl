@@ -38,6 +38,9 @@ They are defined by an origin and a radius.
 While you can technically create a HyperSphere of any dimension, decomposition
 is only defined in 2D and 3D.
 
+```@setup hypersphere
+using GeometryBasics
+```
 ```@repl hypersphere
 s1 = HyperSphere{4, Int}(Point{4, Int}(0), 5)
 s2 = Sphere(Point3f(0, 0, 1), 1)
@@ -51,6 +54,10 @@ The coordinates of Circle are defined in anti-clockwise order.
 
 A `Cylinder` is a 3D shape defined by two points and a radius.
 
+
+```@setup cylinder
+using GeometryBasics
+```
 ```@repl cylinder
 c = Cylinder(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, end point, radius
 ```
@@ -63,6 +70,10 @@ Cylinder supports normals an Tessellation, but currently no texture coordinates.
 coming together into a sharp point.
 It is defined by by the center point of the base, its height and its width.
 
+
+```@setup pyramid
+using GeometryBasics
+```
 ```@repl pyramid
 p = Pyramid(Point3f(0), 1f0, 0.3f0) # center, height, width
 ```
@@ -74,6 +85,9 @@ Pyramid supports normals, but currently no texture coordinates or tessellation
 In GeometryBasics `Tessellation` is a wrapper type for primitives which communicates
 how dense the mesh generated from one should be.
 
+```@setup tessellation
+using GeometryBasics
+```
 ```@repl tessellation
 t = Tessellation(Cylinder(Point3f(0), Point3f(0,0,1), 0.2), 32) # 32 vertices for each circle
 normal_mesh(t)
