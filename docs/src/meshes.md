@@ -38,7 +38,7 @@ In that case we have 8 positions and 6 normals with FaceViews, or 24 without (as
 
 ## MetaMesh
 
-```julia; canonical=false
+```@docs; canonical=false
 MetaMesh
 ```
 
