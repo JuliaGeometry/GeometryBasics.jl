@@ -43,7 +43,7 @@ export decompose, coordinates, faces, normals, decompose_uv, decompose_normals,
        texturecoordinates, vertex_attributes
 export expand_faceviews
 export face_normals
-export Tesselation, Normal, UV, UVW
+export Tessellation, Normal, UV, UVW
 export AbstractMesh, Mesh, MetaMesh, FaceView
 
 

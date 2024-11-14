@@ -19,9 +19,9 @@ r2 = Rect3f(Point3f(-1), Vec3f(2))
 r3 = Rect2i(0, 0, 1, 1)
 ```
 
-Rect2 supports normal and texture coordinate generation as well as tesselation.
-Without tesselation, the coordinates of 2D Rects are defined in anti-clockwise order.
-Rect3 supports normals and texture coordinates, but not tesselation.
+Rect2 supports normal and texture coordinate generation as well as tessellation.
+Without tessellation, the coordinates of 2D Rects are defined in anti-clockwise order.
+Rect3 supports normals and texture coordinates, but not tessellation.
 
 Shorthands:
 
@@ -38,24 +38,31 @@ They are defined by an origin and a radius.
 While you can technically create a HyperSphere of any dimension, decomposition
 is only defined in 2D and 3D.
 
+```@setup hypersphere
+using GeometryBasics
+```
 ```@repl hypersphere
 s1 = HyperSphere{4, Int}(Point{4, Int}(0), 5)
 s2 = Sphere(Point3f(0, 0, 1), 1)
 s3 = Circle(Point2d(0), 2.0)
 ```
 
-Circle and Sphere support normal and texture coordinate generation as well as tesselation.
+Circle and Sphere support normal and texture coordinate generation as well as tessellation.
 The coordinates of Circle are defined in anti-clockwise order.
 
 #### Cylinder
 
 A `Cylinder` is a 3D shape defined by two points and a radius.
 
+
+```@setup cylinder
+using GeometryBasics
+```
 ```@repl cylinder
 c = Cylinder(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, end point, radius
 ```
 
-Cylinder supports normals an Tesselation, but currently no texture coordinates.
+Cylinder supports normals an Tessellation, but currently no texture coordinates.
 
 #### Pyramid
 
@@ -63,22 +70,29 @@ Cylinder supports normals an Tesselation, but currently no texture coordinates.
 coming together into a sharp point.
 It is defined by by the center point of the base, its height and its width.
 
+
+```@setup pyramid
+using GeometryBasics
+```
 ```@repl pyramid
 p = Pyramid(Point3f(0), 1f0, 0.3f0) # center, height, width
 ```
 
-Pyramid supports normals, but currently no texture coordinates or tesselation
+Pyramid supports normals, but currently no texture coordinates or tessellation
 
-## Tesselation
+## Tessellation
 
-In GeometryBasics `Tesselation` is a wrapper type for primitives which communicates
+In GeometryBasics `Tessellation` is a wrapper type for primitives which communicates
 how dense the mesh generated from one should be.
 
-```@repl tesselation
-t = Tesselation(Cylinder(Point3f(0), Point3f(0,0,1), 0.2), 32) # 32 vertices for each circle
+```@setup tessellation
+using GeometryBasics
+```
+```@repl tessellation
+t = Tessellation(Cylinder(Point3f(0), Point3f(0,0,1), 0.2), 32) # 32 vertices for each circle
 normal_mesh(t)
 
-t = Tesselation(Rect2(Point2f(0), Vec2f(1)), (8, 6)) # 8 vertices in x direction by 6 in y direction
+t = Tessellation(Rect2(Point2f(0), Vec2f(1)), (8, 6)) # 8 vertices in x direction by 6 in y direction
 triangle_mesh(t)
 ```
 
@@ -89,8 +103,8 @@ This will also be enough to automatically generate normals for a 3D primitive an
 You can also implement functions to generate them directly with `normals(primitive)` and `texturecoordinates(primitive)`.
 Depending on your primitive this might be necessary to get the normals and uvs you want.
 
-To be compatible with `Tesselation` all of the functions mentioned above should implement a second tesselation argument.
-This will be the second argument passed to the Tesselation constructor.
+To be compatible with `Tessellation` all of the functions mentioned above should implement a second tessellation argument.
+This will be the second argument passed to the Tessellation constructor.
 It's up to you to decide what makes sense here, though typically it's just an integer that more or less corresponds to the number of generated vertices.
 
 #### Example

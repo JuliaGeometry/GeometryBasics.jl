@@ -10,7 +10,7 @@ Base.ndims(::AbstractGeometry{Dim}) where {Dim} = Dim
 """
     Polytope{Dim, T} <: AbstractGeometry{Dim, T}
 
-A Polytope is the generalization of a Polygon to higher dimensions, i.e. a 
+A Polytope is the generalization of a Polygon to higher dimensions, i.e. a
 geometric object consisting of flat faces.
 
 A `Polygon` and `Ngon` are both 2D `Polytope`s. A `Simplex` is the simplest
@@ -22,7 +22,7 @@ abstract type AbstractPolygon{Dim,T} <: Polytope{Dim,T} end
 """
     AbstractFace{N_indices, T} <: StaticVector{N_indices, T}
 
-Parent type for all face types. The standard face type is typically a 
+Parent type for all face types. The standard face type is typically a
 `GLTriangleFace = NgonFace{3, GLIndex}`.
 """
 abstract type AbstractFace{N,T} <: StaticVector{N,T} end
@@ -109,7 +109,7 @@ Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) ==
 Base.hash(f::AbstractFace{2}, h::UInt) = hash(minmax(f.data...), h)
 
 function Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
-    return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) || 
+    return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) ||
         (f1.data == (f2[3], f2[1], f2[2]))
 end
 function Base.hash(f::AbstractFace{3}, h::UInt)
@@ -347,6 +347,7 @@ struct LineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     points::Vector{Point{Dim, T}}
 end
 Base.length(ls::LineString) = length(coordinates(ls))
+Base.:(==)(a::LineString, b::LineString) = a.points == b.points
 coordinates(ls::LineString) = ls.points
 
 struct MultiLineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
@@ -382,7 +383,7 @@ Base.length(mpt::MultiPoint) = length(mpt.points)
 """
     FaceView(data, faces)
 
-A FaceView is an alternative to passing a vertex attribute directly to a mesh. 
+A FaceView is an alternative to passing a vertex attribute directly to a mesh.
 It bundles `data` with a new set of `faces` which may index that data differently
 from the faces defined in a mesh. This can be useful to avoid duplication in `data`.
 
@@ -395,7 +396,7 @@ per_face_normals = FaceView(
 )
 ```
 
-If you need a mesh with strictly per-vertex data, e.g. for rendering, you can use 
+If you need a mesh with strictly per-vertex data, e.g. for rendering, you can use
 `expand_faceviews(mesh)` to convert every vertex attribute to be per-vertex. This
 will duplicate data and reorder faces as needed.
 
@@ -457,7 +458,7 @@ function verify(fs::AbstractVector{FT}, fv::FaceView, name = nothing) where {FT 
     return true
 end
 
-# Dodgy definitions... (since attributes can be FaceView or Array it's often 
+# Dodgy definitions... (since attributes can be FaceView or Array it's often
 #                       useful to treat a FaceView like the vertex data it contains)
 Base.length(x::FaceView) = length(values(x))
 # Base.iterate(x::FaceView) = iterate(values(x))
@@ -485,8 +486,8 @@ end
 """
     AbstractMesh
 
-An abstract mesh is a collection of Polytope elements (Simplices / Ngons). The 
-connections are defined via faces(mesh) and the coordinates of the elements are 
+An abstract mesh is a collection of Polytope elements (Simplices / Ngons). The
+connections are defined via faces(mesh) and the coordinates of the elements are
 returned by coordinates(mesh).
 """
 abstract type AbstractMesh{Dim, T} <: AbstractGeometry{Dim, T} end
@@ -504,9 +505,9 @@ struct Mesh{...}
 end
 ```
 
-A vertex typically carries multiple distinct pieces of data, e.g. a position, 
-a normal, a texture coordinate, etc. We call those pieces of data vertex 
-attributes. The `vertex_attributes` field contains the name and a collection 
+A vertex typically carries multiple distinct pieces of data, e.g. a position,
+a normal, a texture coordinate, etc. We call those pieces of data vertex
+attributes. The `vertex_attributes` field contains the name and a collection
 `<: AbstractVector` or `<: FaceView` for each attribute. The n-th element of that
 collection is the value of the corresponding attribute for the n-th vertex.
 
@@ -517,27 +518,27 @@ vertex_attributes[:normal]   = [normal1, normal2, normal3, ...]
 ...
 ```
 
-A `NamedTuple` is used here to allow different meshes to carry different vertex 
-attributes while also keeping things type stable. The constructor enforces a 
+A `NamedTuple` is used here to allow different meshes to carry different vertex
+attributes while also keeping things type stable. The constructor enforces a
 few restrictions:
 - The first attribute must be named `position` and must have a `Point{PositionDim, PositionType}` eltype.
-- Each vertex attribute must refer to the same number of vertices. (All vertex attributes defined by 
+- Each vertex attribute must refer to the same number of vertices. (All vertex attributes defined by
 AbstractVector must match in length. For FaceViews, the number of faces needs to match.)
 
-See also: [`vertex_attributes`](@ref), [`coordinates`](@ref), [`normals`](@ref), 
-[`texturecoordinates`](@ref), [`decompose`](@ref), [`FaceView`](@ref), 
+See also: [`vertex_attributes`](@ref), [`coordinates`](@ref), [`normals`](@ref),
+[`texturecoordinates`](@ref), [`decompose`](@ref), [`FaceView`](@ref),
 [`expand_faceviews`](@ref)
 
-The `faces` field is a collection `<: AbstractVector{FaceType}` containing faces 
+The `faces` field is a collection `<: AbstractVector{FaceType}` containing faces
 that describe how vertices are connected. Typically these are `(GL)TriangleFace`s
 or `QuadFace`s, but they can be any collection of vertex indices `<: AbstractFace`.
 
 See also: [`faces`](@ref), [`decompose`](@ref)
 
-The `views` field can be used to separate the mesh into mutliple submeshes. Each 
-submesh is described by a "view" into the `faces` vector, i.e. submesh n uses 
-`mesh.faces[mesh.views[n]]`. A `Mesh` can be constructed without `views`, which 
-results in an empty `views` vector. 
+The `views` field can be used to separate the mesh into mutliple submeshes. Each
+submesh is described by a "view" into the `faces` vector, i.e. submesh n uses
+`mesh.faces[mesh.views[n]]`. A `Mesh` can be constructed without `views`, which
+results in an empty `views` vector.
 
 See also: [`merge`](@ref), [`split_mesh`](@ref)
 """
@@ -554,7 +555,7 @@ struct Mesh{
     views::Vector{UnitRange{Int}}
 
     function Mesh(
-            vertex_attributes::NamedTuple{Names, VAT}, 
+            vertex_attributes::NamedTuple{Names, VAT},
             fs::FVT,
             views::Vector{UnitRange{Int}} = UnitRange{Int}[]
         ) where {
@@ -625,7 +626,7 @@ texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 """
     vertex_attributes(mesh::Mesh)
 
-Returns a dictionairy containing the vertex attributes of the given mesh. 
+Returns a dictionairy containing the vertex attributes of the given mesh.
 Mutating these will change the mesh.
 """
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
@@ -634,7 +635,7 @@ Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
 Base.length(mesh::Mesh) = length(mesh.faces)
 
 function Base.:(==)(a::Mesh, b::Mesh)
-    return (a.vertex_attributes == b.vertex_attributes) && 
+    return (a.vertex_attributes == b.vertex_attributes) &&
            (faces(a) == faces(b)) && (a.views == b.views)
 end
 
@@ -654,17 +655,17 @@ end
 
 Constructs a mesh from the given arguments.
 
-If `positions` are given explicitly, they are merged with other vertex attributes 
+If `positions` are given explicitly, they are merged with other vertex attributes
 under the name `position`. Otherwise they must be part of `attributes`. If `faces`
 are not given `attributes.position` must be a FaceView.
 
-Any other vertex attribute can be either an `AbstractVector` or a `FaceView` 
+Any other vertex attribute can be either an `AbstractVector` or a `FaceView`
 thereof. Every vertex attribute that is an `AbstractVector` must be sufficiently
 large to be indexable by `mesh.faces`. Every vertex attribute that is a `FaceView`
 must contain similar faces to `mesh.faces`, i.e. contain the same number of faces
 and have faces of matching length.
 
-`views` can be defined optionally to implicitly split the mesh into multi 
+`views` can be defined optionally to implicitly split the mesh into multi
 sub-meshes. This is done by providing ranges for indexing faces which correspond
 to the sub-meshes. By default this is left empty.
 """
@@ -673,7 +674,7 @@ function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int
 end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
-              faces::AbstractVector{<:AbstractFace}; 
+              faces::AbstractVector{<:AbstractFace};
               views = UnitRange{Int}[], kwargs...) where {Dim, T}
     va = (position = points, kwargs...)
     return Mesh(va, faces, views)
@@ -716,13 +717,13 @@ Constructs a MetaMesh either from another `mesh` or by constructing another mesh
 with the given `positions` and `faces`. Any keyword arguments given will be
 stored in the `meta` field in `MetaMesh`.
 
-This struct is meant to be used for storage of non-vertex data. Any vertex 
-related data should be stored as a vertex attribute in `Mesh`. One example of such 
+This struct is meant to be used for storage of non-vertex data. Any vertex
+related data should be stored as a vertex attribute in `Mesh`. One example of such
 data is material data, which is defined per view in `mesh.views`, i.e. per submesh.
 
-The metadata added to the MetaMesh can be manipulated with Dict-like operations 
-(getindex, setindex!, get, delete, keys, etc). Vertex attributes can be accessed 
-via fields and the same getters as mesh. The mesh itself can be retrieved with 
+The metadata added to the MetaMesh can be manipulated with Dict-like operations
+(getindex, setindex!, get, delete, keys, etc). Vertex attributes can be accessed
+via fields and the same getters as mesh. The mesh itself can be retrieved with
 `Mesh(metamesh)`.
 """
 function MetaMesh(mesh::AbstractMesh; kwargs...)
