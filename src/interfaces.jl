@@ -1,9 +1,9 @@
 """
     coordinates(geometry)
 
-Returns the positions/coordinates of a geometry. 
+Returns the positions/coordinates of a geometry.
 
-This is allowed to return lazy iterators. Use `decompose(ConcretePointType, geometry)` 
+This is allowed to return lazy iterators. Use `decompose(ConcretePointType, geometry)`
 to get a `Vector{ConcretePointType}` with `ConcretePointType` being something like
 `Point3f`.
 """
@@ -14,9 +14,9 @@ end
 """
     faces(geometry)
 
-Returns the faces of a geometry. 
+Returns the faces of a geometry.
 
-This is allowed to return lazy iterators. Use `decompose(ConcreteFaceType, geometry)` 
+This is allowed to return lazy iterators. Use `decompose(ConcreteFaceType, geometry)`
 to get a `Vector{ConcreteFaceType}` with `ConcreteFaceType` being something like `GLTriangleFace`.
 """
 function faces(f::AbstractVector{<:AbstractFace})
@@ -26,9 +26,9 @@ end
 """
     normals(primitive)
 
-Returns the normals of a geometry. 
+Returns the normals of a geometry.
 
-This is allowed to return lazy iterators. Use `decompose_normals(ConcreteVecType, geometry)` 
+This is allowed to return lazy iterators. Use `decompose_normals(ConcreteVecType, geometry)`
 to get a `Vector{ConcreteVecType}` with `ConcreteVecType` being something like `Vec3f`.
 """
 function normals(primitive, nvertices=nothing; kw...)
@@ -49,10 +49,10 @@ end
 """
     texturecoordinates(primitive)
 
-Returns the texturecoordinates of a geometry. 
+Returns the texturecoordinates of a geometry.
 
-This is allowed to return lazy iterators. Use `decompose_uv(ConcreteVecType, geometry)` 
-(or `decompose_uvw`) to get a `Vector{ConcreteVecType}` with `ConcreteVecType` being 
+This is allowed to return lazy iterators. Use `decompose_uv(ConcreteVecType, geometry)`
+(or `decompose_uvw`) to get a `Vector{ConcreteVecType}` with `ConcreteVecType` being
 something like `Vec2f`.
 """
 texturecoordinates(primitive, nvertices=nothing) = nothing
@@ -61,9 +61,9 @@ texturecoordinates(primitive, nvertices=nothing) = nothing
     Tessellation(primitive, nvertices)
 
 When generating a mesh from an abstract geometry, we can typically generate it
-at different levels of detail, i.e. with different amounts of vertices. The 
+at different levels of detail, i.e. with different amounts of vertices. The
 `Tessellation` wrapper allows you to specify this level of detail. When generating
-a mesh from a tessellated geometry, the added information will be passed to 
+a mesh from a tessellated geometry, the added information will be passed to
 `coordinates`, `faces`, etc.
 
 ```julia
@@ -127,7 +127,7 @@ Normal() = Normal(Vec3f)
     decompose(::Type{TargetType}, primitive)
     decompose(::Type{TargetType}, data::AbstractVector)
 
-Dependent on the given type, extracts data from the primtive and converts its 
+Dependent on the given type, extracts data from the primtive and converts its
 eltype to `TargetType`.
 
 Possible `TargetType`s:
@@ -149,7 +149,7 @@ function decompose(::Type{F}, primitive::AbstractGeometry) where {F<:AbstractFac
     end
     return decompose(F, f)
 end
-  
+
 function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
@@ -157,14 +157,14 @@ function decompose(::Type{F}, f::AbstractVector) where {F<:AbstractFace}
 end
 
 # TODO: Should this be a completely different function?
-function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{Int}}) where {F<:AbstractFace}
+function decompose(::Type{F}, f::AbstractVector, views::Vector{UnitRange{IT}}) where {F<:AbstractFace, IT<:Integer}
     fs = faces(f)
     isnothing(fs) && error("No faces defined for $(typeof(f))")
     if isempty(views)
         return collect_with_eltype(F, fs), views
     else
         output = F[]
-        new_views = sizehint!(UnitRange{Int}[], length(views))
+        new_views = sizehint!(UnitRange{IT}[], length(views))
         for range in views
             start = length(output) + 1
             collect_with_eltype!(output, view(fs, range))
