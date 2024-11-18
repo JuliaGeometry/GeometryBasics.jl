@@ -56,7 +56,7 @@ jobs:
             pkg"add https://github.com/ffreyer/FreeTypeAbstraction.jl.git#ff/GeometryBasics_refactor"
             pkg"add https://github.com/ffreyer/GridLayoutBase.jl.git#ff/GeometryBasic_refactor"
             pkg"add https://github.com/ffreyer/Packing.jl.git#ff/GeometryBasics_refactor"
-            pkg"add MeshIO#ff/GeometryBasics_refactor MakieCore#breaking-0.22 Makie#breaking-0.22 GLMakie#breaking-0.22 "
+            pkg"add MeshIO#ff/GeometryBasics_refactor ShaderAbstractions#ff/GeometryBasics_refactor MakieCore#breaking-0.22 Makie#breaking-0.22 GLMakie#breaking-0.22 "
             Pkg.instantiate()'
       - run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs docs/make.jl
         env:
