@@ -1,7 +1,7 @@
 """
     mesh(primitive::GeometryPrimitive[; pointtype = Point, facetype = GLTriangleFace, vertex_attributes...])
 
-Creates a mesh from a given `primitive` with the given `pointtype` and `facetype`. 
+Creates a mesh from a given `primitive` with the given `pointtype` and `facetype`.
 
 This method only generates positions and faces from the primitive. Additional
 vertex attributes like normals and texture coordinates can be given as extra
@@ -51,8 +51,8 @@ Note that vertex attributes that are `nothing` get removed before creating a mes
 See also:[`normal_mesh`](@ref)
 """
 function mesh(
-        positions::AbstractVector{<:Point}, 
-        faces::AbstractVector{FT}; 
+        positions::AbstractVector{<:Point},
+        faces::AbstractVector{FT};
         facetype=GLTriangleFace, vertex_attributes...
     ) where {FT <: AbstractFace}
 
@@ -69,17 +69,17 @@ end
 """
     mesh(mesh::Mesh[; pointtype = Point, facetype = GLTriangleFace, vertex_attributes...]
 
-Recreates the given `mesh` with the given `pointtype`, `facetype` and vertex 
+Recreates the given `mesh` with the given `pointtype`, `facetype` and vertex
 attributes. If the new mesh would match the old mesh, the old mesh is returned instead.
 
 Note that vertex attributes that are `nothing` get removed before creating a mesh.
 """
 function mesh(
-        mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32}, 
+        mesh::Mesh{D, T, FT}; pointtype = Point{D, Float32},
         facetype::Type{<: AbstractFace} = GLTriangleFace,
         attributes...
     ) where {D, T, FT <: AbstractFace}
-    
+
     names = keys(attributes)
     valid_names = filter(name -> !isnothing(attributes[name]), names)
 
@@ -88,7 +88,7 @@ function mesh(
     else
         vals = getindex.(Ref(attributes), valid_names)
         va = NamedTuple{valid_names}(vals)
-    
+
         # add vertex attributes
         va = merge(vertex_attributes(mesh), va)
         # convert position attribute and facetypes in FaceViews
@@ -116,7 +116,7 @@ end
     triangle_mesh(primitive::GeometryPrimitive[; pointtype = Point, facetype = GLTriangleFace])
 
 Creates a simple triangle mesh from a given `primitive` with the given `pointtype`
-and `facetype`. 
+and `facetype`.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -133,18 +133,18 @@ facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
 """
     uv_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f])
 
-Creates a triangle mesh with texture coordinates from a given `primitive`. The 
-`pointtype`, `facetype` and `uvtype` are set by the correspondering keyword arguments. 
+Creates a triangle mesh with texture coordinates from a given `primitive`. The
+`pointtype`, `facetype` and `uvtype` are set by the correspondering keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
 function uv_mesh(
-        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32},
         uvtype = Vec2f, facetype = GLTriangleFace
     ) where {N}
-    
+
     return mesh(
-        primitive, uv = decompose_uv(uvtype, primitive), 
+        primitive, uv = decompose_uv(uvtype, primitive),
         pointtype = pointtype, facetype = facetype
     )
 end
@@ -152,19 +152,19 @@ end
 """
     uv_normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f, normaltype = Vec3f])
 
-Creates a triangle mesh with texture coordinates and normals from a given 
-`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
-by the correspondering keyword arguments. 
+Creates a triangle mesh with texture coordinates and normals from a given
+`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
+by the correspondering keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
 function uv_normal_mesh(
-        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32},
         uvtype = Vec2f, normaltype = Vec3f, facetype = GLTriangleFace
     ) where {N}
 
     return mesh(
-        primitive, uv = decompose_uv(uvtype, primitive), 
+        primitive, uv = decompose_uv(uvtype, primitive),
         normal = decompose_normals(normaltype, primitive),
         pointtype = pointtype, facetype = facetype
     )
@@ -173,14 +173,14 @@ end
 """
     uv_normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f, normaltype = Vec3f])
 
-Creates a triangle mesh with texture coordinates and normals from a given 
-`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
-by the correspondering keyword arguments. 
+Creates a triangle mesh with texture coordinates and normals from a given
+`primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
+by the correspondering keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
 function normal_mesh(
-        points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace}; 
+        points::AbstractVector{<:Point}, faces::AbstractVector{<:AbstractFace};
         pointtype = Point3f, normaltype = Vec3f, facetype = GLTriangleFace
     )
     _points = decompose(pointtype, points)
@@ -191,18 +191,18 @@ end
 """
     normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, normaltype = Vec3f])
 
-Creates a triangle mesh with normals from a given `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set 
-by the correspondering keyword arguments. 
+Creates a triangle mesh with normals from a given `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
+by the correspondering keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
 function normal_mesh(
-        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32}, 
+        primitive::AbstractGeometry{N}; pointtype = Point{N, Float32},
         normaltype = Vec3f, facetype = GLTriangleFace
     ) where {N}
 
     return mesh(
-        primitive, normal = decompose_normals(normaltype, primitive), 
+        primitive, normal = decompose_normals(normaltype, primitive),
         pointtype = pointtype, facetype = facetype)
 end
 
@@ -235,10 +235,10 @@ end
 
 Generates a new mesh containing all the data of the individual meshes.
 
-If all meshes are consistent in their use of FaceViews they will be preserved. 
+If all meshes are consistent in their use of FaceViews they will be preserved.
 Otherwise all of them will be converted with `expand_faceviews(mesh)`.
 
-This function will generate `views` in the new mesh which correspond to the 
+This function will generate `views` in the new mesh which correspond to the
 inputs of this function.
 """
 function Base.merge(meshes::AbstractVector{<:Mesh})
@@ -257,8 +257,8 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         if !all(m -> keys(vertex_attributes(m)) == names, meshes)
             idx = findfirst(m -> keys(vertex_attributes(m)) != names, meshes)
             error(
-                "Cannot merge meshes with different vertex attributes. " * 
-                "First missmatch between meshes[1] with $names and " * 
+                "Cannot merge meshes with different vertex attributes. " *
+                "First missmatch between meshes[1] with $names and " *
                 "meshes[$idx] with $(keys(vertex_attributes(meshes[idx])))."
             )
         end
@@ -276,7 +276,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
         @label DOUBLE_BREAK
 
         if consistent_face_views
-            
+
             # All the same kind of face, can just merge
             new_attribs = NamedTuple{names}(map(names) do name
                 if name === :position
@@ -293,8 +293,8 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
             # TODO: is the type difference in offset bad?
             idx = length(faces(m1))
             offset = length(coordinates(m1))
-            views = isempty(m1.views) ? UnitRange{Int64}[1:idx] : copy(m1.views)
-            
+            views = isempty(m1.views) ? UnitRange{UInt32}[1:idx] : copy(m1.views)
+
             for mesh in Iterators.drop(meshes, 1)
                 N = length(faces(mesh))
 
@@ -312,7 +312,7 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
                         push!(views, view .+ idx)
                     end
                 end
-    
+
                 idx += N
                 offset += length(coordinates(mesh))
             end
@@ -347,7 +347,7 @@ function expand_faceviews(mesh::Mesh)
     other_fs = faces.(getproperty.((mesh,), names))
     names = (:position, names...)
     all_fs = tuple(main_fs, other_fs...)
-    
+
     if isempty(mesh.views)
 
         new_fs, maps = merge_vertex_indices(all_fs)
@@ -363,7 +363,7 @@ function expand_faceviews(mesh::Mesh)
     else
 
         new_fs = sizehint!(eltype(main_fs)[], length(main_fs))
-        new_views = sizehint!(UnitRange{Int}[], length(mesh.views))
+        new_views = sizehint!(UnitRange{UInt32}[], length(mesh.views))
         new_va = NamedTuple{keys(va)}(map(keys(va)) do name
             sizehint!(similar(values(va[name]), 0), length(va[name]))
         end)
@@ -374,7 +374,7 @@ function expand_faceviews(mesh::Mesh)
             view_fs, maps = merge_vertex_indices(view.(all_fs, (idxs,)), vertex_index_counter)
 
             vertex_index_counter += length(maps[1])
-            
+
             for name in keys(new_va)
                 map = maps[something(findfirst(==(name), names), 1)]
                 append!(new_va[name], values(va[name])[map])
@@ -417,7 +417,7 @@ function merge_vertex_indices(
     # indices that remap attributes
     attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
 
-    # keep track of the remmaped indices for one vertex so we don't have to 
+    # keep track of the remmaped indices for one vertex so we don't have to
     # query the dict twice
     temp = Vector{T}(undef, N)
 
@@ -430,7 +430,7 @@ function merge_vertex_indices(
 
             # if the vertex exists, get it's index
             # otherwise register it with the next available vertex index
-            temp[i] = get!(vertex_index_map, vertex) do 
+            temp[i] = get!(vertex_index_map, vertex) do
                 vertex_index_counter += 1
                 push!.(attribute_indices, vertex)
                 return vertex_index_counter - 1
@@ -454,10 +454,10 @@ end
 Creates a new mesh containing `faces(mesh)[range]` for each range in `views`.
 This also removes unused vertices.
 """
-function split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
+function split_mesh(mesh::Mesh, views::Vector{<: UnitRange{<: Integer}} = mesh.views)
     return map(views) do idxs
         new_fs, maps = merge_vertex_indices((view(faces(mesh), idxs),))
-        
+
         names = keys(vertex_attributes(mesh))
         new_va = NamedTuple{names}(map(names) do name
             v = getproperty(mesh, name)

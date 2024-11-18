@@ -133,7 +133,7 @@ end
         @test faces(mesh) == [TetrahedronFace{Int64}(1,2,3,4)]
         @test decompose(LineFace{Int64}, mesh) == LineFace{Int64}[(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
         @test decompose(GLTriangleFace, mesh) == GLTriangleFace[(2, 3, 4), (1, 3, 4), (1, 2, 4), (1, 2, 3)]
-        
+
         points = rand(Point3f, 8)
         tfaces = [GLTriangleFace(1, 2, 3), GLTriangleFace(5, 6, 7)]
         ns = rand(Vec3f, 8)
@@ -268,25 +268,25 @@ end
 
 @testset "Offsetintegers" begin
     x = 1
-    @test GeometryBasics.raw(x) isa Int64
+    @test GeometryBasics.raw(x) isa Int
     @test GeometryBasics.value(x) == x
 
     x = ZeroIndex(1)
-    @test eltype(x) == Int64
+    @test eltype(x) == Int
 
     x = OffsetInteger{0}(1)
-    @test typeof(x) == OffsetInteger{0,Int64}
+    @test typeof(x) == OffsetInteger{0,Int}
 
     x1 = OffsetInteger{0}(2)
     x2 = 1
     @test Base.to_index(x1) == 2
-    @test -(x1) == OffsetInteger{0,Int64}(-2)
-    @test abs(x1) == OffsetInteger{0,Int64}(2)
-    @test +(x, x1) == OffsetInteger{0,Int64}(3)
-    @test *(x, x1) == OffsetInteger{0,Int64}(2)
-    @test -(x, x1) == OffsetInteger{0,Int64}(-1)
+    @test -(x1)    == OffsetInteger{0,Int}(-2)
+    @test abs(x1)  == OffsetInteger{0,Int}(2)
+    @test +(x, x1) == OffsetInteger{0,Int}(3)
+    @test *(x, x1) == OffsetInteger{0,Int}(2)
+    @test -(x, x1) == OffsetInteger{0,Int}(-1)
     #test for /
-    @test div(x, x1) == OffsetInteger{0,Int64}(0)
+    @test div(x, x1) == OffsetInteger{0,Int}(0)
     @test !==(x, x1)
     @test !>=(x, x1)
     @test <=(x, x1)
