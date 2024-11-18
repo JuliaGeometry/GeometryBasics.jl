@@ -552,12 +552,12 @@ struct Mesh{
 
     vertex_attributes::NamedTuple{Names, VAT}
     faces::FVT
-    views::Vector{UnitRange{Int}}
+    views::Vector{UnitRange{UInt32}}
 
     function Mesh(
             vertex_attributes::NamedTuple{Names, VAT},
             fs::FVT,
-            views::Vector{UnitRange{Int}} = UnitRange{Int}[]
+            views::Vector{<: UnitRange{<: Integer}} = UnitRange{UInt32}[]
         ) where {
             FT <: AbstractFace, FVT <: AbstractVector{FT}, Names, Dim, T,
             VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}}
@@ -669,13 +669,14 @@ and have faces of matching length.
 sub-meshes. This is done by providing ranges for indexing faces which correspond
 to the sub-meshes. By default this is left empty.
 """
-function Mesh(faces::AbstractVector{<:AbstractFace}; views::Vector{UnitRange{Int}} = UnitRange{Int}[], attributes...)
+function Mesh(faces::AbstractVector{<:AbstractFace};
+        views::Vector{<: UnitRange{<: Integer}} = UnitRange{UInt32}[], attributes...)
     return Mesh(NamedTuple(attributes), faces, views)
 end
 
 function Mesh(points::AbstractVector{Point{Dim, T}},
               faces::AbstractVector{<:AbstractFace};
-              views = UnitRange{Int}[], kwargs...) where {Dim, T}
+              views = UnitRange{UInt32}[], kwargs...) where {Dim, T}
     va = (position = points, kwargs...)
     return Mesh(va, faces, views)
 end
