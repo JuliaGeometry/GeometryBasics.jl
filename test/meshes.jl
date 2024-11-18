@@ -39,7 +39,7 @@ end
         position = GeometryBasics.FaceView(Point2f[(0, 0), (1, 0), (1, 1), (0, 1)], [QuadFace(1,2,3,4)]),
         normal   = GeometryBasics.FaceView([Vec3f(0,0,1)], [QuadFace(1)])
     )
-    
+
     m2 = GeometryBasics.expand_faceviews(m)
 
     @test faces(m) == [QuadFace(1,2,3,4)]
@@ -60,8 +60,8 @@ end
         GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
     end
     dm = merge(direct_meshes)
-    
-    @test GeometryBasics.facetype(dm) == QuadFace{Int64}
+
+    @test GeometryBasics.facetype(dm) == QuadFace{Int}
     @test length(faces(dm)) == 27 * 6 # 27 rects, 6 quad faces
     @test length(normals(dm)) == 27 * 6
     @test length(coordinates(dm)) == 27 * 8
@@ -69,7 +69,7 @@ end
     @test coordinates(dm) isa Vector
     @test !allunique([idx for f in faces(dm) for idx in f])
     @test !allunique([idx for f in faces(dm.normal) for idx in f])
-    
+
     indirect_meshes = map(rects) do r
         m = GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
         # Also testing merge of meshes with views
@@ -79,6 +79,7 @@ end
     im = merge(indirect_meshes)
 
     @test im == dm
+    @test GeometryBasics.facetype(im) == QuadFace{Int64}
 
     converted_meshes = map(rects) do r
         m = GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
@@ -86,14 +87,14 @@ end
     end
     cm = merge(converted_meshes)
 
-    @test GeometryBasics.facetype(cm) == QuadFace{Int64}
+    @test GeometryBasics.facetype(cm) == QuadFace{Int}
     @test length(faces(cm)) == 27 * 6 # 27 rects, 6 quad faces
     @test length(normals(cm)) == 27 * 6 * 4 # duplicate 4x across face
     @test length(coordinates(cm)) == 27 * 8 * 3 # duplicate 3x across shared vertex
     @test normals(cm) isa Vector
     @test coordinates(cm) isa Vector
     @test allunique([idx for f in faces(cm) for idx in f])
-    
+
 
     mixed_meshes = map(direct_meshes, indirect_meshes, converted_meshes) do dm, im, cm
         rand((dm, im, cm)) # (with FaceView, with mesh.views & FaceView, w/o FaceView)
@@ -111,7 +112,7 @@ end
     @testset "Extracting faces from position FaceView" begin
         # can't extract from array
         @test_throws TypeError Mesh(position = ps, normal = ns)
-    
+
         m = Mesh(position = FaceView(ps, fs), normal = ns)
         @test coordinates(m) == ps
         @test normals(m) == ns
@@ -124,7 +125,7 @@ end
         m = Mesh(rand(Point2f, 12), fs)
         @test length(m.position) == 12
         @test length(m.faces) == 4
-        
+
         @test_throws ErrorException Mesh(ps, fs, normal = rand(Vec3f, 8))
         m = Mesh(ps, fs, normal = rand(Vec3f, 12))
         @test length(m.position) == 10
@@ -153,7 +154,7 @@ end
     fs = GLTriangleFace[(1,2,3), (3,4,5), (5,6,7), (8,9,10)]
 
     m = Mesh(ps, fs, normal = ns, uv = uvs)
-    
+
     @test vertex_attributes(m) == getfield(m, :vertex_attributes)
     @test coordinates(m) == vertex_attributes(m)[:position]
     @test normals(m) == vertex_attributes(m)[:normal]
@@ -199,19 +200,19 @@ end
         @test ps isa Vector{Point3d}
         ns = normals(r)
         @test length(ns) == 6
-        @test ns isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{QuadFace{Int64}}}
+        @test ns isa GeometryBasics.FaceView{Vec3f, Vector{Vec3f}, Vector{QuadFace{Int}}}
         uvs = texturecoordinates(r)
         @test length(uvs) == 8
         @test_broken uvs isa Vector{Vec2f}
         fs = faces(r)
         @test length(fs) == 6
-        @test fs isa Vector{QuadFace{Int64}}
+        @test fs isa Vector{QuadFace{Int}}
     end
 
     @testset "normal_mesh()" begin
         m = normal_mesh(r, pointtype = Point3f, normaltype = Vec3f)
         m = GeometryBasics.expand_faceviews(m)
-        
+
         @test hasproperty(m, :position)
         @test coordinates(m) isa Vector{Point3f}
         @test length(coordinates(m)) == 24
@@ -231,7 +232,7 @@ end
 
     @testset "normal_uv_mesh()" begin
         m = uv_normal_mesh(
-            r, pointtype = Point3d, normaltype = Vec3d, 
+            r, pointtype = Point3d, normaltype = Vec3d,
             uvtype = Vec3d, facetype = QuadFace{Int32}
         )
 
