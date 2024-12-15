@@ -57,7 +57,7 @@ jobs:
           DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
-            pkg"add MakieCore#breaking-0.22 Makie#breaking-0.22 GLMakie#breaking-0.22 "
+            pkg"add MakieCore#master Makie#master GLMakie#master"
             Pkg.instantiate()'
       - run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs docs/make.jl
         env:
