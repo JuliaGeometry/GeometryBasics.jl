@@ -132,10 +132,10 @@ end
 ```
 
 To connect these points into a mesh, we need to generate a set of faces.
-The faces of a prallelepiped are parallelograms, which we can describe with `QuadFace`. 
-Here we should be concious of the winding direction of faces.
+The faces of a parallelepiped are parallelograms, which we can describe with `QuadFace`. 
+Here we should be conscious of the winding direction of faces.
 They are often used to determine the front vs the backside of a (2D) face.
-For example GeometryBasics normal generation and OpenGL's backface culling assume a counter-clockwise windig direction to correspond to a front-facing face.
+For example GeometryBasics normal generation and OpenGL's backface culling assume a counter-clockwise winding direction to correspond to a front-facing face.
 This means that if we look at a face from outside the shape, the positions referred to by that face should be ordered counter-clockwise.
 With that in mind the faces of our primitive become:
 
