@@ -3,15 +3,17 @@ function Rect(geometry::AbstractArray{<:Point{N,T}}) where {N,T}
 end
 
 """
-Construct a HyperRectangle enclosing all points.
+    Rect(points::AbstractArray{<: Point})
+
+Construct a bounding box countaining all the given points.
 """
-function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:AbstractPoint}
+function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     N2, T2 = length(PT), eltype(PT)
     @assert N1 >= N2
     vmin = Point{N2,T2}(typemax(T2))
     vmax = Point{N2,T2}(typemin(T2))
     for p in geometry
-        vmin, vmax = minmax(p, vmin, vmax)
+        vmin, vmax = _minmax(p, vmin, vmax)
     end
     o = vmin
     w = vmax - vmin
@@ -23,6 +25,11 @@ function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:AbstractPoint
     end
 end
 
+"""
+    Rect(primitive::GeometryPrimitive)
+
+Construct a bounding box for the given primitive.
+"""
 function Rect(primitive::GeometryPrimitive{N,T}) where {N,T}
     return Rect{N,T}(primitive)
 end

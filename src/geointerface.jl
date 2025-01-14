@@ -2,7 +2,8 @@
 
 GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
 GeoInterface.isgeometry(::Type{<:AbstractFace}) = true
-GeoInterface.isgeometry(::Type{<:AbstractPoint}) = true
+
+GeoInterface.isgeometry(::Type{<:Point}) = true
 GeoInterface.isgeometry(::Type{<:AbstractMesh}) = true
 GeoInterface.isgeometry(::Type{<:AbstractPolygon}) = true
 GeoInterface.isgeometry(::Type{<:LineString}) = true
@@ -41,7 +42,8 @@ GeoInterface.getcoord(::PointTrait, g::Point, i::Int) = g[i]
 GeoInterface.ngeom(::LineTrait, g::Line) = length(g)
 GeoInterface.getgeom(::LineTrait, g::Line, i::Int) = g[i]
 
-GeoInterface.ngeom(::LineStringTrait, g::LineString) = length(g) + 1  # n line segments + 1
+
+GeoInterface.ngeom(::LineStringTrait, g::LineString) = length(g)  # n connected points
 GeoInterface.ncoord(::LineStringTrait, g::LineString{Dim}) where {Dim} = Dim
 function GeoInterface.getgeom(::LineStringTrait, g::LineString, i::Int)
     return GeometryBasics.coordinates(g)[i]
@@ -50,8 +52,8 @@ end
 GeoInterface.ngeom(::PolygonTrait, g::Polygon) = length(g.interiors) + 1  # +1 for exterior
 function GeoInterface.getgeom(::PolygonTrait,
                               g::Polygon,
-                              i::Int)::typeof(g.exterior)
-    return i > 1 ? g.interiors[i - 1] : g.exterior
+                              i::Int)
+    return i > 1 ? LineString(g.interiors[i - 1]) : LineString(g.exterior)
 end
 
 GeoInterface.ngeom(::MultiPointTrait, g::MultiPoint) = length(g)
@@ -69,7 +71,7 @@ GeoInterface.ngeom(::MultiPolygonTrait, g::MultiPolygon) = length(g)
 GeoInterface.getgeom(::MultiPolygonTrait, g::MultiPolygon, i::Int) = g[i]
 
 function GeoInterface.ncoord(::AbstractGeometryTrait,
-                             ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
+                             ::Simplex{Dim,T,N}) where {Dim,T,N}
     return Dim
 end
 function GeoInterface.ncoord(::AbstractGeometryTrait,
@@ -77,11 +79,11 @@ function GeoInterface.ncoord(::AbstractGeometryTrait,
     return Dim
 end
 function GeoInterface.ngeom(::AbstractGeometryTrait,
-                            ::Simplex{Dim,T,N,P}) where {Dim,T,N,P}
+                            ::Simplex{Dim,T,N}) where {Dim,T,N}
     return N
 end
 GeoInterface.ngeom(::PolygonTrait, ::Ngon) = 1  # can't have any holes
-GeoInterface.getgeom(::PolygonTrait, g::Ngon, _) = LineString(g.points)
+GeoInterface.getgeom(::PolygonTrait, g::Ngon, _) = LineString([g.points...])
 
 function GeoInterface.ncoord(::PolyhedralSurfaceTrait,
                              ::Mesh{Dim,T,E,V} where {Dim,T,E,V})
@@ -103,6 +105,11 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
     end
 end
 
+# without a function barrier you get a lot of allocations from runtime types
+function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
+    return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
+end
+
 function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
@@ -112,7 +119,7 @@ function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
         return LineString([Point{3,T}(GeoInterface.x(p), GeoInterface.y(p), GeoInterface.z(p)) for p in getgeom(geom)])
     else
         T = promote_type(typeof(x), typeof(y))
-        return LineString([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
+        return LineString(_collect_with_type(Point{2, T}, geom))
     end
 end
 

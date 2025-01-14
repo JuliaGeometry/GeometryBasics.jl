@@ -62,7 +62,7 @@ function Rect{N,T1}(a::Rect{N,T2}) where {N,T1,T2}
     return Rect(Vec{N,T1}(minimum(a)), Vec{N,T1}(widths(a)))
 end
 
-function Rect(v1::Vec{N,T1}, v2::Vec{N,T2}) where {N,T1,T2}
+function Rect(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
     T = promote_type(T1, T2)
     return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
 end
@@ -90,17 +90,11 @@ Rect constructor for individually specified intervals.
 e.g. Rect(0,0,1,2) has origin == Vec(0,0) and
 width == Vec(1,2)
 """
-@generated function Rect(vals::Number...)
-    # Generated so we get goodish codegen on each signature
-    n = length(vals)
-    @assert iseven(n)
-    mid = div(n, 2)
-    v1 = Expr(:call, :Vec)
-    v2 = Expr(:call, :Vec)
-    # TODO this can be inbounds
-    append!(v1.args, [:(vals[$i]) for i in 1:mid])
-    append!(v2.args, [:(vals[$i]) for i in (mid + 1):length(vals)])
-    return Expr(:call, :Rect, v1, v2)
+function Rect(vals::Vararg{Number, N}) where {N}
+    M, r = fldmod(N, 2)
+    (r == 0) || throw(ArgumentError("number of arguments must be even"))
+    origin, widths = ntuple(i -> vals[i], M), ntuple(i -> vals[i+M], M)
+    return Rect(Vec(origin), Vec(widths))
 end
 
 Rect3(a::Vararg{Number,6}) = Rect3(Vec{3}(a[1], a[2], a[3]), Vec{3}(a[4], a[5], a[6]))
@@ -199,8 +193,8 @@ split(b::Rect, axis, value::Number) = _split(b, axis, value)
 function _split(b::H, axis, value) where {H<:Rect}
     bmin = minimum(b)
     bmax = maximum(b)
-    b1max = setindex(bmax, value, axis)
-    b2min = setindex(bmin, value, axis)
+    b1max = Base.setindex(bmax, value, axis)
+    b2min = Base.setindex(bmin, value, axis)
 
     return H(bmin, b1max - bmin), H(b2min, bmax - b2min)
 end
@@ -308,20 +302,21 @@ function Base.to_indices(A::AbstractMatrix{T}, I::Tuple{Rect2{IT}}) where {T,IT<
     return ((mini[1] + 1):(mini[1] + wh[1]), (mini[2] + 1):(mini[2] + wh[2]))
 end
 
-function minmax(p::StaticVector, vmin, vmax)
+function _minmax(p::StaticVector, vmin, vmax)
     any(isnan, p) && return (vmin, vmax)
     return min.(p, vmin), max.(p, vmax)
 end
 
+# TODO: doesn't work regardless
 # Annoying special case for view(Vector{Point}, Vector{Face})
-function minmax(tup::Tuple, vmin, vmax)
-    for p in tup
-        any(isnan, p) && continue
-        vmin = min.(p, vmin)
-        vmax = max.(p, vmax)
-    end
-    return vmin, vmax
-end
+# function Base.minmax(tup::Tuple, vmin, vmax)
+#     for p in tup
+#         any(isnan, p) && continue
+#         vmin = min.(p, vmin)
+#         vmax = max.(p, vmax)
+#     end
+#     return vmin, vmax
+# end
 
 function positive_widths(rect::Rect{N,T}) where {N,T}
     mini, maxi = minimum(rect), maximum(rect)
@@ -341,7 +336,9 @@ Return `true` if any of the widths of `h` are negative.
 Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
 
 """
-Perform a union between two Rects.
+    union(r1::Rect{N}, r2::Rect{N})
+
+Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
     m = min.(minimum(h1), minimum(h2))
@@ -349,19 +346,21 @@ function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
     return Rect{N}(m, mm - m)
 end
 
-"""
-    diff(h1::Rect, h2::Rect)
+# TODO: What should this be? The difference is "h2 - h1", which could leave an
+# L shaped cutout. Should we pad that back out into a full rect?
+# """
+#     diff(h1::Rect, h2::Rect)
 
-Perform a difference between two Rects.
-"""
-diff(h1::Rect, h2::Rect) = h1
+# Perform a difference between two Rects.
+# """
+# diff(h1::Rect, h2::Rect) = h1
 
 """
     intersect(h1::Rect, h2::Rect)
 
 Perform a intersection between two Rects.
 """
-function intersect(h1::Rect{N}, h2::Rect{N}) where {N}
+function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
     m = max.(minimum(h1), minimum(h2))
     mm = min.(maximum(h1), maximum(h2))
     return Rect{N}(m, mm - m)
@@ -540,21 +539,30 @@ centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 # Rect2 decomposition
 
 function faces(rect::Rect2, nvertices=(2, 2))
-    w, h = nvertices
-    idx = LinearIndices(nvertices)
-    quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
-    return ivec((quad(i, j) for i in 1:(w - 1), j in 1:(h - 1)))
+    if nvertices == (2, 2)
+        return [QuadFace(1,2,3,4)]
+    else
+        w, h = nvertices
+        idx = LinearIndices(nvertices)
+        quad(i, j) = QuadFace{Int}(idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1])
+        return [quad(i, j) for j in 1:(h - 1) for i in 1:(w - 1)]
+    end
 end
 
-function coordinates(rect::Rect2, nvertices=(2, 2))
+function coordinates(rect::Rect2{T}, nvertices=(2, 2)) where {T}
     mini, maxi = extrema(rect)
-    xrange, yrange = LinRange.(mini, maxi, nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+    if nvertices == (2, 2)
+        return Point2{T}[mini, (maxi[1], mini[2]), maxi, (mini[1], maxi[2])]
+    else
+        xrange, yrange = LinRange.(mini, maxi, nvertices)
+        return [Point(x, y) for y in yrange for x in xrange]
+    end
 end
 
-function texturecoordinates(rect::Rect2, nvertices=(2, 2))
-    xrange, yrange = LinRange.((0, 1), (1, 0), nvertices)
-    return ivec(((x, y) for x in xrange, y in yrange))
+function texturecoordinates(rect::Rect2{T}, nvertices=(2, 2)) where {T}
+    ps = coordinates(Rect2{T}(0, 0, 1, 1), nvertices)
+    ps = [Vec2{T}(0, 1) .+ Vec2{T}(1, -1) .* p for p in ps]
+    return ps
 end
 
 function normals(rect::Rect2, nvertices=(2, 2))
@@ -563,22 +571,25 @@ end
 
 ##
 # Rect3 decomposition
-function coordinates(rect::Rect3)
+function coordinates(rect::Rect3{T}) where T
     # TODO use n
     w = widths(rect)
     o = origin(rect)
-    points = Point{3,Int}[(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0), (1, 0, 0),
-                          (1, 0, 1), (0, 0, 1), (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
-                          (1, 1, 1), (0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 0, 1),
-                          (1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 1)]
-    return ((x .* w .+ o) for x in points)
+    return Point{3, T}[o + (x, y, z) .* w for x in (0, 1) for y in (0, 1) for z in (0, 1)]
+end
+
+function normals(::Rect3)
+    ns = Vec3f[(-1,0,0), (1,0,0), (0,-1,0), (0,1,0), (0,0,-1), (0,0,1)]
+    return FaceView(ns, QuadFace{Int}.(1:6))
 end
 
 function texturecoordinates(rect::Rect3)
     return coordinates(Rect3(0, 0, 0, 1, 1, 1))
 end
 
-function faces(rect::Rect3)
-    return QuadFace{Int}[(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (13, 14, 15, 16),
-                         (17, 18, 19, 20), (21, 22, 23, 24),]
+function faces(::Rect3)
+    return QuadFace{Int}[
+        (1, 2, 4, 3), (7, 8, 6, 5), (5, 6, 2, 1), 
+        (3, 4, 8, 7), (1, 3, 7, 5), (6, 8, 4, 2)
+    ]
 end
