@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - master
-      - sd/simple-mesh
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -57,7 +56,7 @@ jobs:
           DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
-            pkg"add MakieCore#master Makie#master GLMakie#master"
+            pkg"add MakieCore Makie GLMakie"
             Pkg.instantiate()'
       - run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs docs/make.jl
         env:
