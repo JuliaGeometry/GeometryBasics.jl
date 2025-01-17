@@ -288,7 +288,7 @@ end
 
 function Polygon(
         exterior::AbstractVector{Point{Dim,T}},
-        interiors::AbstractVector{AbstractVector{Point{Dim,T}}}) where {Dim, T}
+        interiors::AbstractVector{<:AbstractVector{Point{Dim,T}}}) where {Dim, T}
     tov(v) = convert(Vector{Point{Dim, T}}, v)
     return Polygon{Dim,T}(tov(exterior), map(tov, interiors))
 end
