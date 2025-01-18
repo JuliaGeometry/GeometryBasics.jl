@@ -5,6 +5,7 @@ using GeometryBasics: MetaMesh
 using GeoInterface
 using GeoJSON
 using Extents
+using StaticArrays
 
 @testset "GeometryBasics" begin
 @testset "algorithms" begin
