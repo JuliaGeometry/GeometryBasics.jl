@@ -28,4 +28,9 @@
     ]
     fs = GLTriangleFace[(4, 8, 7), (5, 8, 4), (3, 4, 7), (5, 4, 1), (2, 3, 7), (6, 5, 1), (2, 7, 6), (6, 1, 2)]
     @test fs == GeometryBasics.earcut_triangulate(poly1)
+
+    # issue #236
+    let p = SA[Point(0.0, 0.0), Point(1.0, 0.0), Point(0.0, 1.0)]
+        @test Polygon(p) == Polygon(Array(p))
+    end
 end
