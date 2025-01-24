@@ -3,7 +3,7 @@
     HyperRectangle{N, T}
 
 A `HyperRectangle` is a generalization of a rectangle into N-dimensions.
-Formally it is the cartesian product of intervals, which is represented by the
+Formally it is the Cartesian product of intervals, which is represented by the
 `origin` and `widths` fields, whose indices correspond to each of the `N` axes.
 """
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
@@ -17,7 +17,7 @@ end
 """
     const Rect{N,T} = HyperRectangle{N,T}
 
-A rectangle in N dimensions, formally the cartesian product of intervals. See also [`HyperRectangle`](@ref). Its aliases are
+A rectangle in N dimensions, formally the Cartesian product of intervals. See also [`HyperRectangle`](@ref). Its aliases are
 
 |        |`T`(eltype)|`Float64` |`Float32` |`Int`     |
 |--------|-----------|----------|----------|----------|
@@ -216,12 +216,12 @@ function Base.:(*)(m::Mat{N1,N1,T1}, h::Rect{N2,T2}) where {N1,N2,T1,T2}
 
     # get all points on the Rect
     d = decompose(Point, h)
-    # make sure our points are sized for the tranform
+    # make sure our points are sized for the transform
     pts = (Vec{N1,T}[vcat(pt, ones(Vec{D,T})) for pt in d]...,)::NTuple{2^N2,Vec{N1,T}}
 
     vmin = Vec{N1,T}(typemax(T))
     vmax = Vec{N1,T}(typemin(T))
-    # tranform all points, tracking min and max points
+    # transform all points, tracking min and max points
     for pt in pts
         pn = m * pt
         vmin = min.(pn, vmin)
@@ -239,11 +239,11 @@ function Base.:(*)(m::Mat{N,N,T1}, h::Rect{N,T2}) where {N,T1,T2}
     # get all points on the Rect
     pts = decompose(Point, h)
 
-    # make sure our points are sized for the tranform
+    # make sure our points are sized for the transform
     vmin = Vec{N,T}(typemax(T))
     vmax = Vec{N,T}(typemin(T))
 
-    # tranform all points, tracking min and max points
+    # transform all points, tracking min and max points
     for pt in pts
         pn = m * Vec(pt)
         vmin = min.(pn, vmin)
@@ -262,13 +262,13 @@ function Base.:(*)(m::Mat{4,4,T}, h::Rect{3,T}) where {T}
            Vec{4,T}(0.0, 0.0, 1.0, 1.0), Vec{4,T}(1.0, 0.0, 1.0, 1.0),
            Vec{4,T}(0.0, 1.0, 1.0, 1.0), Vec{4,T}(1.0, 1.0, 1.0, 1.0))
 
-    # make sure our points are sized for the tranform
+    # make sure our points are sized for the transform
     vmin = Vec{4,T}(typemax(T))
     vmax = Vec{4,T}(typemin(T))
     o, w = origin(h), widths(h)
     _o = Vec{4,T}(o[1], o[2], o[3], T(0))
     _w = Vec{4,T}(w[1], w[2], w[3], T(1))
-    # tranform all points, tracking min and max points
+    # transform all points, tracking min and max points
     for pt in pts
         pn = m * (_o + (pt .* _w))
         vmin = min.(pn, vmin)

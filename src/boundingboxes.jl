@@ -5,7 +5,7 @@ end
 """
     Rect(points::AbstractArray{<: Point})
 
-Construct a bounding box countaining all the given points.
+Construct a bounding box containing all the given points.
 """
 function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     N2, T2 = length(PT), eltype(PT)

@@ -626,7 +626,7 @@ texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 """
     vertex_attributes(mesh::Mesh)
 
-Returns a dictionairy containing the vertex attributes of the given mesh.
+Returns a dictionary containing the vertex attributes of the given mesh.
 Mutating these will change the mesh.
 """
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)

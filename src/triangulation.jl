@@ -168,7 +168,7 @@ function decompose(::Type{F}, points::AbstractVector{<:Point}) where {F<:Abstrac
                 t += 1
             end
             nv -= 1
-            #= resest error detection counter =#
+            #= reset error detection counter =#
             count = 2 * nv
         end
     end
