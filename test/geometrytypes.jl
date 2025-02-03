@@ -28,16 +28,16 @@ using Test, GeometryBasics
             (7.535533905932738, 1.4644660940672627, 6.0),
             (6.041241452319315, 7.041241452319315, 1.9175170953613705),
             (0.46446609406726314, 8.535533905932738, 6.0),
-            (1.9587585476806848, 2.9587585476806857, 10.08248290463863), 
-            (1, 2, 3), 
+            (1.9587585476806848, 2.9587585476806857, 10.08248290463863),
+            (1, 2, 3),
             (4, 5, 6)
         ]
 
         @test decompose(Point3{Float64}, Tessellation(s, 8)) ≈ positions
 
         _faces = TriangleFace[
-            (9, 2, 1), (9, 3, 2), (9, 4, 3), (9, 1, 4), (1, 2, 6), (1, 6, 5), 
-            (2, 3, 7), (2, 7, 6), (3, 4, 8), (3, 8, 7), (4, 1, 5), (4, 5, 8), 
+            (9, 2, 1), (9, 3, 2), (9, 4, 3), (9, 1, 4), (1, 2, 6), (1, 6, 5),
+            (2, 3, 7), (2, 7, 6), (3, 4, 8), (3, 8, 7), (4, 1, 5), (4, 5, 8),
             (10, 5, 6), (10, 6, 7), (10, 7, 8), (10, 8, 5)]
 
         @test _faces == decompose(TriangleFace{Int}, Tessellation(s, 8))
@@ -46,7 +46,7 @@ using Test, GeometryBasics
         @test m === triangle_mesh(m)
         @test GeometryBasics.faces(m) == decompose(GLTriangleFace, _faces)
         @test GeometryBasics.coordinates(m) ≈ positions
-        
+
         m = normal_mesh(s) # just test that it works without explicit resolution parameter
         @test hasproperty(m, :position)
         @test hasproperty(m, :normal)
@@ -56,15 +56,15 @@ using Test, GeometryBasics
 
         ns = GeometryBasics.FaceView(
             Vec{3, Float32}[
-                [0.70710677, -0.70710677, 0.0], [0.4082483, 0.4082483, -0.8164966], 
-                [-0.70710677, 0.70710677, -9.9991995f-17], [-0.4082483, -0.4082483, 0.8164966], 
+                [0.70710677, -0.70710677, 0.0], [0.4082483, 0.4082483, -0.8164966],
+                [-0.70710677, 0.70710677, -9.9991995f-17], [-0.4082483, -0.4082483, 0.8164966],
                 [-0.57735026, -0.57735026, -0.57735026], [0.57735026, 0.57735026, 0.57735026]
             ], [
-                GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5), 
-                GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5), 
-                QuadFace{Int64}(1, 2, 2, 1), QuadFace{Int64}(2, 3, 3, 2), 
-                QuadFace{Int64}(3, 4, 4, 3), QuadFace{Int64}(4, 1, 1, 4), 
-                GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6), 
+                GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5),
+                GLTriangleFace(5, 5, 5), GLTriangleFace(5, 5, 5),
+                QuadFace{Int64}(1, 2, 2, 1), QuadFace{Int64}(2, 3, 3, 2),
+                QuadFace{Int64}(3, 4, 4, 3), QuadFace{Int64}(4, 1, 1, 4),
+                GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6),
                 GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6)
             ]
         )
@@ -84,21 +84,20 @@ end
     @test decompose(Point2f, mesh) == pt_expa
 
     b = Rect(Vec(1, 1, 1), Vec(1, 1, 1))
-    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 1], [1, 2, 2], 
-                             [2, 1, 1], [2, 1, 2], [2, 2, 1], [2, 2, 2]]
+    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 1], [1, 2, 2],
+                            [2, 1, 1], [2, 1, 2], [2, 2, 1], [2, 2, 2]]
     @test decompose(Point{3,Int}, b) == pt_expb
-    
 
     mesh = normal_mesh(b)
     @test faces(mesh) == GLTriangleFace[
-        (1, 2, 4), (1, 4, 3), (7, 8, 6), (7, 6, 5), (5, 6, 2), (5, 2, 1), 
+        (1, 2, 4), (1, 4, 3), (7, 8, 6), (7, 6, 5), (5, 6, 2), (5, 2, 1),
         (3, 4, 8), (3, 8, 7), (1, 3, 7), (1, 7, 5), (6, 8, 4), (6, 4, 2)]
     @test normals(mesh) == GeometryBasics.FaceView(
-        Vec{3, Float32}[[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 0.0, 1.0]], 
+        Vec{3, Float32}[[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 0.0, 1.0]],
         GLTriangleFace[(1, 1, 1), (1, 1, 1), (2, 2, 2), (2, 2, 2), (3, 3, 3), (3, 3, 3), (4, 4, 4), (4, 4, 4), (5, 5, 5), (5, 5, 5), (6, 6, 6), (6, 6, 6)]
     )
     @test coordinates(mesh) == Point{3, Float32}[
-        [1.0, 1.0, 1.0], [1.0, 1.0, 2.0], [1.0, 2.0, 1.0], [1.0, 2.0, 2.0], 
+        [1.0, 1.0, 1.0], [1.0, 1.0, 2.0], [1.0, 2.0, 1.0], [1.0, 2.0, 2.0],
         [2.0, 1.0, 1.0], [2.0, 1.0, 2.0], [2.0, 2.0, 1.0], [2.0, 2.0, 2.0]]
 
     @test isempty(Rect{3,Float32}())
@@ -248,7 +247,7 @@ end
     h1 = Rect(0.0, 0.0, 1.0, 1.0)
     h2 = Rect(1.0, 1.0, 2.0, 2.0)
     @test union(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
-    # @test GeometryBasics.diff(h1, h2) == h1 
+    # @test GeometryBasics.diff(h1, h2) == h1
     @test GeometryBasics.intersect(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
 
     b = Rect(0.0, 0.0, 1.0, 1.0)
