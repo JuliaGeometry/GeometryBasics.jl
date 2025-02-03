@@ -134,7 +134,7 @@ facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
     uv_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f])
 
 Creates a triangle mesh with texture coordinates from a given `primitive`. The
-`pointtype`, `facetype` and `uvtype` are set by the correspondering keyword arguments.
+`pointtype`, `facetype` and `uvtype` are set by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -154,7 +154,7 @@ end
 
 Creates a triangle mesh with texture coordinates and normals from a given
 `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -175,7 +175,7 @@ end
 
 Creates a triangle mesh with texture coordinates and normals from a given
 `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -192,7 +192,7 @@ end
     normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, normaltype = Vec3f])
 
 Creates a triangle mesh with normals from a given `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -333,7 +333,7 @@ end
     expand_faceviews(mesh::Mesh)
 
 Returns the given `mesh` if it contains no FaceViews. Otherwise, generates a new
-mesh that contains no FaceViews, reordering and duplicating vertex atttributes
+mesh that contains no FaceViews, reordering and duplicating vertex attributes
 as necessary. If the mesh has `views` they will be adjusted as needed to produce
 the same submeshes.
 """
@@ -417,7 +417,7 @@ function merge_vertex_indices(
     # indices that remap attributes
     attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
 
-    # keep track of the remmaped indices for one vertex so we don't have to
+    # keep track of the remapped indices for one vertex so we don't have to
     # query the dict twice
     temp = Vector{T}(undef, N)
 

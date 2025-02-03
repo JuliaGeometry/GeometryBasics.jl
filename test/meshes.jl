@@ -119,7 +119,7 @@ end
         @test faces(m) == fs
     end
 
-    @testset "Verifaction" begin
+    @testset "Verification" begin
         # enough vertices present
         @test_throws ErrorException Mesh(rand(Point2f, 7), fs)
         m = Mesh(rand(Point2f, 12), fs)
