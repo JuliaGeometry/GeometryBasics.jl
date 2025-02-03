@@ -77,6 +77,88 @@ using Test, GeometryBasics
 end
 
 @testset "HyperRectangles" begin
+    @testset "Constructors" begin
+        # TODO: Do these actually make sense?
+        # Should they not be Rect(NaN..., 0...)?
+        @testset "Empty Constructors" begin
+            for constructor in [Rect, Rect{2}, Rect2, RectT, Rect2f]
+                @test constructor() == Rect{2, Float32}(Inf, Inf, -Inf, -Inf)
+            end
+            for constructor in [Rect{3}, Rect3, Rect3f]
+                @test constructor() == Rect{3, Float32}((Inf, Inf, Inf), (-Inf, -Inf, -Inf))
+            end
+
+            for T in [UInt32, Int16, Float64]
+                a = typemax(T)
+                b = typemin(T)
+                for constructor in [Rect{2, T}, Rect2{T}, RectT{T, 2}]
+                    @test constructor() == Rect{2, T}(a, a, b, b)
+                end
+                for constructor in [Rect{3, T}, Rect3{T}, RectT{T, 3}]
+                    @test constructor() == Rect{3, T}(Point(a, a, a), Vec(b, b, b))
+                end
+            end
+        end
+
+        @testset "Constructor arg conversions" begin
+            function expected_rect(::Type{<: Rect}, arg1, arg2)
+                return Rect{min(length(arg1), length(arg2)), promote_type(eltype(arg1), eltype(arg2))}(arg1, arg2)
+            end
+            function expected_rect(::Type{<: Rect{N}}, arg1, arg2) where {N}
+                return Rect{N, promote_type(eltype(arg1), eltype(arg2))}(arg1, arg2)
+            end
+            function expected_rect(::Type{<: Rect{N, T}}, arg1, arg2) where {N, T}
+                return Rect{N, T}(arg1, arg2)
+            end
+
+            @testset "2D args -> 2D Rect" begin
+                for constructor in [Rect, RectT,   Rect2, Rect{2}, RectT{Int32},
+                                    Rect2f, Rect{2, Float16}, Rect2{UInt32}, RectT{Float64, 2}]
+                    @testset "$constructor" begin
+                        @test constructor(1,2,3,4)           == expected_rect(constructor, Point(1,2), Vec(3,4))
+                        @test constructor(1.0,2,3,4)         == expected_rect(constructor, Point(1.0,2), Vec(3,4))
+                        @test constructor(Point2f(1,2),3,4)  == expected_rect(constructor, Point2f(1,2), Vec(3,4))
+                        @test constructor(Vec2(1,2),3,4.0)   == expected_rect(constructor, Point(1,2), Vec(3,4.0))
+                        @test constructor((1,2),Point2(3,4)) == expected_rect(constructor, Point(1,2), Vec(3,4))
+                        @test constructor(1.0,2,Vec2(3,4))   == expected_rect(constructor, Point(1,2), Vec(3,4))
+                    end
+                end
+            end
+
+            @testset "3D args -> 3D Rect" begin
+                for constructor in [Rect, RectT,   Rect3, Rect{3}, RectT{Float64},
+                                    Rect3d, Rect{3, Int16}, Rect3{UInt8}, RectT{Float32, 3}]
+                    @testset "$constructor" begin
+                        @test constructor(1,2,3,4,5,6)           == expected_rect(constructor, Point(1,2,3), Vec(4,5,6))
+                        @test constructor(1,2,3,4,5,6.0)         == expected_rect(constructor, Point(1,2,3), Vec(4,5,6.0))
+                        @test constructor(1,2.0,3,Vec3f(4,5,6))  == expected_rect(constructor, Point(1,2,3), Vec3f(4,5,6))
+                        @test constructor(Vec3(1,2,3),4,5,6)     == expected_rect(constructor, Point3(1,2,3), Vec(4,5,6))
+                        @test constructor((1,2,3),Point3(4,5,6)) == expected_rect(constructor, Point(1,2,3), Vec(4,5,6))
+                        @test constructor(Vec3(1,2,3),4,5,6)     == expected_rect(constructor, Point(1,2,3), Vec(4,5,6))
+                    end
+                end
+            end
+        end
+
+        @testset "Copy Constructors" begin
+            r = Rect2i(0,0,1,1)
+            for constructor in [Rect, Rect2f, Rect3f, RectT{Float64}]
+                @test constructor(r) == constructor(Point2(0), Vec2(1))
+            end
+        end
+
+        @testset "Special Constructors" begin
+            @test Rect3f((1, 2, 3, Vec(1,2,3))) == Rect3f(1,2,3, Vec(1,2,3))
+            @test Rect2(((1, 2), 3, 4)) == Rect2f((1,2), 3, 4)
+            @test Rect((1, 2, 3, 4)) == Rect2f(1, 2, 3, 4)
+            @test Rect2((x = 1, y = 2), (width = 3, height = 4)) == Rect2f(1, 2, 3, 4)
+        end
+
+        # TODO: test/check for Rect(::GeometryPrimitive) for all primitives
+    end
+
+    # TODO: origin, minimum, maximum, width, height, widths, area, volume with empty constructed Rects
+
     a = Rect(Vec(0, 0), Vec(1, 1))
     pt_expa = Point{2,Int}[(0, 0), (1, 0), (1, 1), (0, 1)]
     @test decompose(Point{2,Int}, a) == pt_expa
