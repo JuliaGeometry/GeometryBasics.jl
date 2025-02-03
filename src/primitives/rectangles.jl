@@ -125,6 +125,13 @@ RectT{T}(r::GeometryPrimitive{N}) where {N, T} = Rect{N, T}(minimum(r), widths(r
 Rect{N}(r::GeometryPrimitive{_N, T}) where {N, _N, T} = Rect{N, T}(minimum(r), widths(r))
 Rect{N, T}(r::GeometryPrimitive) where {N, T} = Rect{N, T}(minimum(r), widths(r))
 
+# centered Rects
+
+centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
+centered(R::Type{RectT{T}}) where {T} = R(Vec{2,T}(-0.5), Vec{2,T}(1))
+centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
+centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
+
 # TODO These are kinda silly
 function Rect2(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
     return Rect2(xy.x, xy.y, wh.width, wh.height)
@@ -337,11 +344,11 @@ function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
     return Rect{N}(m, mm - m)
 end
 
-function update(b::Rect{N,T}, v::Vec{N,T2}) where {N,T,T2}
+function update(b::Rect{N,T}, v::VecTypes{N,T2}) where {N,T,T2}
     return update(b, Vec{N,T}(v))
 end
 
-function update(b::Rect{N,T}, v::Vec{N,T}) where {N,T}
+function update(b::Rect{N,T}, v::VecTypes{N,T}) where {N,T}
     m = min.(minimum(b), v)
     maxi = maximum(b)
     mm = if any(isnan, maxi)
@@ -353,11 +360,11 @@ function update(b::Rect{N,T}, v::Vec{N,T}) where {N,T}
 end
 
 # Min maximum distance functions between hrectangle and point for a given dimension
-function min_dist_dim(rect::Rect{N,T}, p::Vec{N,T}, dim::Int) where {N,T}
+function min_dist_dim(rect::Rect{N,T}, p::VecTypes{N,T}, dim::Int) where {N,T}
     return max(zero(T), max(minimum(rect)[dim] - p[dim], p[dim] - maximum(rect)[dim]))
 end
 
-function max_dist_dim(rect::Rect{N,T}, p::Vec{N,T}, dim::Int) where {N,T}
+function max_dist_dim(rect::Rect{N,T}, p::VecTypes{N,T}, dim::Int) where {N,T}
     return max(maximum(rect)[dim] - p[dim], p[dim] - minimum(rect)[dim])
 end
 
@@ -373,7 +380,7 @@ function max_dist_dim(rect1::Rect{N,T}, rect2::Rect{N,T}, dim::Int) where {N,T}
 end
 
 # Total minimum maximum distance functions
-function min_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function min_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimum_dist = T(0.0)
     for dim in 1:length(p)
         d = min_dist_dim(rect, p, dim)
@@ -382,7 +389,7 @@ function min_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N
     return minimum_dist
 end
 
-function max_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function max_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     maximum_dist = T(0.0)
     for dim in 1:length(p)
         d = max_dist_dim(rect, p, dim)
@@ -391,29 +398,29 @@ function max_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N
     return maximum_dist
 end
 
-function min_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function min_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     return sqrt(min_euclideansq(rect, p))
 end
 
-function max_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function max_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     return sqrt(max_euclideansq(rect, p))
 end
 
 # Functions that return both minimum and maximum for convenience
-function minmax_dist_dim(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}},
+function minmax_dist_dim(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}},
                          dim::Int) where {N,T}
     minimum_d = min_dist_dim(rect, p, dim)
     maximum_d = max_dist_dim(rect, p, dim)
     return minimum_d, maximum_d
 end
 
-function minmax_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function minmax_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimum_dist = min_euclideansq(rect, p)
     maximum_dist = max_euclideansq(rect, p)
     return minimum_dist, maximum_dist
 end
 
-function minmax_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function minmax_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimumsq, maximumsq = minmax_euclideansq(rect, p)
     return sqrt(minimumsq), sqrt(maximumsq)
 end
@@ -501,10 +508,6 @@ end
 Base.:(==)(b1::Rect, b2::Rect) = minimum(b1) == minimum(b2) && widths(b1) == widths(b2)
 
 Base.isequal(b1::Rect, b2::Rect) = b1 == b2
-
-centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
-centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
-centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 ##
 # Rect2 decomposition

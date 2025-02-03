@@ -121,6 +121,7 @@ end
                         @test constructor(Vec2(1,2),3,4.0)   == expected_rect(constructor, Point(1,2), Vec(3,4.0))
                         @test constructor((1,2),Point2(3,4)) == expected_rect(constructor, Point(1,2), Vec(3,4))
                         @test constructor(1.0,2,Vec2(3,4))   == expected_rect(constructor, Point(1,2), Vec(3,4))
+                        @test_throws ArgumentError constructor(1,2,3)
                     end
                 end
             end
@@ -135,6 +136,7 @@ end
                         @test constructor(Vec3(1,2,3),4,5,6)     == expected_rect(constructor, Point3(1,2,3), Vec(4,5,6))
                         @test constructor((1,2,3),Point3(4,5,6)) == expected_rect(constructor, Point(1,2,3), Vec(4,5,6))
                         @test constructor(Vec3(1,2,3),4,5,6)     == expected_rect(constructor, Point(1,2,3), Vec(4,5,6))
+                        @test_throws ArgumentError constructor(1,2,3)
                     end
                 end
             end
@@ -152,6 +154,14 @@ end
             @test Rect2(((1, 2), 3, 4)) == Rect2f((1,2), 3, 4)
             @test Rect((1, 2, 3, 4)) == Rect2f(1, 2, 3, 4)
             @test Rect2((x = 1, y = 2), (width = 3, height = 4)) == Rect2f(1, 2, 3, 4)
+
+            for constructor in [Rect, RectT,   Rect2, Rect{2}, RectT{Float32},
+                                Rect2f, Rect{2, Float16}, Rect2{Float16}, RectT{Float64, 2}]
+                @test centered(constructor) == constructor(Point2d(-0.5), Vec2d(1))
+            end
+            for constructor in [Rect3, Rect{3}, Rect3d, Rect{3, Float16}, Rect3{Float64}, RectT{Float32, 3}]
+                @test centered(constructor) == constructor(Point3d(-0.5), Vec3d(1))
+            end
         end
 
         # TODO: test/check for Rect(::GeometryPrimitive) for all primitives
@@ -306,8 +316,17 @@ end
     @test widths(split1) == widths(split2)
     @test origin(split1) == Vec(0, 0)
     @test origin(split2) == Vec(0, 1)
-    @test in(split1, rect1)
-    @test !in(rect1, split1)
+    @test in(split1, rect1) && in(split2, rect1)
+    @test !(in(rect1, split1) || in(rect1, split2))
+
+    rect1 = Rect(Vec(0.0, 0.0, -1.0), Vec(1.0, 2.0, 1.0))
+    split1, split2 = GeometryBasics.split(rect1, 1, 0.75)
+    @test widths(split1) == Vec(0.75, 2, 1)
+    @test widths(split2) == Vec(0.25, 2, 1)
+    @test origin(split1) == Vec(0, 0, -1)
+    @test origin(split2) == Vec(0.75, 0, -1)
+    @test in(split1, rect1) && in(split2, rect1)
+    @test !(in(rect1, split1) || in(rect1, split2))
 
     prim = Rect(0.0, 0.0, 1.0, 1.0)
     @test length(prim) == 2
@@ -338,19 +357,33 @@ end
     v = Vec(1.0, 2.0)
     @test update(b, v) isa GeometryBasics.HyperRectangle{2,Float64}
 
-    p = Vec(5.0, 4.0)
-    rect = Rect(0.0, 0.0, 1.0, 1.0)
-    @test min_dist_dim(rect, p, 1) == 4.0
-    @test min_dist_dim(rect, p, 2) == 3.0
-    @test max_dist_dim(rect, p, 1) == 5.0
-    @test max_dist_dim(rect, p, 2) == 4.0
+    @testset "euclidean distances" begin
+        p = Vec(5.0, 4.0)
+        rect = Rect(0.0, 0.0, 1.0, 1.0)
+        @test min_dist_dim(rect, p, 1) == 4.0
+        @test min_dist_dim(rect, p, 2) == 3.0
+        @test max_dist_dim(rect, p, 1) == 5.0
+        @test max_dist_dim(rect, p, 2) == 4.0
+        @test minmax_dist_dim(rect, p, 1) == (4.0, 5.0)
 
-    rect1 = Rect(0.0, 0.0, 1.0, 1.0)
-    rect2 = Rect(3.0, 1.0, 4.0, 2.0)
-    @test min_dist_dim(rect1, rect2, 1) == 2.0
-    @test min_dist_dim(rect1, rect2, 2) == 0.0
-    @test max_dist_dim(rect1, rect2, 1) == 7.0
-    @test max_dist_dim(rect1, rect2, 2) == 3.0
+        rect1 = Rect(0.0, 0.0, 1.0, 1.0)
+        rect2 = Rect(3.0, 1.0, 4.0, 2.0)
+        @test min_dist_dim(rect1, rect2, 1) == 2.0
+        @test min_dist_dim(rect1, rect2, 2) == 0.0
+        @test max_dist_dim(rect1, rect2, 1) == 7.0
+        @test max_dist_dim(rect1, rect2, 2) == 3.0
+        @test minmax_dist_dim(rect1, rect2, 1) == (2.0, 7.0)
+
+        r = Rect2f(-1, -1, 2, 3)
+        p = Point2f(1, 2) + Point2f(3, 4)
+        @test min_euclidean(r, p) == 5f0
+        @test max_euclidean(r, p) ≈ sqrt(5*5 + 7*7)
+
+        r2 = Rect2f(0, 0, 2, 3)
+        @test min_euclidean(r, r2) == 0f0
+        @test max_euclidean(r, r2) == 5f0
+        @test minmax_euclidean(r, r2) == (0f0, 5f0)
+    end
 
     @test !before(rect1, rect2)
     rect1 = Rect(0.0, 0.0, 1.0, 1.0)
@@ -397,5 +430,29 @@ end
     rect2 = Rect(Vec(1, 2, 3, 4), Vec(5, 6, 7, 8))
     @test rect1 == rect2
 
-    @test_throws ArgumentError Rect(1, 2, 3)
+    @testset "Matrix Multiplications" begin
+        r = Rect2f(-1, -2, 4, 3)
+
+        # TODO: this seems quite dangerous: We pad points with ones which makes
+        #       sense for translations if we go to D+1, but is nonsense if we
+        #       go higher dimensions than that.
+        M = rand(Mat4f)
+        ps = Point2f[M * Point(p..., 1, 1) for p in coordinates(r)]
+        @test Rect2f(ps) == M * r
+
+        M = Mat2f(0.5, -0.3, 0.7, 1.5)
+        ps = Point2f[M * p for p in coordinates(r)]
+        @test Rect2f(ps) == M * r
+
+        r = Rect3f(-1, -2, -3, 2, 4, 1)
+        M = rand(Mat4f)
+        ps = Point3f[M * Point(p..., 1) for p in coordinates(r)]
+        @test Rect3f(ps) == M * r
+    end
+
+    # TODO: this is effectively 0-indexed... should it be?
+    M = reshape(collect(11:100), 10, 9)[1:9, :]
+    r = Rect2i(2, 4, 2, 4)
+    @test M[r] == [53 63 73 83; 54 64 74 84]
+
 end
