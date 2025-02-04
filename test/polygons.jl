@@ -1,8 +1,29 @@
 @testset "Polygon" begin
-    @testset "from points" begin
+    @testset "Constructors" begin
         points = connect([1, 2, 3, 4, 5, 6], Point2f)
         polygon = Polygon(points)
         @test polygon == Polygon(points)
+        @test polygon == copy(polygon)
+        @test coordinates(polygon) == points
+        @test Polygon(OffsetArray(points)) == polygon
+
+        interiors = [rand(Point2f, 4), rand(Point2f, 4)]
+        exterior = rand(Point2f, 5)
+        p1 = Polygon(exterior, interiors)
+        @test p1.interiors == interiors
+        @test p1.exterior == exterior
+        p2 = Polygon(OffsetArray(exterior, 0), interiors)
+        @test p2 == p1
+
+        # TODO: promote polygon type automatically
+        polygon = Polygon(Point2f.(points))
+        mp = MultiPolygon([polygon, p1, p2])
+        @test mp.polygons == [polygon, p1, p2]
+        @test mp[1] == polygon
+        @test mp[2] == p1
+        @test size(mp) == (3,) # TODO: What does size even mean here?
+        @test length(mp) == 3
+        @test MultiPolygon(OffsetArray([polygon, p1, p2], 0)) == mp
     end
 
     rect = Rect2f(0, 0, 1, 1)

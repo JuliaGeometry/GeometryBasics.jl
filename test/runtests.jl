@@ -92,6 +92,9 @@ end
         tetrahedra = connect(x, NSimplex{4})
         @test tetrahedra == [Tetrahedron(x[1], x[2], x[3], x[4])]
 
+        @test length(tetrahedra[1]) == 4
+        @test all(coordinates(tetrahedra[1]) .== x)
+
         @testset "matrix non-copy point views" begin
             # point in row
             points = [1 2; 1 4; 66 77]
@@ -237,7 +240,7 @@ end
     @test GeometryBasics.faces(m) isa Vector{GLTriangleFace}
 end
 
-@testset "lines intersects" begin
+@testset "Lines" begin
     a = Line(Point(0.0, 0.0), Point(4.0, 1.0))
     b = Line(Point(0.0, 0.25), Point(3.0, 0.25))
     c = Line(Point(0.0, 0.25), Point(0.5, 0.25))
@@ -245,27 +248,34 @@ end
     e = Line(Point(1.0, 0.0), Point(0.0, 4.0))
     f = Line(Point(5.0, 0.0), Point(6.0, 0.0))
 
-    @test intersects(a, b) === (true, Point(1.0, 0.25))
-    @test intersects(a, c) === (false, Point(0.0, 0.0))
-    @test intersects(d, d) === (false, Point(0.0, 0.0))
-    found, point = intersects(d, e)
-    @test found && point ≈ Point(0.0, 4.0)
-    @test intersects(a, f) === (false, Point(0.0, 0.0))
+    multi_line = [a,b,c,d,e,f]
+    @test coordinates(multi_line) == vcat([[x.points...] for x in multi_line]...)
 
-    # issue #168
-    # If these tests fail then you can increase the tolerance on the checks so
-    # long as you know what you're doing :)
-    line_helper(a, b, c, d) = Line(Point(a, b), Point(c, d))
-    b, loc = intersects(line_helper(-3.1, 15.588457268119894, 3.1, 15.588457268119894),
-                        line_helper(2.0866025403784354, 17.37050807568877, -4.0866025403784505, 13.806406460551015))
-    @test b
-    @test loc ≈ Point(-1.0000000000000058, 15.588457268119894)
+    @testset "intersects" begin
+        @test intersects(a, b) === (true, Point(1.0, 0.25))
+        @test intersects(a, c) === (false, Point(0.0, 0.0))
+        @test intersects(d, d) === (false, Point(0.0, 0.0))
+        found, point = intersects(d, e)
+        @test found && point ≈ Point(0.0, 4.0)
+        @test intersects(a, f) === (false, Point(0.0, 0.0))
 
-    b, loc = intersects(line_helper(5743.933982822018, 150.0, 5885.355339059327, -50.0),
-                        line_helper(5760.0, 100.0, 5760.0, 140.0))
-    @test b
-    @test loc ≈ Point(5760.0, 127.27922061357884)
+        # issue #168
+        # If these tests fail then you can increase the tolerance on the checks so
+        # long as you know what you're doing :)
+        line_helper(a, b, c, d) = Line(Point(a, b), Point(c, d))
+        b, loc = intersects(line_helper(-3.1, 15.588457268119894, 3.1, 15.588457268119894),
+                            line_helper(2.0866025403784354, 17.37050807568877, -4.0866025403784505, 13.806406460551015))
+        @test b
+        @test loc ≈ Point(-1.0000000000000058, 15.588457268119894)
+
+        b, loc = intersects(line_helper(5743.933982822018, 150.0, 5885.355339059327, -50.0),
+                            line_helper(5760.0, 100.0, 5760.0, 140.0))
+        @test b
+        @test loc ≈ Point(5760.0, 127.27922061357884)
+    end
 end
+
+
 
 @testset "Offsetintegers" begin
     x = 1

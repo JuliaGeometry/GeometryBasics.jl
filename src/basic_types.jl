@@ -337,6 +337,7 @@ end
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
 Base.size(mp::MultiPolygon) = size(mp.polygons)
 Base.length(mp::MultiPolygon) = length(mp.polygons)
+Base.:(==)(a::MultiPolygon, b::MultiPolygon) = a.polygons == b.polygons
 
 """
     LineString(points::AbstractVector{<:Point})
@@ -361,6 +362,7 @@ end
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 Base.length(mpt::MultiLineString) = length(mpt.linestrings)
+Base.:(==)(a::MultiLineString, b::MultiLineString) = a.linestrings == b.linestrings
 
 """
     MultiPoint(points::AbstractVector{AbstractPoint})

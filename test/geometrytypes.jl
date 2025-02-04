@@ -204,16 +204,19 @@ end
     @test values(ns) ≈ Vec3f[[0.9805807, 0.0, 0.19611615], [0.0, 0.9805807, 0.19611615], [-0.9805807, 0.0, 0.19611615], [0.0, -0.9805807, 0.19611615], [0.0, 0.0, -1.0]]
 end
 
-NFace = NgonFace
+@testset "Type Utils" begin
+    @test GeometryBasics.Face(TriangleFace, Int32) == TriangleFace{Int32}
+    @test GeometryBasics.Face(GLTriangleFace, Int32) == TriangleFace{GLIndex}
+end
 
 @testset "Faces" begin
     @test convert_simplex(GLTriangleFace, QuadFace{Int}(1, 2, 3, 4)) ==
           (GLTriangleFace(1, 2, 3), GLTriangleFace(1, 3, 4))
-    @test convert_simplex(NFace{3,ZeroIndex{Int}}, QuadFace{ZeroIndex{Int}}(1, 2, 3, 4)) ==
-          (NFace{3,ZeroIndex{Int}}(1, 2, 3), NFace{3,ZeroIndex{Int}}(1, 3, 4))
-    @test convert_simplex(NFace{3,OffsetInteger{3,Int}},
-                          NFace{4,OffsetInteger{2,Int}}(1, 2, 3, 4)) ==
-          (NFace{3,OffsetInteger{3,Int}}(1, 2, 3), NFace{3,OffsetInteger{3,Int}}(1, 3, 4))
+    @test convert_simplex(NgonFace{3,ZeroIndex{Int}}, QuadFace{ZeroIndex{Int}}(1, 2, 3, 4)) ==
+          (NgonFace{3,ZeroIndex{Int}}(1, 2, 3), NgonFace{3,ZeroIndex{Int}}(1, 3, 4))
+    @test convert_simplex(NgonFace{3,OffsetInteger{3,Int}},
+                          NgonFace{4,OffsetInteger{2,Int}}(1, 2, 3, 4)) ==
+          (NgonFace{3,OffsetInteger{3,Int}}(1, 2, 3), NgonFace{3,OffsetInteger{3,Int}}(1, 3, 4))
     @test convert_simplex(LineFace{Int}, QuadFace{Int}(1, 2, 3, 4)) ==
           (LineFace{Int}(1, 2), LineFace{Int}(2, 3), LineFace{Int}(3, 4),
            LineFace{Int}(4, 1))
@@ -226,6 +229,33 @@ NFace = NgonFace
         @test convert_simplex(NgonFace{1,UInt32}, face) === (NgonFace{1,UInt32}((1,)),)
         @test convert_simplex(typeof(face), face) === (face,)
     end
+
+    ps = rand(Point2f, 10)
+    f = GLTriangleFace(1, 2, 3)
+    @test ps[f] == Triangle(ps[[1,2,3]]...)
+    data = [string(i) for i in 1:10]
+    f = QuadFace(3, 4, 7, 8)
+    @test data[f] == ("3", "4", "7", "8")
+
+    @test hash(f) != hash(QuadFace(1,2,3,4))
+    @test hash(f) == hash(QuadFace(3,4,7,8))
+    # cyclic permutation does not change the face
+    @test hash(f) == hash(QuadFace(7,8,3,4))
+    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(1,2,3))
+    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(2,3,1))
+    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(3,1,2))
+end
+
+@testset "FaceView" begin
+    ps = rand(Point2f, 5)
+    fs = GLTriangleFace[(1,2,3), (2,3,4), (5,5,5)]
+    fv = FaceView(ps, fs)
+    @test faces(fv) == fs
+    @test values(fv) == ps
+    @test fv[fs[1]] == ps[fs[1]]
+    @test !isempty(fv)
+    @test fv == FaceView(ps, fs)
+    @test length(fv) == 5
 end
 
 @testset "Normals" begin
@@ -253,7 +283,6 @@ end
     v_ns = normals(coordinates(c), filter!(f -> f isa QuadFace, faces(c)))[1:end-2]
     @test values(ns)[1:15] ≈ v_ns[1:15]
     @test values(ns)[1:15] ≈ v_ns[16:30] # repeated via FaceView in ns
-
 end
 
 @testset "HyperSphere" begin
@@ -455,4 +484,32 @@ end
     r = Rect2i(2, 4, 2, 4)
     @test M[r] == [53 63 73 83; 54 64 74 84]
 
+end
+
+@testset "LineStrings" begin
+    ps1 = rand(Point2f, 10)
+    ls1 = LineString(ps1)
+    _ls1 = LineString(ps1)
+    @test coordinates(ls1) == ps1
+    @test length(ls1) == 10
+    @test ls1 == _ls1
+
+    ls2 = LineString(rand(Point2f, 6))
+    ls3 = LineString(rand(Point2f, 4))
+    mls = MultiLineString([ls1, ls2, ls3])
+    @test mls.linestrings == [ls1, ls2, ls3]
+    @test mls[1] == ls1
+    @test mls[2] == ls2
+    @test mls[3] == ls3
+    @test size(mls) == (3, ) # TODO: Does this make sense?
+    @test length(mls) == 3
+    @test MultiLineString(OffsetArray([ls1, ls2, ls3], 0)) == mls
+end
+
+@testset "MultiPoint" begin
+    ps1 = rand(Point2f, 10)
+    mp = MultiPoint(ps1)
+    @test all(getindex.(Ref(mp), 1:10) .== ps1)
+    @test size(mp) == (10, ) # TODO: Does this make sense?
+    @test length(mp) == 10
 end

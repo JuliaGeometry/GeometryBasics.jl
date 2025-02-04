@@ -173,15 +173,27 @@ end
     @test hasproperty(m, :uv)
     @test hasproperty(m, :faces)
 
+    @test GeometryBasics.meta(m) == NamedTuple()
+    @test Mesh(m) === m
+
     mm = MetaMesh(m, name = "test")
 
     @test Mesh(mm) == m
     @test haskey(mm, :name)
     @test get(mm, :name, nothing) == "test"
+    @test get(() -> nothing, mm, :name) == "test"
+    @test get(mm, :foo, nothing) === nothing
+    @test get(() -> nothing, mm, :foo) === nothing
     @test mm[:name] == "test"
     @test !haskey(mm, :foo)
-    @test get!(mm, :foo, "bar") == "bar"
+    @test get!(mm, :foo, "foo") == "foo"
     @test haskey(mm, :foo)
+    @test get!(() -> "bar", mm, :bar) == "bar"
+    @test haskey(mm, :bar)
+    mm[:foo] = "bar"
+    @test mm[:foo] == "bar"
+    delete!(mm, :bar)
+    @test !haskey(mm, :bar)
     @test keys(mm) == keys(getfield(mm, :meta))
 
     @test vertex_attributes(mm) == getfield(m, :vertex_attributes)
@@ -189,6 +201,22 @@ end
     @test normals(mm) == vertex_attributes(m)[:normal]
     @test texturecoordinates(mm) == vertex_attributes(m)[:uv]
     @test faces(mm) == getfield(m, :faces)
+
+    @test hasproperty(mm, :vertex_attributes)
+    @test hasproperty(mm, :position)
+    @test hasproperty(mm, :normal)
+    @test hasproperty(mm, :uv)
+    @test hasproperty(mm, :faces)
+    @test propertynames(mm) == (:mesh, :meta, propertynames(m)...)
+
+    @test mm.vertex_attributes == getfield(m, :vertex_attributes)
+    @test mm.position == vertex_attributes(m)[:position]
+    @test mm.normal == vertex_attributes(m)[:normal]
+    @test mm.uv == vertex_attributes(m)[:uv]
+    @test mm.faces == getfield(m, :faces)
+
+    @test GeometryBasics.meta(mm) == mm.meta
+    @test Mesh(mm) === mm.mesh
 end
 
 @testset "mesh() constructors" begin
