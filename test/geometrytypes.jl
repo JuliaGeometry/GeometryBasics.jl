@@ -165,6 +165,22 @@ end
         end
 
         # TODO: test/check for Rect(::GeometryPrimitive) for all primitives
+        @testset "Boundingbox-like" begin
+            for constructor in [Rect, Rect{2}, Rect{2, Float32}, Rect3f]
+                @test constructor(Circle(Point2f(0), 1f0))              == constructor(Point2f(-1, -1), Vec2f(2, 2))
+                @test constructor(Rect2f(0, 0, 1, 1))                   == constructor(Point2f( 0,  0), Vec2f(1, 1))
+                m = GeometryBasics.mesh(Tessellation(Circle(Point2f(0), 1f0), 5))
+                @test constructor(m)                                     ≈ constructor(Point2f(-1, -1), Vec2f(2, 2))
+            end
+            for constructor in [Rect, Rect{3}, Rect{3, Float32}]
+                @test constructor(Sphere(Point3f(0), 1f0))                          == Rect3f(-1, -1, -1, 2, 2, 2)
+                @test constructor(Rect3f(0, 0, 0, 1, 1, 1))                         == Rect3f(0, 0, 0, 1, 1, 1)
+                @test constructor(Cylinder(Point3f(0, 0, -1), Point3f(0,0,1), 1f0))  ≈ Rect3f(-1, -1, -1, 2, 2, 2) atol = 0.05
+                @test constructor(Pyramid(Point3f(0, 0, -1), 2f0, 2f0))             == Rect3f(-1, -1, -1, 2, 2, 2)
+                m = GeometryBasics.mesh(Tessellation(Sphere(Point3f(0), 1f0), 5))
+                @test constructor(m)                                                 ≈ Rect3f(-1, -1, -1, 2, 2, 2)
+            end
+        end
     end
 
     # TODO: origin, minimum, maximum, width, height, widths, area, volume with empty constructed Rects

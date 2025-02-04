@@ -1,18 +1,40 @@
-function Rect(geometry::AbstractArray{<:Point{N,T}}) where {N,T}
-    return Rect{N,T}(geometry)
+# Boundingbox-like Rect constructors
+
+Rect(p::AbstractGeometry{N, T}) where {N, T} = Rect{N, T}(p)
+RectT{T}(p::AbstractGeometry{N}) where {N, T} = Rect{N, T}(p)
+Rect{N}(p::AbstractGeometry{_N, T}) where {N, _N, T} = Rect{N, T}(p)
+
+Rect(p::AbstractArray{<: VecTypes{N, T}}) where {N, T} = Rect{N, T}(p)
+RectT{T}(p::AbstractArray{<: VecTypes{N}}) where {N, T} = Rect{N, T}(p)
+Rect{N}(p::AbstractArray{<: VecTypes{_N, T}}) where {N, _N, T} = Rect{N, T}(p)
+
+# compat: bounding boxes also defined Rect{T} constructors
+# This is not really compatible with Rect{N}...
+# How do you even deprecate this?
+# @deprecate Rect{T}(x::AbstractGeometry) where {T <: Number} RectT{T}(x) where {T}
+# @deprecate Rect{T}(x::AbstractArray) where {T <: Number}    RectT{T}(x) where {T}
+
+# Implementations
+# Specialize fully typed Rect constructors
+Rect{N, T}(p::AbstractGeometry) where {N, T} = Rect{N, T}(coordinates(p))
+
+function bbox_dim_check(trg, src::Integer)
+    @assert trg isa Integer "Rect{$trg, $T1} is invalid. This may have happened due to calling Rect{$N1}(obj) to get a bounding box."
+    if trg < src
+        throw(ArgumentError("Cannot construct a $trg dimensional bounding box from $src dimensional Points. ($trg must be ≥ $src)"))
+    end
 end
 
 """
-    Rect(points::AbstractArray{<: Point})
+    Rect(points::AbstractArray{<: VecTypes})
 
 Construct a bounding box containing all the given points.
 """
-function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
-    N2, T2 = length(PT), eltype(PT)
-    @assert N1 >= N2
+function Rect{N1, T1}(points::AbstractArray{<: VecTypes{N2, T2}}) where {N1, T1, N2, T2}
+    bbox_dim_check(N1, N2)
     vmin = Point{N2,T2}(typemax(T2))
     vmax = Point{N2,T2}(typemin(T2))
-    for p in geometry
+    for p in points
         vmin, vmax = _minmax(p, vmin, vmax)
     end
     o = vmin
@@ -25,29 +47,25 @@ function Rect{N1,T1}(geometry::AbstractArray{PT}) where {N1,T1,PT<:Point}
     end
 end
 
+
 """
     Rect(primitive::GeometryPrimitive)
 
 Construct a bounding box for the given primitive.
 """
-function Rect(primitive::GeometryPrimitive{N,T}) where {N,T}
-    return Rect{N,T}(primitive)
-end
-
-function Rect{T}(primitive::GeometryPrimitive{N,T}) where {N,T}
-    return Rect{N,T}(primitive)
-end
-
-function Rect{T}(a::Pyramid) where {T}
-    w, h = a.width / T(2), a.length
+function Rect{N, T}(a::Pyramid) where {N, T}
+    bbox_dim_check(N, 3)
+    w, h = a.width, a.length
     m = Vec{3,T}(a.middle)
-    return Rect{T}(m .- Vec{3,T}(w, w, 0), m .+ Vec{3,T}(w, w, h))
+    return Rect{N, T}(m .- Vec{3,T}(w / T(2), w / T(2), 0), Vec{3,T}(w, w, h))
 end
 
-function Rect{T}(a::Sphere) where {T}
+function Rect{N, T}(a::HyperSphere) where {N, T}
     mini, maxi = extrema(a)
-    return Rect{T}(mini, maxi .- mini)
+    return Rect{N, T}(mini, maxi .- mini)
 end
 
-Rect{T}(a) where {T} = Rect{T}(coordinates(a))
-Rect{N,T}(a) where {N,T} = Rect{N,T}(coordinates(a))
+# TODO: exact implementation that doesn't rely on coordinates
+# function Rect{N, T}(a::Cylinder) where {N, T}
+#     return Rect{N, T}(...)
+# end

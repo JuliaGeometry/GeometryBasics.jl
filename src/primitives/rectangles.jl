@@ -118,13 +118,6 @@ Rect{3, T}(o::VecTypes{2}, w::VecTypes{3}) where {T} = Rect{3, T}(Vec(o..., 0), 
 Rect{3, T}(o::VecTypes{3}, w::VecTypes{2}) where {T} = Rect{3, T}(o,            Vec(w..., 0))
 Rect{3, T}(o::VecTypes{2}, w::VecTypes{2}) where {T} = Rect{3, T}(Vec(o..., 0), Vec(w..., 0))
 
-# Boundingbox-like constructors
-
-# Rect(r::GeometryPrimitive{N, T}) where {N, T} = Rect{N, T}(minimum(r), widths(r)) # in boundingboxes.jl
-RectT{T}(r::GeometryPrimitive{N}) where {N, T} = Rect{N, T}(minimum(r), widths(r))
-Rect{N}(r::GeometryPrimitive{_N, T}) where {N, _N, T} = Rect{N, T}(minimum(r), widths(r))
-Rect{N, T}(r::GeometryPrimitive) where {N, T} = Rect{N, T}(minimum(r), widths(r))
-
 # centered Rects
 
 centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
