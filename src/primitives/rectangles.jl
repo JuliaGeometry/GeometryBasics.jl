@@ -505,9 +505,11 @@ end
 #
 # Equality
 #
-Base.:(==)(b1::Rect, b2::Rect) = minimum(b1) == minimum(b2) && widths(b1) == widths(b2)
+Base.:(==)(b1::Rect, b2::Rect) = origin(b1) == origin(b2) && widths(b1) == widths(b2)
 
-Base.isequal(b1::Rect, b2::Rect) = b1 == b2
+function Base.isapprox(r1::Rect, r2::Rect; kwargs...)
+    return isapprox(origin(r1), origin(r2); kwargs...) && isapprox(widths(r1), widths(r2); kwargs...)
+end
 
 ##
 # Rect2 decomposition

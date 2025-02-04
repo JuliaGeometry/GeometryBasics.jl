@@ -467,16 +467,16 @@ end
         #       go higher dimensions than that.
         M = rand(Mat4f)
         ps = Point2f[M * Point(p..., 1, 1) for p in coordinates(r)]
-        @test Rect2f(ps) == M * r
+        @test Rect2f(ps) ≈ M * r
 
         M = Mat2f(0.5, -0.3, 0.7, 1.5)
         ps = Point2f[M * p for p in coordinates(r)]
-        @test Rect2f(ps) == M * r
+        @test Rect2f(ps) ≈ M * r
 
         r = Rect3f(-1, -2, -3, 2, 4, 1)
         M = rand(Mat4f)
         ps = Point3f[M * Point(p..., 1) for p in coordinates(r)]
-        @test Rect3f(ps) == M * r
+        @test Rect3f(ps) ≈ M * r
     end
 
     # TODO: this is effectively 0-indexed... should it be?
