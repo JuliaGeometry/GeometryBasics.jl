@@ -391,17 +391,6 @@ function expand_faceviews(mesh::Mesh)
 end
 
 function merge_vertex_indices(
-        faces::AbstractVector{FT}, args...
-    ) where {N, T, FT <: AbstractFace{N, T}}
-    if args[end] isa Integer
-        fs = tuple(faces, args[1:end-1]...)
-        return merge_vertex_indices(fs, args[end])
-    else
-        return merge_vertex_indices(tuple(faces, args...))
-    end
-end
-
-function merge_vertex_indices(
         faces::NTuple{N_Attrib, <: AbstractVector{FT}},
         vertex_index_counter::Integer = T(1)
     ) where {N, T, FT <: AbstractFace{N, T}, N_Attrib}
@@ -486,13 +475,13 @@ end
 
 
 function map_coordinates(f, mesh::Mesh)
-    result = copy(mesh)
+    result = deepcopy(mesh)
     map_coordinates!(f, result)
     return result
 end
 
 function map_coordinates(f, mesh::MetaMesh)
-    result = copy(Mesh(mesh))
+    result = deepcopy(Mesh(mesh))
     map_coordinates!(f, result)
     return MetaMesh(result, meta(mesh))
 end

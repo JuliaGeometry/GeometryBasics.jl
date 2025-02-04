@@ -54,7 +54,18 @@ end
     @test isempty(m2.views)
 end
 
-@testset "complex merge" begin
+@testset "Duplicate face removal" begin
+    fs = GLTriangleFace[(1,2,3), (2,3,4), (3,4,5), (1,2,3), (1,4,5)]
+    fs = [fs; fs]
+    new_fs = remove_duplicates(fs)
+    @test all(f -> f in GLTriangleFace[(1,2,3), (2,3,4), (3,4,5), (1,4,5)], new_fs)
+
+    fs = rand(QuadFace{Int32}, 4)
+    new_fs = remove_duplicates([fs; fs])
+    @test all(in(fs), new_fs)
+end
+
+@testset "complex merge + split" begin
     rects = [Rect3f(Point3f(x, y, z), Vec3f(0.5)) for x in -1:1 for y in -1:1 for z in -1:1]
     direct_meshes = map(rects) do r
         GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
@@ -264,6 +275,8 @@ end
         @test faces(m) isa Vector{GLTriangleFace}
         @test length(faces(m)) == 12
         @test GeometryBasics.facetype(m) == GLTriangleFace
+
+        @test normal_mesh(coordinates(m), faces(m)) == m
     end
 
     @testset "normal_uv_mesh()" begin
@@ -372,4 +385,21 @@ end
         @test length(faces(m2)) == 12
 
     end
+end
+
+@testset "map_coordinates" begin
+    m = GeometryBasics.mesh(Rect3f(0,0,0,1,1,1))
+    m2 = GeometryBasics.map_coordinates(p -> 2 * p, m)
+    @test m !== m2
+    @test 2 * coordinates(m) == coordinates(m2)
+
+    m3 = GeometryBasics.map_coordinates!(p -> 0.5 * p, m2)
+    @test m3 === m2
+    @test coordinates(m) == coordinates(m3)
+
+    m = MetaMesh(GeometryBasics.mesh(Rect3f(0,0,0,1,1,1)), meta = "test")
+    m2 = GeometryBasics.map_coordinates(p -> 2 * p, m)
+    @test m !== m2
+    @test 2 * coordinates(m) == coordinates(m2)
+    @test GeometryBasics.meta(m) == GeometryBasics.meta(m2)
 end
