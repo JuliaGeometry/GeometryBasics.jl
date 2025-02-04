@@ -70,6 +70,9 @@ end
     @test !allunique([idx for f in faces(dm) for idx in f])
     @test !allunique([idx for f in faces(dm.normal) for idx in f])
 
+    split_meshes = split_mesh(dm)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, direct_meshes))
+
     indirect_meshes = map(rects) do r
         m = GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
         # Also testing merge of meshes with views
@@ -80,6 +83,9 @@ end
 
     @test im == dm
     @test GeometryBasics.facetype(im) == QuadFace{Int64}
+
+    split_meshes = split_mesh(im)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, indirect_meshes))
 
     converted_meshes = map(rects) do r
         m = GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
@@ -95,6 +101,8 @@ end
     @test coordinates(cm) isa Vector
     @test allunique([idx for f in faces(cm) for idx in f])
 
+    split_meshes = split_mesh(cm)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, converted_meshes))
 
     mixed_meshes = map(direct_meshes, indirect_meshes, converted_meshes) do dm, im, cm
         rand((dm, im, cm)) # (with FaceView, with mesh.views & FaceView, w/o FaceView)
