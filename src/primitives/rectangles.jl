@@ -105,12 +105,12 @@ RectT{  T}(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number}) where {T} 
 Rect{3   }(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number})           = Rect{3   }(Vec(x, y, z), w)
 Rect{3, T}(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number}) where {T} = Rect{3, T}(Vec(x, y, z), w)
 
-# copy constructors
+# copy constructors (allow explicit truncation)
 
-      Rect(r::Rect{N, T}) where {N, T} = Rect{N, T}(origin(r), widths(r))
-RectT{  T}(r::Rect{N})    where {N, T} = Rect{N, T}(origin(r), widths(r))
-Rect{N   }(r::Rect{N, T}) where {N, T} = Rect{N, T}(origin(r), widths(r))
-Rect{N, T}(r::Rect{N})    where {N, T} = Rect{N, T}(origin(r), widths(r))
+      Rect(r::Rect{N, T}) where {N, T}      = Rect{N, T}(origin(r), widths(r))
+RectT{  T}(r::Rect{N})    where {N, T}      = Rect{N, T}(origin(r), widths(r))
+Rect{N   }(r::Rect{_N, T}) where {N, _N, T} = Rect{N, T}(Vec{N, T}(origin(r)), Vec{N, T}(widths(r)))
+Rect{N, T}(r::Rect)       where {N, T}      = Rect{N, T}(Vec{N, T}(origin(r)), Vec{N, T}(widths(r)))
 
 # dimensional promotion
 
