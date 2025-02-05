@@ -312,21 +312,23 @@ end
     x = OffsetInteger{0}(1)
     @test typeof(x) == OffsetInteger{0,Int}
 
-    x1 = OffsetInteger{0}(2)
-    x2 = 1
-    @test Base.to_index(x1) == 2
-    @test -(x1)    == OffsetInteger{0,Int}(-2)
-    @test abs(x1)  == OffsetInteger{0,Int}(2)
-    @test +(x, x1) == OffsetInteger{0,Int}(3)
-    @test *(x, x1) == OffsetInteger{0,Int}(2)
-    @test -(x, x1) == OffsetInteger{0,Int}(-1)
-    #test for /
-    @test div(x, x1) == OffsetInteger{0,Int}(0)
-    @test !==(x, x1)
-    @test !>=(x, x1)
-    @test <=(x, x1)
-    @test !>(x, x1)
-    @test <(x, x1)
+    for x1 in [OffsetInteger{0}(2), 2, 0x02]
+        @test Base.to_index(x1) == 2
+        @test -(x1)    == OffsetInteger{0,Int}(-2)
+        @test abs(x1)  == OffsetInteger{0,Int}(2)
+        for x in [OffsetInteger{0}(1), 1, 0x01]
+            @test +(x, x1) == OffsetInteger{0,Int}(3)
+            @test *(x, x1) == OffsetInteger{0,Int}(2)
+            @test -(x, x1) == OffsetInteger{0,Int}(-1)
+            #test for /
+            @test div(x, x1) == OffsetInteger{0,Int}(0)
+            @test !==(x, x1)
+            @test !>=(x, x1)
+            @test <=(x, x1)
+            @test !>(x, x1)
+            @test <(x, x1)
+        end
+    end
 end
 
 @testset "Tests from GeometryTypes" begin
