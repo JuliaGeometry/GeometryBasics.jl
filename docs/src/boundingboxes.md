@@ -23,9 +23,9 @@ All other methods funnel into that one, defaulting to the same `N, T` that the g
 GeometryBasics allows the user given dimension `N` to be smaller or equal to that of the geometry.
 This is checked with `GeometryBasics.bbox_dim_check(user_dim, geom_dim)` which you may reuse.
 
-```@example
+```julia
 function Rect{N, T}(a::HyperSphere{N2}) where {N, N2, T}
-    bbox_dim_check(N, N2)
+    GeometryBasics.bbox_dim_check(N, N2)
     return Rect{N, T}(minimum(a), widths(a))
 end
 ```
