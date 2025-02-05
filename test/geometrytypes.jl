@@ -317,12 +317,39 @@ end
     face_target = TriangleFace{Int}[[1, 2, 5], [1, 5, 4], [2, 3, 6], [2, 6, 5], [4, 5, 8],
                                     [4, 8, 7], [5, 6, 9], [5, 9, 8]]
     @test f == face_target
+
+    uv = decompose_uv(Tesselation(sphere, 3))
+    uv_target = Vec{2, Float32}[[0.0, 1.0], [0.0, 0.5], [0.0, 0.0], [0.5, 1.0], [0.5, 0.5],
+                                [0.5, 0.0], [1.0, 1.0], [1.0, 0.5], [1.0, 0.0]]
+    @test uv == uv_target
+
+    @test minimum(sphere) == Point3f(-1)
+    @test maximum(sphere) == Point3f(1)
+    @test origin(sphere) == Point3f(0)
+    @test widths(sphere) == Vec3f(2)
+    @test radius(sphere) == 1f0
+    @test !(Point3f(1) in sphere)
+    @test Point3f(0.5) in sphere
+    @test centered(HyperSphere) == Sphere(Point3f(0), 0.5f0)
+    @test centered(Sphere) == Sphere(Point3f(0), 0.5f0)
+    @test centered(Sphere{Float64}) == Sphere(Point3(0.0), 0.5)
+
     circle = Circle(Point2f(0), 1.0f0)
     points = decompose(Point2f, Tessellation(circle, 20))
     @test length(points) == 20
     tess_circle = Tessellation(circle, 32)
     mesh = triangle_mesh(tess_circle)
     @test decompose(Point2f, mesh) ≈ decompose(Point2f, tess_circle)
+
+    @test minimum(circle) == Point2f(-1)
+    @test maximum(circle) == Point2f(1)
+    @test origin(circle) == Point2f(0)
+    @test widths(circle) == Vec2f(2)
+    @test radius(circle) == 1f0
+    @test !(Point2f(-1) in circle)
+    @test Point2f(-0.5) in circle
+    @test centered(Circle) == Circle(Point2f(0), 0.5f0)
+    @test centered(Circle{Float64}) == Circle(Point2(0.0), 0.5)
 end
 
 @testset "Rectangles" begin
