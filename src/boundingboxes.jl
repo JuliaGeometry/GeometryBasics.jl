@@ -2,21 +2,22 @@
 
 Rect(p::AbstractGeometry{N, T}) where {N, T} = Rect{N, T}(p)
 RectT{T}(p::AbstractGeometry{N}) where {N, T} = Rect{N, T}(p)
-Rect{N}(p::AbstractGeometry{_N, T}) where {N, _N, T} = Rect{N, T}(p)
+Rect{N}(p::AbstractGeometry{_N, T}) where {N <: Val, _N, T} = Rect{N, T}(p)
 
 Rect(p::AbstractArray{<: VecTypes{N, T}}) where {N, T} = Rect{N, T}(p)
 RectT{T}(p::AbstractArray{<: VecTypes{N}}) where {N, T} = Rect{N, T}(p)
 Rect{N}(p::AbstractArray{<: VecTypes{_N, T}}) where {N, _N, T} = Rect{N, T}(p)
 
-# compat: bounding boxes also defined Rect{T} constructors
-# This is not really compatible with Rect{N}...
-# How do you even deprecate this?
-# @deprecate Rect{T}(x::AbstractGeometry) where {T <: Number} RectT{T}(x) where {T}
-# @deprecate Rect{T}(x::AbstractArray) where {T <: Number}    RectT{T}(x) where {T}
-
 # Implementations
 # Specialize fully typed Rect constructors
-Rect{N, T}(p::AbstractGeometry) where {N, T} = Rect{N, T}(coordinates(p))
+function Rect{N, T}(geom::AbstractGeometry) where {N, T <: Number}
+    if applicable(Rect{T}, geom)
+        @warn "`Rect{T}(geom)` is deprecated as the final boundingbox method. Define `Rect{N, T}(geom)` instead."
+        return Rect{T}(geom)
+    else
+        return Rect{N, T}(coordinates(geom))
+    end
+end
 
 function bbox_dim_check(trg, src::Integer)
     @assert trg isa Integer "Rect{$trg, $T1} is invalid. This may have happened due to calling Rect{$N1}(obj) to get a bounding box."
