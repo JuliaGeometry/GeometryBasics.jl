@@ -13,8 +13,9 @@ makedocs(format=Documenter.HTML(prettyurls=get(ENV, "CI", "false") == "true"),
                 "polygons.md",
                 "meshes.md",
                 "decomposition.md",
+                "boundingboxes.md",
                 "static_array_types.md",
-                "api.md"
+                "api.md",
                ],
          modules=[GeometryBasics])
 

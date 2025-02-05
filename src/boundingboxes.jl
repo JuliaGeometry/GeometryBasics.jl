@@ -60,9 +60,9 @@ function Rect{N, T}(a::Pyramid) where {N, T}
     return Rect{N, T}(m .- Vec{3,T}(w / T(2), w / T(2), 0), Vec{3,T}(w, w, h))
 end
 
-function Rect{N, T}(a::HyperSphere) where {N, T}
-    mini, maxi = extrema(a)
-    return Rect{N, T}(mini, maxi .- mini)
+function Rect{N, T}(a::HyperSphere{N2}) where {N, N2, T}
+    bbox_dim_check(N, N2)
+    return Rect{N, T}(minimum(a), widths(a))
 end
 
 # TODO: exact implementation that doesn't rely on coordinates
