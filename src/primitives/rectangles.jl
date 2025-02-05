@@ -109,8 +109,8 @@ Rect{3, T}(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number}) where {T} 
 
       Rect(r::Rect{N, T}) where {N, T}      = Rect{N, T}(origin(r), widths(r))
 RectT{  T}(r::Rect{N})    where {N, T}      = Rect{N, T}(origin(r), widths(r))
-Rect{N   }(r::Rect{_N, T}) where {N, _N, T} = Rect{N, T}(Vec{N, T}(origin(r)), Vec{N, T}(widths(r)))
-Rect{N, T}(r::Rect)       where {N, T}      = Rect{N, T}(Vec{N, T}(origin(r)), Vec{N, T}(widths(r)))
+Rect{N   }(r::Rect{N2, T}) where {N, N2, T} = Rect{N, T}(Vec{min(N, N2), T}(origin(r)), Vec{min(N, N2), T}(widths(r)))
+Rect{N, T}(r::Rect{N2})    where {N, N2, T} = Rect{N, T}(Vec{min(N, N2), T}(origin(r)), Vec{min(N, N2), T}(widths(r)))
 
 # dimensional promotion
 
