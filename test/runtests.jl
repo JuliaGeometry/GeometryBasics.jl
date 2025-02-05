@@ -258,6 +258,8 @@ end
         found, point = intersects(d, e)
         @test found && point ≈ Point(0.0, 4.0)
         @test intersects(a, f) === (false, Point(0.0, 0.0))
+        @test intersects(a, d) === (true, Point(0.0, 0.0))
+        @test intersects(a, d, eps = 1e-6) === (false, Point(0.0, 0.0))
 
         # issue #168
         # If these tests fail then you can increase the tolerance on the checks so
@@ -273,6 +275,28 @@ end
         @test b
         @test loc ≈ Point(5760.0, 127.27922061357884)
     end
+
+    ps = [Point2f(1), Point2f(2)]
+    @test GeometryBasics.simple_concat(ps, 2:2, Point2f(3)) == [Point2f(2), Point2f(3)]
+    ps = [Point2f(i) for i in 1:4]
+    @test collect(GeometryBasics.consecutive_pairs(ps)) == collect(zip(ps[1:end-1], ps[2:end]))
+
+    ps = Point2f[(0,0), (1,0), (0,1), (1,2), (0,2), (1,1), (0,0)]
+    idxs, ips = self_intersections(ps)
+    @test idxs == [(2, 6), (3, 5)]
+    @test ips == [Point2f(0.5), Point2f(0.5, 1.5)]
+
+    ps = [Point2f(cos(x), sin(x)) for x in 0:4pi/5:4pi+0.1]
+    idxs, ips = self_intersections(ps)
+    @test idxs == [(1, 3), (1, 4), (2, 4), (2, 5), (3, 5)]
+    @test all(ips .≈ Point2f[(0.30901694, 0.2245140), (-0.118034005, 0.36327127), (-0.38196602, 0), (-0.118033946, -0.3632713), (0.309017, -0.22451389)])
+
+    @test_throws ErrorException split_intersections(ps)
+    ps = Point2f[(0,0), (1,0), (0,1), (1,1), (0, 0)]
+    idxs, ips = self_intersections(ps)
+    sps = split_intersections(ps)
+    @test sps[1] == [ps[3], ps[4], ips[1]]
+    @test sps[2] == [ps[5], ps[1], ps[2], ips[1]]
 end
 
 
