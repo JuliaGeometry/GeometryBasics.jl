@@ -15,7 +15,7 @@
         p2 = Polygon(OffsetArray(exterior, 0), interiors)
         @test p2 == p1
 
-        # TODO: promote polygon type automatically
+        # TODO: promote polygon type automatically when creating MultiPolygon
         polygon = Polygon(Point2f.(points))
         mp = MultiPolygon([polygon, p1, p2])
         @test mp.polygons == [polygon, p1, p2]

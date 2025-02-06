@@ -164,7 +164,6 @@ end
             end
         end
 
-        # TODO: test/check for Rect(::GeometryPrimitive) for all primitives
         @testset "Boundingbox-like" begin
             for constructor in [Rect, Rect{2}, Rect{2, Float32}, Rect3f]
                 @test constructor(Circle(Point2f(0), 1f0))              == constructor(Point2f(-1, -1), Vec2f(2, 2))
@@ -183,18 +182,45 @@ end
         end
     end
 
-    # TODO: origin, minimum, maximum, width, height, widths, area, volume with empty constructed Rects
+    # TODO: These don't really make sense...
+    r = Rect2f()
+    @test origin(r) == Vec(Inf, Inf)
+    @test minimum(r) == Vec(Inf, Inf)
+    @test isnan(maximum(r))
+    @test width(r) == -Inf
+    @test height(r) == -Inf
+    @test widths(r) == Vec(-Inf, -Inf)
+    @test area(r) == Inf
+    @test volume(r) == Inf
 
-    a = Rect(Vec(0, 0), Vec(1, 1))
-    pt_expa = Point{2,Int}[(0, 0), (1, 0), (1, 1), (0, 1)]
+    a = Rect(Vec(0, 1), Vec(2, 3))
+    pt_expa = Point{2,Int}[(0, 1), (2, 1), (2, 4), (0, 4)]
     @test decompose(Point{2,Int}, a) == pt_expa
     mesh = normal_mesh(a)
     @test decompose(Point2f, mesh) == pt_expa
 
-    b = Rect(Vec(1, 1, 1), Vec(1, 1, 1))
-    pt_expb = Point{3,Int64}[[1, 1, 1], [1, 1, 2], [1, 2, 1], [1, 2, 2],
-                            [2, 1, 1], [2, 1, 2], [2, 2, 1], [2, 2, 2]]
+    @test origin(a) == Vec(0,1)
+    @test minimum(a) == Vec(0,1)
+    @test maximum(a) == Vec(2,4)
+    @test width(a) == 2
+    @test height(a) == 3
+    @test widths(a) == Vec(2,3)
+    @test area(a) == 2*3
+    @test volume(a) == 2*3
+
+    b = Rect(Vec(1, 2, 3), Vec(4, 5, 6))
+    pt_expb = Point{3, Int64}[[1, 2, 3], [1, 2, 9], [1, 7, 3], [1, 7, 9],
+                              [5, 2, 3], [5, 2, 9], [5, 7, 3], [5, 7, 9]]
     @test decompose(Point{3,Int}, b) == pt_expb
+
+    @test origin(b) == Vec(1,2,3)
+    @test minimum(b) == Vec(1,2,3)
+    @test maximum(b) == Vec(5,7,9)
+    @test width(b) == 4
+    @test height(b) == 5
+    @test widths(b) == Vec(4,5,6)
+    @test_throws MethodError area(b)
+    @test volume(b) == 4*5*6
 
     mesh = normal_mesh(b)
     @test faces(mesh) == GLTriangleFace[
