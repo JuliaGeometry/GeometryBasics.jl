@@ -3,7 +3,7 @@
         points = connect([1, 2, 3, 4, 5, 6], Point2f)
         @test points isa Vector{Point2f}
         points = connect([1, 2, 3, 4, 5, 6], Point2)
-        @test points isa Vector{Point2i}
+        @test points isa Vector{Point2{Int}}
         polygon = Polygon(points)
         @test polygon == Polygon(points)
         @test polygon == copy(polygon)
