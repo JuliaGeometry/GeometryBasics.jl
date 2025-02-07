@@ -73,15 +73,25 @@ function connect(points::AbstractVector{Point},
 end
 
 function connect(points::AbstractVector{T}, ::Type{<:Point{N}}, skip::Int=N) where {T <: Real,N}
+    return connect(points, Point{N, T}, skip)
+end
+function connect(points::AbstractVector{_T}, ::Type{<:Point{N, T}}, skip::Int=N) where {T <: Real, N, _T <: Real}
     return map(Point{N,T}, TupleView{N,skip}(points))
 end
 
 function connect(indices::AbstractVector{T}, P::Type{<:AbstractFace{N}},
                          skip::Int=N) where {T <: Integer, N}
+    return connect(indices, Face(P, T), skip)
+end
+function connect(indices::AbstractVector{_T}, P::Type{<:AbstractFace{N, T}},
+                         skip::Int=N) where {T <: Integer, N, _T <: Integer}
     return collect(reinterpret(Face(P, T), TupleView{N, skip}(indices)))
 end
 
-function connect(points::AbstractMatrix{T}, P::Type{<:Point{N}}) where {T <: Real, N}
+function connect(points::AbstractMatrix{T}, ::Type{<:Point{N}}) where {T <: Real, N}
+    return connect(points, Point{N, T})
+end
+function connect(points::AbstractMatrix{_T}, P::Type{Point{N, T}}) where {T <: Real, N, _T <: Real}
     return if size(points, 1) === N
         return reinterpret(Point{N,T}, points)
     elseif size(points, 2) === N

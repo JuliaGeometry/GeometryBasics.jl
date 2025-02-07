@@ -1,6 +1,9 @@
 @testset "Polygon" begin
     @testset "Constructors" begin
         points = connect([1, 2, 3, 4, 5, 6], Point2f)
+        @test points isa Vector{Point2f}
+        points = connect([1, 2, 3, 4, 5, 6], Point2)
+        @test points isa Vector{Point2i}
         polygon = Polygon(points)
         @test polygon == Polygon(points)
         @test polygon == copy(polygon)
@@ -23,8 +26,7 @@
         @test size(mp) == (3,) # TODO: What does size even mean here?
         @test length(mp) == 3
         @test MultiPolygon(OffsetArray([polygon, p1, p2], 0)) == mp
-        mp = MultiPolygon([Polygon(Point2f.()), p1, p2])
-
+        @test MultiPolygon([Polygon(Point2f.(points)), p1, p2]) == mp
     end
 
     rect = Rect2f(0, 0, 1, 1)
