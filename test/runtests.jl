@@ -80,11 +80,14 @@ end
     @testset "connected views" begin
         numbers = [1, 2, 3, 4, 5, 6]
         x = connect(numbers, Point{2})
-
-        @test x == Point[(1, 2), (3, 4), (5, 6)]
+        @test x == Point{2, Int}[(1, 2), (3, 4), (5, 6)]
+        xf = connect(numbers, Point2f)
+        @test xf == Point2f[(1, 2), (3, 4), (5, 6)]
 
         line = connect(x, Line, 1)
-        @test line == [Line(Point(1, 2), Point(3, 4)), Line(Point(3, 4), Point(5, 6))]
+        @test line == [Line(Point{2, Int}(1, 2), Point{2, Int}(3, 4)), Line(Point{2, Int}(3, 4), Point{2, Int}(5, 6))]
+        linef = connect(xf, Line, 1)
+        @test linef == [Line(Point2f(1, 2), Point2f(3, 4)), Line(Point2f(3, 4), Point2f(5, 6))]
 
         triangles = connect(x, Triangle)
         @test triangles == [Triangle(Point(1, 2), Point(3, 4), Point(5, 6))]
