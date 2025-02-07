@@ -15,8 +15,7 @@
         p2 = Polygon(OffsetArray(exterior, 0), interiors)
         @test p2 == p1
 
-        # TODO: promote polygon type automatically when creating MultiPolygon
-        polygon = Polygon(Point2f.(points))
+        polygon = Polygon(points)
         mp = MultiPolygon([polygon, p1, p2])
         @test mp.polygons == [polygon, p1, p2]
         @test mp[1] == polygon
@@ -24,6 +23,8 @@
         @test size(mp) == (3,) # TODO: What does size even mean here?
         @test length(mp) == 3
         @test MultiPolygon(OffsetArray([polygon, p1, p2], 0)) == mp
+        mp = MultiPolygon([Polygon(Point2f.()), p1, p2])
+
     end
 
     rect = Rect2f(0, 0, 1, 1)

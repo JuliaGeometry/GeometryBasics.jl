@@ -321,6 +321,17 @@ function coordinates(polygon::Polygon{N,T}) where {N,T}
     end
 end
 
+function Base.promote_rule(::Type{Polygon{N, T1}}, ::Type{Polygon{N, T2}}) where {N, T1, T2}
+    return Polygon{N, promote_rule(T1, T2)}
+end
+
+function Base.convert(::Type{Polygon{N, T}}, poly::Polygon{N}) where {N, T}
+    return Polygon(
+        convert(Vector{Point{N, T}}, poly.exterior),
+        convert(Vector{Vector{Point{N, T}}}, poly.interiors),
+    )
+end
+
 """
     MultiPolygon(polygons::AbstractPolygon)
 
@@ -332,6 +343,10 @@ end
 
 function MultiPolygon(polygons::AbstractVector{<:AbstractPolygon{Dim,T}}) where {Dim,T}
     return MultiPolygon(convert(Vector{eltype(polygons)}, polygons))
+end
+function MultiPolygon(polygons::AbstractVector{<:AbstractPolygon{Dim}}) where {Dim}
+    T = reduce(promote_type, typeof.(polygons), init = eltype(polygons))
+    return MultiPolygon(convert(Vector{T}, polygons))
 end
 
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
