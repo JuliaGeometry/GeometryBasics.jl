@@ -190,6 +190,11 @@ end
                 @test constructor(m)                                                 ≈ Rect3f(-1, -1, -1, 2, 2, 2)
             end
         end
+
+        r = Rect2f(10, 10, -5, -5)
+        @test origin(r) == Point2f(5)
+        @test widths(r) == Vec2f(5)
+        @test maximum(r) == Point2f(10)
     end
 
     r = Rect2f()

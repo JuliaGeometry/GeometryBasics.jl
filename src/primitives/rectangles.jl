@@ -9,6 +9,10 @@ Formally it is the Cartesian product of intervals, which is represented by the
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
     origin::Vec{N,T}
     widths::Vec{N,T}
+
+    function HyperRectangle{N, T}(origin::VecTypes, widths::VecTypes) where {N, T}
+        return new{N, T}(Vec{N, T}(min.(origin, origin .+ widths)), Vec{N, T}(abs.(widths)))
+    end
 end
 
 ##
@@ -288,12 +292,7 @@ end
 #     return vmin, vmax
 # end
 
-function positive_widths(rect::Rect{N,T}) where {N,T}
-    mini, maxi = minimum(rect), maximum(rect)
-    realmin = min.(mini, maxi)
-    realmax = max.(mini, maxi)
-    return Rect{N,T}(realmin, realmax .- realmin)
-end
+positive_widths(rect::Rect{N,T}) where {N,T} = rect
 
 ###
 # set operations
