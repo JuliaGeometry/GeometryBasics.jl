@@ -56,10 +56,9 @@ Rect() = Rect{2,Float32}()
 RectT{T}() where {T} = Rect{2,T}()
 Rect{N}() where {N} = Rect{N,Float32}()
 
-function Rect{N,T}() where {T,N}
-    # empty constructor such that update will always include the first point
-    return Rect{N,T}(Vec{N,T}(typemax(T)), Vec{N,T}(typemin(T)))
-end
+Rect{N,T}() where {T <: AbstractFloat,N} = Rect{N,T}(Vec{N,T}(NaN), Vec{N,T}(0))
+Rect{N,T}() where {T, N} = throw(MethodError(Rect{N,T}, tuple()))
+# TODO: what about integers and other types? No reasonable default?
 
 # Rect(numbers...)
 Rect(args::Vararg{Number, N}) where {N} = Rect{div(N, 2), promote_type(typeof.(args)...)}(args...)
@@ -302,9 +301,10 @@ end
 """
     isempty(h::Rect)
 
-Return `true` if any of the widths of `h` are negative.
+Return `true` if any of the widths of `h` are zero or negative.
 """
-Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
+Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
+Base.isnan(r::Rect) = isnan(origin(r)) || isnan(widths(r))
 
 """
     union(r1::Rect{N}, r2::Rect{N})
@@ -312,6 +312,8 @@ Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
 Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
+    isnan(h1) && return h2
+    isnan(h2) && return h1
     m = min.(minimum(h1), minimum(h2))
     mm = max.(maximum(h1), maximum(h2))
     return Rect{N}(m, mm - m)
@@ -332,6 +334,7 @@ end
 Perform a intersection between two Rects.
 """
 function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
+    isnan(h1) || isnan(h2) && return Rect{N}()
     m = max.(minimum(h1), minimum(h2))
     mm = min.(maximum(h1), maximum(h2))
     return Rect{N}(m, mm - m)
@@ -342,6 +345,8 @@ function update(b::Rect{N,T}, v::VecTypes{N,T2}) where {N,T,T2}
 end
 
 function update(b::Rect{N,T}, v::VecTypes{N,T}) where {N,T}
+    isnan(b) && return Rect{N, T}(v, Vec{N, T}(0))
+
     m = min.(minimum(b), v)
     maxi = maximum(b)
     mm = if any(isnan, maxi)

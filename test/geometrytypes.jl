@@ -78,25 +78,35 @@ end
 
 @testset "HyperRectangles" begin
     @testset "Constructors" begin
-        # TODO: Do these actually make sense?
-        # Should they not be Rect(NaN..., 0...)?
         @testset "Empty Constructors" begin
-            for constructor in [Rect, Rect{2}, Rect2, RectT, Rect2f]
-                @test constructor() == Rect{2, Float32}(Inf, Inf, -Inf, -Inf)
-            end
-            for constructor in [Rect{3}, Rect3, Rect3f]
-                @test constructor() == Rect{3, Float32}((Inf, Inf, Inf), (-Inf, -Inf, -Inf))
+            function nan_equal(r1::Rect, r2::Rect)
+                o1 = origin(r1); o2 = origin(r2)
+                return ((isnan(o1) && isnan(o2)) || (o1 == o2)) && (widths(r1) == widths(r2))
             end
 
-            for T in [UInt32, Int16, Float64]
+            for constructor in [Rect, Rect{2}, Rect2, RectT, Rect2f]
+                @test nan_equal(constructor(), Rect{2, Float32}(NaN, NaN, 0, 0))
+            end
+            for constructor in [Rect{3}, Rect3, Rect3f]
+                @test nan_equal(constructor(), Rect{3, Float32}((NaN, NaN, NaN), (0, 0, 0)))
+            end
+
+            for T in [UInt32, Int16]
                 a = typemax(T)
                 b = typemin(T)
                 for constructor in [Rect{2, T}, Rect2{T}, RectT{T, 2}]
-                    @test constructor() == Rect{2, T}(a, a, b, b)
+                    @test_throws MethodError constructor()
                 end
                 for constructor in [Rect{3, T}, Rect3{T}, RectT{T, 3}]
-                    @test constructor() == Rect{3, T}(Point(a, a, a), Vec(b, b, b))
+                    @test_throws MethodError constructor()
                 end
+            end
+
+            for constructor in [Rect{2, Float64}, Rect2{Float64}, RectT{Float64, 2}]
+                @test nan_equal(constructor(), Rect{2, Float64}(NaN, NaN, 0, 0))
+            end
+            for constructor in [Rect{3, Float64}, Rect3{Float64}, RectT{Float64, 3}]
+                @test nan_equal(constructor(), Rect{3, Float64}(Point3(NaN), Vec3(0)))
             end
         end
 
@@ -182,19 +192,17 @@ end
         end
     end
 
-    # TODO: These don't really make sense...
     r = Rect2f()
-    @test origin(r) == Vec(Inf, Inf)
-    @test minimum(r) == Vec(Inf, Inf)
+    @test isnan(origin(r))
+    @test isnan(minimum(r))
     @test isnan(maximum(r))
-    @test width(r) == -Inf
-    @test height(r) == -Inf
-    @test widths(r) == Vec(-Inf, -Inf)
-    @test area(r) == Inf
-    @test volume(r) == Inf
-    # TODO: broken? returns NaN widths
-    # @test union(r, Rect2f(1,1,2,2)) == Rect2f(1,1,2,2)
-    # @test union(Rect2f(1,1,2,2), r) == Rect2f(1,1,2,2)
+    @test width(r) == 0
+    @test height(r) == 0
+    @test widths(r) == Vec2(0)
+    @test area(r) == 0
+    @test volume(r) == 0
+    @test union(r, Rect2f(1,1,2,2)) == Rect2f(1,1,2,2)
+    @test union(Rect2f(1,1,2,2), r) == Rect2f(1,1,2,2)
     @test update(r, Vec2f(1,1)) == Rect2f(1,1,0,0)
 
     a = Rect(Vec(0, 1), Vec(2, 3))
