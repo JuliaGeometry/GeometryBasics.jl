@@ -758,6 +758,12 @@ function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
     return Mesh(points, connect(faces, facetype, skip))
 end
 
+# the method above allows Mesh(..., Face(...), ...) to work, but produces bad results
+# explicitly error here
+function Mesh(points::AbstractVector{<:Point}, faces::AbstractFace, args...; kwargs...)
+    throw(MethodError(Mesh, (points, faces, args...)))
+end
+
 function Mesh(; kwargs...)
     fs = faces(kwargs[:position]::FaceView)
     va = NamedTuple{keys(kwargs)}(map(keys(kwargs)) do k

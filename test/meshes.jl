@@ -31,6 +31,8 @@ end
 @testset "Merge empty vector of meshes" begin
     # https://github.com/JuliaGeometry/GeometryBasics.jl/issues/136
     merge(Mesh[]) == Mesh(Point3f[], GLTriangleFace[])
+    merge([Mesh(Point3f[], GLTriangleFace[])]) == Mesh(Point3f[], GLTriangleFace[])
+    merge([Mesh(Point3f[], GLTriangleFace[]), Mesh(Point3f[], GLTriangleFace[])]) == Mesh(Point3f[], GLTriangleFace[])
 end
 
 @testset "Vertex Index Remapping" begin
@@ -137,6 +139,8 @@ end
         @test normals(m) == ns
         @test faces(m) == fs
     end
+
+    @test_throws MethodError Mesh(Point2f[], GLTriangleFace(1,2,3))
 
     @testset "Verification" begin
         # enough vertices present
