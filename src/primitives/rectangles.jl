@@ -48,6 +48,10 @@ const Recti{N} = Rect{N,Int}
 const Rect2i = Rect2{Int}
 const Rect3i = Rect3{Int}
 
+
+# Constructors
+
+
 Rect() = Rect{2,Float32}()
 RectT{T}() where {T} = Rect{2,T}()
 Rect{N}() where {N} = Rect{N,Float32}()
@@ -57,116 +61,83 @@ function Rect{N,T}() where {T,N}
     return Rect{N,T}(Vec{N,T}(typemax(T)), Vec{N,T}(typemin(T)))
 end
 
-# conversion from other Rects
-function Rect{N,T1}(a::Rect{N,T2}) where {N,T1,T2}
-    return Rect(Vec{N,T1}(minimum(a)), Vec{N,T1}(widths(a)))
-end
-
-function Rect(v1::VecTypes{N,T1}, v2::VecTypes{N,T2}) where {N,T1,T2}
-    T = promote_type(T1, T2)
-    return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
-end
-
-function RectT{T}(v1::VecTypes{N}, v2::VecTypes{N}) where {N,T}
-    return if T <: Integer
-        Rect{N,T}(round.(T, v1), round.(T, v2))
-    else
-        return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
-    end
-end
-
-function Rect{N}(v1::VecTypes{N}, v2::VecTypes{N}) where {N}
-    T = promote_type(eltype(v1), eltype(v2))
-    return Rect{N,T}(Vec{N,T}(v1), Vec{N,T}(v2))
-end
+# Rect(numbers...)
+Rect(args::Vararg{Number, N}) where {N} = Rect{div(N, 2), promote_type(typeof.(args)...)}(args...)
+RectT{T}(args::Vararg{Number, N}) where {N, T} = Rect{div(N, 2), T}(args...)
+Rect{N}(args::Vararg{Number}) where {N} = Rect{N, promote_type(typeof.(args)...)}(args...)
 
 """
     Rect(vals::Number...)
 
-```
-Rect(vals::Number...)
-```
 Rect constructor for individually specified intervals.
 e.g. Rect(0,0,1,2) has origin == Vec(0,0) and
 width == Vec(1,2)
 """
-function Rect(vals::Vararg{Number, N}) where {N}
-    M, r = fldmod(N, 2)
-    (r == 0) || throw(ArgumentError("number of arguments must be even"))
-    origin, widths = ntuple(i -> vals[i], M), ntuple(i -> vals[i+M], M)
-    return Rect(Vec(origin), Vec(widths))
+function Rect{N, T}(vals::Vararg{Number, M}) where {N, M, T}
+    n, r = fldmod(M, 2)
+    if r != 0 || n != N
+        throw(ArgumentError("Number of arguments must be compatible with given or derived Rect size. Got $M arguments for a Rect{$N} expecting $(2 * N)."))
+    end
+    origin, widths = ntuple(i -> vals[i], N), ntuple(i -> vals[i+N], N)
+    return Rect{N, T}(Vec(origin), Vec(widths))
 end
 
-Rect3(a::Vararg{Number,6}) = Rect3(Vec{3}(a[1], a[2], a[3]), Vec{3}(a[4], a[5], a[6]))
-Rect3(args::Vararg{Number,4}) = Rect3(Rect{2}(args...))
-#=
-From different args
-=#
-function (Rect)(args::Vararg{Number,4})
-    args_prom = promote(args...)
-    return Rect2{typeof(args_prom[1])}(args_prom...)
-end
+# VecTypes
 
-function (Rect2)(args::Vararg{Number,4})
-    args_prom = promote(args...)
-    return Rect2{typeof(args_prom[1])}(args_prom...)
-end
+     Rect(o::VecTypes{N, T1}, w::VecTypes{N, T2}) where {N, T1, T2} = Rect{N, promote_type(T1, T2)}(o, w)
+RectT{ T}(o::VecTypes{N},     w::VecTypes{N})     where {N, T}      = Rect{N, T}(o, w)
+Rect{N  }(o::VecTypes{N, T1}, w::VecTypes{N, T2}) where {N, T1, T2} = Rect{N, promote_type(T1, T2)}(o, w)
 
-function (Rect{2,T})(args::Vararg{Number,4}) where {T}
-    x, y, w, h = T <: Integer ? round.(T, args) : args
-    return Rect2{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
-end
+# mixed number - vectype
 
-function RectT{T}(args::Vararg{Number,4}) where {T}
-    x, y, w, h = T <: Integer ? round.(T, args) : args
-    return Rect2{T}(Vec{2,T}(x, y), Vec{2,T}(w, h))
-end
+      Rect(o::VecTypes{N, <:Number}, args::Vararg{Number, N}) where {N}    = Rect{N   }(o, promote(args...))
+RectT{  T}(o::VecTypes{N, <:Number}, args::Vararg{Number, N}) where {N, T} = Rect{N, T}(o, promote(args...))
+Rect{N   }(o::VecTypes{N, <:Number}, args::Vararg{Number, N}) where {N}    = Rect{N   }(o, promote(args...))
+Rect{N, T}(o::VecTypes{N, <:Number}, args::Vararg{Number, N}) where {N, T} = Rect{N, T}(o, promote(args...))
 
-function Rect3f(x::Rect2{T}) where {T}
-    return Rect{3,T}(Vec{3,T}(minimum(x)..., 0), Vec{3,T}(widths(x)..., 0.0))
-end
+      Rect(x::Number, y::Number, w::VecTypes{2, <:Number})           = Rect{2   }(Vec(x, y), w)
+RectT{  T}(x::Number, y::Number, w::VecTypes{2, <:Number}) where {T} = Rect{2, T}(Vec(x, y), w)
+Rect{2   }(x::Number, y::Number, w::VecTypes{2, <:Number})           = Rect{2   }(Vec(x, y), w)
+Rect{2, T}(x::Number, y::Number, w::VecTypes{2, <:Number}) where {T} = Rect{2, T}(Vec(x, y), w)
 
-function Rect2{T}(a::Rect2) where {T}
-    return Rect2{T}(minimum(a), widths(a))
-end
+      Rect(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number})           = Rect{3   }(Vec(x, y, z), w)
+RectT{  T}(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number}) where {T} = Rect{3, T}(Vec(x, y, z), w)
+Rect{3   }(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number})           = Rect{3   }(Vec(x, y, z), w)
+Rect{3, T}(x::Number, y::Number, z::Number, w::VecTypes{3, <:Number}) where {T} = Rect{3, T}(Vec(x, y, z), w)
 
-function RectT{T}(a::Rect2) where {T}
-    return Rect2{T}(minimum(a), widths(a))
-end
+# copy constructors (allow explicit truncation)
 
-function Rect{N,T}(a::GeometryPrimitive) where {N,T}
-    return Rect{N,T}(Vec{N,T}(minimum(a)), Vec{N,T}(widths(a)))
-end
+      Rect(r::Rect{N, T}) where {N, T}      = Rect{N, T}(origin(r), widths(r))
+RectT{  T}(r::Rect{N})    where {N, T}      = Rect{N, T}(origin(r), widths(r))
+Rect{N   }(r::Rect{N2, T}) where {N, N2, T} = Rect{N, T}(Vec{min(N, N2), T}(origin(r)), Vec{min(N, N2), T}(widths(r)))
+Rect{N, T}(r::Rect{N2})    where {N, N2, T} = Rect{N, T}(Vec{min(N, N2), T}(origin(r)), Vec{min(N, N2), T}(widths(r)))
 
-function Rect2(xy::VecTypes{2}, w::Number, h::Number)
-    return Rect2(xy..., w, h)
-end
+# dimensional promotion
 
-function Rect2(x::Number, y::Number, wh::VecTypes{2})
-    return Rect2(x, y, wh...)
-end
+Rect{3, T}(o::VecTypes{2}, w::VecTypes{3}) where {T} = Rect{3, T}(Vec(o..., 0), w)
+Rect{3, T}(o::VecTypes{3}, w::VecTypes{2}) where {T} = Rect{3, T}(o,            Vec(w..., 0))
+Rect{3, T}(o::VecTypes{2}, w::VecTypes{2}) where {T} = Rect{3, T}(Vec(o..., 0), Vec(w..., 0))
 
-function RectT{T}(xy::VecTypes{2}, w::Number, h::Number) where {T}
-    return Rect2{T}(xy..., w, h)
-end
+# centered Rects
 
-function RectT{T}(x::Number, y::Number, wh::VecTypes{2}) where {T}
-    return Rect2{T}(x, y, wh...)
-end
+centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
+centered(R::Type{RectT{T}}) where {T} = R(Vec{2,T}(-0.5), Vec{2,T}(1))
+centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
+centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
 
 # TODO These are kinda silly
 function Rect2(xy::NamedTuple{(:x, :y)}, wh::NamedTuple{(:width, :height)})
     return Rect2(xy.x, xy.y, wh.width, wh.height)
 end
 
-function Rect3f(x::Tuple{Tuple{<:Number,<:Number},Tuple{<:Number,<:Number}})
-    return Rect3f(Vec3f(x[1]..., 0), Vec3f(x[2]..., 0))
-end
+Rect(ow::Tuple) = Rect(ow...)
+RectT{T}(ow::Tuple) where {T} = RectT{T}(ow...)
+Rect{N}(ow::Tuple) where {N} = Rect{N}(ow...)
+Rect{N, T}(ow::Tuple) where {N, T} = Rect{N, T}(ow...)
 
-function Rect3f(x::Tuple{Tuple{<:Number,<:Number,<:Number},
-                          Tuple{<:Number,<:Number,<:Number}})
-    return Rect3f(Vec3f(x[1]...), Vec3f(x[2]...))
-end
+
+# Utilities
+
 
 # allow auto-conversion between different eltypes
 Base.convert(::Type{Rect{N, T}}, r::Rect{N}) where {N, T} = Rect{N, T}(r)
@@ -366,11 +337,11 @@ function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
     return Rect{N}(m, mm - m)
 end
 
-function update(b::Rect{N,T}, v::Vec{N,T2}) where {N,T,T2}
+function update(b::Rect{N,T}, v::VecTypes{N,T2}) where {N,T,T2}
     return update(b, Vec{N,T}(v))
 end
 
-function update(b::Rect{N,T}, v::Vec{N,T}) where {N,T}
+function update(b::Rect{N,T}, v::VecTypes{N,T}) where {N,T}
     m = min.(minimum(b), v)
     maxi = maximum(b)
     mm = if any(isnan, maxi)
@@ -382,11 +353,11 @@ function update(b::Rect{N,T}, v::Vec{N,T}) where {N,T}
 end
 
 # Min maximum distance functions between hrectangle and point for a given dimension
-function min_dist_dim(rect::Rect{N,T}, p::Vec{N,T}, dim::Int) where {N,T}
+function min_dist_dim(rect::Rect{N,T}, p::VecTypes{N,T}, dim::Int) where {N,T}
     return max(zero(T), max(minimum(rect)[dim] - p[dim], p[dim] - maximum(rect)[dim]))
 end
 
-function max_dist_dim(rect::Rect{N,T}, p::Vec{N,T}, dim::Int) where {N,T}
+function max_dist_dim(rect::Rect{N,T}, p::VecTypes{N,T}, dim::Int) where {N,T}
     return max(maximum(rect)[dim] - p[dim], p[dim] - minimum(rect)[dim])
 end
 
@@ -402,7 +373,7 @@ function max_dist_dim(rect1::Rect{N,T}, rect2::Rect{N,T}, dim::Int) where {N,T}
 end
 
 # Total minimum maximum distance functions
-function min_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function min_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimum_dist = T(0.0)
     for dim in 1:length(p)
         d = min_dist_dim(rect, p, dim)
@@ -411,7 +382,7 @@ function min_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N
     return minimum_dist
 end
 
-function max_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function max_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     maximum_dist = T(0.0)
     for dim in 1:length(p)
         d = max_dist_dim(rect, p, dim)
@@ -420,29 +391,29 @@ function max_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N
     return maximum_dist
 end
 
-function min_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function min_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     return sqrt(min_euclideansq(rect, p))
 end
 
-function max_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function max_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     return sqrt(max_euclideansq(rect, p))
 end
 
 # Functions that return both minimum and maximum for convenience
-function minmax_dist_dim(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}},
+function minmax_dist_dim(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}},
                          dim::Int) where {N,T}
     minimum_d = min_dist_dim(rect, p, dim)
     maximum_d = max_dist_dim(rect, p, dim)
     return minimum_d, maximum_d
 end
 
-function minmax_euclideansq(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function minmax_euclideansq(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimum_dist = min_euclideansq(rect, p)
     maximum_dist = max_euclideansq(rect, p)
     return minimum_dist, maximum_dist
 end
 
-function minmax_euclidean(rect::Rect{N,T}, p::Union{Vec{N,T},Rect{N,T}}) where {N,T}
+function minmax_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) where {N,T}
     minimumsq, maximumsq = minmax_euclideansq(rect, p)
     return sqrt(minimumsq), sqrt(maximumsq)
 end
@@ -527,13 +498,11 @@ end
 #
 # Equality
 #
-Base.:(==)(b1::Rect, b2::Rect) = minimum(b1) == minimum(b2) && widths(b1) == widths(b2)
+Base.:(==)(b1::Rect, b2::Rect) = origin(b1) == origin(b2) && widths(b1) == widths(b2)
 
-Base.isequal(b1::Rect, b2::Rect) = b1 == b2
-
-centered(R::Type{Rect{N,T}}) where {N,T} = R(Vec{N,T}(-0.5), Vec{N,T}(1))
-centered(R::Type{Rect{N}}) where {N} = R(Vec{N,Float32}(-0.5), Vec{N,Float32}(1))
-centered(R::Type{Rect}) = R(Vec{2,Float32}(-0.5), Vec{2,Float32}(1))
+function Base.isapprox(r1::Rect, r2::Rect; kwargs...)
+    return isapprox(origin(r1), origin(r2); kwargs...) && isapprox(widths(r1), widths(r2); kwargs...)
+end
 
 ##
 # Rect2 decomposition
@@ -589,7 +558,7 @@ end
 
 function faces(::Rect3)
     return QuadFace{Int}[
-        (1, 2, 4, 3), (7, 8, 6, 5), (5, 6, 2, 1), 
+        (1, 2, 4, 3), (7, 8, 6, 5), (5, 6, 2, 1),
         (3, 4, 8, 7), (1, 3, 7, 5), (6, 8, 4, 2)
     ]
 end

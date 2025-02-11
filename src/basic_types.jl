@@ -321,6 +321,17 @@ function coordinates(polygon::Polygon{N,T}) where {N,T}
     end
 end
 
+function Base.promote_rule(::Type{Polygon{N, T1}}, ::Type{Polygon{N, T2}}) where {N, T1, T2}
+    return Polygon{N, promote_type(T1, T2)}
+end
+
+function Base.convert(::Type{Polygon{N, T}}, poly::Polygon{N}) where {N, T}
+    return Polygon(
+        convert(Vector{Point{N, T}}, poly.exterior),
+        convert(Vector{Vector{Point{N, T}}}, poly.interiors),
+    )
+end
+
 """
     MultiPolygon(polygons::AbstractPolygon)
 
@@ -337,6 +348,7 @@ end
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
 Base.size(mp::MultiPolygon) = size(mp.polygons)
 Base.length(mp::MultiPolygon) = length(mp.polygons)
+Base.:(==)(a::MultiPolygon, b::MultiPolygon) = a.polygons == b.polygons
 
 """
     LineString(points::AbstractVector{<:Point})
@@ -361,6 +373,7 @@ end
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 Base.length(mpt::MultiLineString) = length(mpt.linestrings)
+Base.:(==)(a::MultiLineString, b::MultiLineString) = a.linestrings == b.linestrings
 
 """
     MultiPoint(points::AbstractVector{AbstractPoint})
@@ -639,6 +652,65 @@ function Base.:(==)(a::Mesh, b::Mesh)
            (faces(a) == faces(b)) && (a.views == b.views)
 end
 
+"""
+    strictly_equal_face_vertices(a::Mesh, b::Mesh)
+
+Checks whether mesh a and b are equal in terms of vertices used in their faces.
+This allows for vertex data and indices to be synchronously permuted. For
+example, this will recognize
+```
+a = Mesh([a, b, c], [GLTriangleFace(1,2,3)])
+b = Mesh([a, c, b], [GLTriangleFace(1,3,2)])
+```
+as equal, because while the positions and faces have different orders the vertices
+in the face are the same:
+```
+[a, c, b][[1, 3, 2]] == [a, b, c] == [a, b, c][[1,2,3]]
+```
+
+This still returns false if the order of faces is permuted, e.g.
+`Mesh(ps, [f1, f2]) != Mesh(ps, [f2, f1])`. It also returns false if vertices are
+cyclically permuted within a face, i.e. `ps[[1,2,3]] != ps[[2,3,1]]`.
+"""
+function strictly_equal_face_vertices(a::Mesh, b::Mesh)
+    # Quick checks
+    if propertynames(a) != propertynames(b) || length(faces(a)) != length(faces(b))
+        return false
+    end
+
+    N = length(faces(a))
+    # for views we want to ignore empty ranges (they don't represent geometry)
+    # and treat 1:N as no range (as that is used interchangeably)
+    views1 = filter(view -> length(view) > 0 && (minimum(view) > 1 || maximum(view) < N), a.views)
+    views2 = filter(view -> length(view) > 0 && (minimum(view) > 1 || maximum(view) < N), b.views)
+    views1 != views2 && return false
+
+    # TODO: Allow different face orders & cyclic permutation within faces.
+    # E.g. use hash.(data[face]), cyclically permute min to front, hash result
+    # and add them to heaps (or sets?) so we can compare them at the end
+    # That should probably be another function as it's probably a significant
+    # step up in overhead?
+    for (attrib1, attrib2) in zip(vertex_attributes(a), vertex_attributes(b))
+        if attrib1 isa FaceView
+            if !(attrib2 isa FaceView) || length(faces(attrib1)) != length(faces(attrib2))
+                return false
+            end
+            for (f1, f2) in zip(faces(attrib1), faces(attrib2))
+                values(attrib1)[f1] == values(attrib2)[f2] || return false
+            end
+        else
+            if attrib2 isa FaceView
+                return false
+            end
+            for (f1, f2) in zip(faces(a), faces(b))
+                attrib1[f1] == attrib2[f2] || return false
+            end
+        end
+    end
+
+    return true
+end
+
 function Base.iterate(mesh::Mesh, i=1)
     return i - 1 < length(mesh) ? (mesh[i], i + 1) : nothing
 end
@@ -684,6 +756,12 @@ end
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
               facetype=TriangleFace, skip=1)
     return Mesh(points, connect(faces, facetype, skip))
+end
+
+# the method above allows Mesh(..., Face(...), ...) to work, but produces bad results
+# explicitly error here
+function Mesh(points::AbstractVector{<:Point}, faces::AbstractFace, args...; kwargs...)
+    throw(MethodError(Mesh, (points, faces, args...)))
 end
 
 function Mesh(; kwargs...)

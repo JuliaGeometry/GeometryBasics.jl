@@ -1,6 +1,22 @@
 using Test
 
-@testset "conversion" begin
+@testset "Construction and Conversion" begin
+    for VT in [Point, Vec]
+        for T in [Int32, Float32, Float64, UInt16, BigFloat]
+            p = VT{3, T}(1,2,3)
+            @test p[1] == T(1)
+            @test p[2] == T(2)
+            @test p[3] == T(3)
+        end
+
+        for VT2 in [Point, Vec]
+            @test VT{2, Float32}(VT2{3, Float32}(1,2,3)) == VT{2, Float32}(1,2)
+            @test VT{2, Float32}(VT2{3, Float64}(1,2,3)) == VT{2, Float32}(1,2)
+        end
+        @test VT{2, Float32}(Float32[1,2,3]) == VT{2, Float32}(1,2)
+        @test VT{2, Float32}([1,2,3]) == VT{2, Float32}(1,2)
+    end
+
     @test convert(Point, (2, 3)) === Point(2, 3)
     @test convert(Point, (2.0, 3)) === Point(2.0, 3.0)
 end
@@ -17,6 +33,10 @@ end
                 T = ifelse(T1 == Point, Point, ifelse(T2 == Point, Point, Vec))
                 @test T(2, 2, 4) == T1(1,2,3) .+ T2(1, 0, 1)
                 @test T(foo.((1,2,3), (1, 0, 1))) == foo.(T1(1,2,3), T2(1, 0, 1))
+                @test T1(1,2,3) .* T2(1,2,3) == T(1, 4, 9)
+                # TODO: repair this:
+                # @test foo.(T1(1,2,3), [T2(1,1,1), T2(2,2,2)]) == [T(1,2,3), T(2,4,6)]
+                # @test foo.([T2(1,1,1), T2(2,2,2)], T1(1,2,3)) == [T(0, -3, -8), T(3, 0, -5)]
             end
         end
 
@@ -51,7 +71,7 @@ end
             for T2 in (Vec, Point, tuple)
                 T1 == tuple && T2 == tuple && continue
                 T = ifelse(T1 == Point, Point, ifelse(T2 == Point, Point, Vec))
-                @test T(foo2.((1,2,3), (1, 0, 1), (3, 2, 1), (2,2,0))) == 
+                @test T(foo2.((1,2,3), (1, 0, 1), (3, 2, 1), (2,2,0))) ==
                     foo2.(T1(1,2,3), T2(1, 0, 1), T2(3, 2, 1), T2(2,2,0))
             end
         end
@@ -80,7 +100,7 @@ end
 @testset "Mat" begin
     M3 = Mat3(1,2,3, 4,5,6, 7,8,9)
     @test M3 isa Mat{3,3,Int,9}
-    
+
     @testset "indexing" begin
         for i in 1:9
             @test getindex(M3, i) == i

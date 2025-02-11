@@ -36,10 +36,9 @@ function Base.in(x::Point, c::HyperSphere)
     return norm(origin(c) - x) ≤ radius(c)
 end
 
-centered(S::Type{HyperSphere{N,T}}) where {N,T} = S(Vec{N,T}(0), T(0.5))
-function centered(::Type{T}) where {T<:HyperSphere}
-    return centered(HyperSphere{ndims_or(T, 3),eltype_or(T, Float32)})
-end
+centered(S::Type{HyperSphere{N,T}}) where {N,T} = S(Point{N,T}(0), T(0.5))
+centered(S::Type{<: HyperSphere{N}}) where {N} = S(Point{N,Float32}(0), 0.5f0)
+centered(S::Type{<: HyperSphere}) = S(Point3f(0), 0.5f0)
 
 function coordinates(s::Circle, nvertices=64)
     r = radius(s); o = origin(s)
@@ -52,7 +51,7 @@ function texturecoordinates(::Circle, nvertices=64)
     return coordinates(Circle(Point2f(0.5), 0.5f0), nvertices)
 end
 
-# TODO: Consider generating meshes for circles with a point in the center so 
+# TODO: Consider generating meshes for circles with a point in the center so
 #       that the triangles are more regular
 # function faces(::Circle, nvertices=64)
 #     return [GLTriangleFace(nvertices+1, i, mod1(i+1, nvertices)) for i in 1:nvertices]

@@ -31,6 +31,8 @@ end
 @testset "Merge empty vector of meshes" begin
     # https://github.com/JuliaGeometry/GeometryBasics.jl/issues/136
     merge(Mesh[]) == Mesh(Point3f[], GLTriangleFace[])
+    merge([Mesh(Point3f[], GLTriangleFace[])]) == Mesh(Point3f[], GLTriangleFace[])
+    merge([Mesh(Point3f[], GLTriangleFace[]), Mesh(Point3f[], GLTriangleFace[])]) == Mesh(Point3f[], GLTriangleFace[])
 end
 
 @testset "Vertex Index Remapping" begin
@@ -54,7 +56,18 @@ end
     @test isempty(m2.views)
 end
 
-@testset "complex merge" begin
+@testset "Duplicate face removal" begin
+    fs = GLTriangleFace[(1,2,3), (2,3,4), (3,4,5), (1,2,3), (1,4,5)]
+    fs = [fs; fs]
+    new_fs = remove_duplicates(fs)
+    @test all(f -> f in GLTriangleFace[(1,2,3), (2,3,4), (3,4,5), (1,4,5)], new_fs)
+
+    fs = rand(QuadFace{Int32}, 4)
+    new_fs = remove_duplicates([fs; fs])
+    @test all(in(fs), new_fs)
+end
+
+@testset "complex merge + split" begin
     rects = [Rect3f(Point3f(x, y, z), Vec3f(0.5)) for x in -1:1 for y in -1:1 for z in -1:1]
     direct_meshes = map(rects) do r
         GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
@@ -70,6 +83,9 @@ end
     @test !allunique([idx for f in faces(dm) for idx in f])
     @test !allunique([idx for f in faces(dm.normal) for idx in f])
 
+    split_meshes = split_mesh(dm)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, direct_meshes))
+
     indirect_meshes = map(rects) do r
         m = GeometryBasics.mesh(coordinates(r), faces(r), normal = normals(r), facetype = QuadFace{Int64})
         # Also testing merge of meshes with views
@@ -80,6 +96,9 @@ end
 
     @test im == dm
     @test GeometryBasics.facetype(im) == QuadFace{Int64}
+
+    split_meshes = split_mesh(im)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, indirect_meshes))
 
     converted_meshes = map(rects) do r
         m = GeometryBasics.Mesh(coordinates(r), faces(r), normal = normals(r))
@@ -95,6 +114,8 @@ end
     @test coordinates(cm) isa Vector
     @test allunique([idx for f in faces(cm) for idx in f])
 
+    split_meshes = split_mesh(cm)
+    @test all(GeometryBasics.strictly_equal_face_vertices.(split_meshes, converted_meshes))
 
     mixed_meshes = map(direct_meshes, indirect_meshes, converted_meshes) do dm, im, cm
         rand((dm, im, cm)) # (with FaceView, with mesh.views & FaceView, w/o FaceView)
@@ -118,6 +139,8 @@ end
         @test normals(m) == ns
         @test faces(m) == fs
     end
+
+    @test_throws MethodError Mesh(Point2f[], GLTriangleFace(1,2,3))
 
     @testset "Verification" begin
         # enough vertices present
@@ -173,15 +196,27 @@ end
     @test hasproperty(m, :uv)
     @test hasproperty(m, :faces)
 
+    @test GeometryBasics.meta(m) == NamedTuple()
+    @test Mesh(m) === m
+
     mm = MetaMesh(m, name = "test")
 
     @test Mesh(mm) == m
     @test haskey(mm, :name)
     @test get(mm, :name, nothing) == "test"
+    @test get(() -> nothing, mm, :name) == "test"
+    @test get(mm, :foo, nothing) === nothing
+    @test get(() -> nothing, mm, :foo) === nothing
     @test mm[:name] == "test"
     @test !haskey(mm, :foo)
-    @test get!(mm, :foo, "bar") == "bar"
+    @test get!(mm, :foo, "foo") == "foo"
     @test haskey(mm, :foo)
+    @test get!(() -> "bar", mm, :bar) == "bar"
+    @test haskey(mm, :bar)
+    mm[:foo] = "bar"
+    @test mm[:foo] == "bar"
+    delete!(mm, :bar)
+    @test !haskey(mm, :bar)
     @test keys(mm) == keys(getfield(mm, :meta))
 
     @test vertex_attributes(mm) == getfield(m, :vertex_attributes)
@@ -189,6 +224,22 @@ end
     @test normals(mm) == vertex_attributes(m)[:normal]
     @test texturecoordinates(mm) == vertex_attributes(m)[:uv]
     @test faces(mm) == getfield(m, :faces)
+
+    @test hasproperty(mm, :vertex_attributes)
+    @test hasproperty(mm, :position)
+    @test hasproperty(mm, :normal)
+    @test hasproperty(mm, :uv)
+    @test hasproperty(mm, :faces)
+    @test propertynames(mm) == (:mesh, :meta, propertynames(m)...)
+
+    @test mm.vertex_attributes == getfield(m, :vertex_attributes)
+    @test mm.position == vertex_attributes(m)[:position]
+    @test mm.normal == vertex_attributes(m)[:normal]
+    @test mm.uv == vertex_attributes(m)[:uv]
+    @test mm.faces == getfield(m, :faces)
+
+    @test GeometryBasics.meta(mm) == mm.meta
+    @test Mesh(mm) === mm.mesh
 end
 
 @testset "mesh() constructors" begin
@@ -228,6 +279,8 @@ end
         @test faces(m) isa Vector{GLTriangleFace}
         @test length(faces(m)) == 12
         @test GeometryBasics.facetype(m) == GLTriangleFace
+
+        @test normal_mesh(coordinates(m), faces(m)) == m
     end
 
     @testset "normal_uv_mesh()" begin
@@ -336,4 +389,21 @@ end
         @test length(faces(m2)) == 12
 
     end
+end
+
+@testset "map_coordinates" begin
+    m = GeometryBasics.mesh(Rect3f(0,0,0,1,1,1))
+    m2 = GeometryBasics.map_coordinates(p -> 2 * p, m)
+    @test m !== m2
+    @test 2 * coordinates(m) == coordinates(m2)
+
+    m3 = GeometryBasics.map_coordinates!(p -> 0.5 * p, m2)
+    @test m3 === m2
+    @test coordinates(m) == coordinates(m3)
+
+    m = MetaMesh(GeometryBasics.mesh(Rect3f(0,0,0,1,1,1)), meta = "test")
+    m2 = GeometryBasics.map_coordinates(p -> 2 * p, m)
+    @test m !== m2
+    @test 2 * coordinates(m) == coordinates(m2)
+    @test GeometryBasics.meta(m) == GeometryBasics.meta(m2)
 end
