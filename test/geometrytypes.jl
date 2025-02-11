@@ -192,6 +192,10 @@ end
     @test widths(r) == Vec(-Inf, -Inf)
     @test area(r) == Inf
     @test volume(r) == Inf
+    # TODO: broken? returns NaN widths
+    # @test union(r, Rect2f(1,1,2,2)) == Rect2f(1,1,2,2)
+    # @test union(Rect2f(1,1,2,2), r) == Rect2f(1,1,2,2)
+    @test update(r, Vec2f(1,1)) == Rect2f(1,1,0,0)
 
     a = Rect(Vec(0, 1), Vec(2, 3))
     pt_expa = Point{2,Int}[(0, 1), (2, 1), (2, 4), (0, 4)]
@@ -207,6 +211,9 @@ end
     @test widths(a) == Vec(2,3)
     @test area(a) == 2*3
     @test volume(a) == 2*3
+    @test union(a, Rect2f(1,1,2,2)) == Rect2f(0,1,3,3)
+    @test union(Rect2f(1,1,2,2), a) == Rect2f(0,1,3,3)
+    @test update(a, Vec2f(0,0)) == Rect2f(0,0,2,4)
 
     b = Rect(Vec(1, 2, 3), Vec(4, 5, 6))
     pt_expb = Point{3, Int64}[[1, 2, 3], [1, 2, 9], [1, 7, 3], [1, 7, 9],
@@ -221,6 +228,10 @@ end
     @test widths(b) == Vec(4,5,6)
     @test_throws MethodError area(b)
     @test volume(b) == 4*5*6
+    @test union(b, Rect3f(1,1,1,2,2,2)) == Rect3f(1,1,1, 4,6,8)
+    @test union(Rect3f(1,1,1,2,2,2), b) == Rect3f(1,1,1, 4,6,8)
+    @test update(b, Vec3f(0)) == Rect3f(0,0,0,5,7,9)
+
 
     mesh = normal_mesh(b)
     @test faces(mesh) == GLTriangleFace[
