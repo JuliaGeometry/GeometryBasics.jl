@@ -63,11 +63,21 @@ end
     self_intersections(points::AbstractVector{<:Point})
 
 Finds all self intersections of in a continuous line described by `points`.
+Returns a Vector of indices where each pair `v[2i], v[2i+1]` refers two
+intersecting line segments by their first point, and a Vector of intersection
+points.
 
 Note that if two points are the same, they will generate a self intersection
-unless they are the first and last point or part of consecutive segments.
+unless they are consecutive segments. (The first and last point are assumed to
+be shared between the first and last segment.)
 """
 function self_intersections(points::AbstractVector{<:VecTypes{D, T}}) where {D, T}
+    ti, sections = _self_intersections(points)
+    # convert array of tuples to flat array
+    return [x for t in ti for x in t], sections
+end
+
+function _self_intersections(points::AbstractVector{<:VecTypes{D, T}}) where {D, T}
     sections = similar(points, 0)
     intersections = Tuple{Int, Int}[]
 
@@ -98,7 +108,7 @@ Splits polygon `points` into it's self intersecting parts. Only 1 intersection
 is handled right now.
 """
 function split_intersections(points::AbstractVector{<:VecTypes{N, T}}) where {N, T}
-    intersections, sections = self_intersections(points)
+    intersections, sections = _self_intersections(points)
     return if isempty(intersections)
         return [points]
     elseif length(intersections) == 1 && length(sections) == 1
