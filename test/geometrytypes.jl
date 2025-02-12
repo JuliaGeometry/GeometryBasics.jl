@@ -290,13 +290,13 @@ end
     f = QuadFace(3, 4, 7, 8)
     @test data[f] == ("3", "4", "7", "8")
 
-    @test hash(f) != hash(QuadFace(1,2,3,4))
-    @test hash(f) == hash(QuadFace(3,4,7,8))
+    @test GeometryBasics.cyclic_hash(f) != GeometryBasics.cyclic_hash(QuadFace(1,2,3,4))
+    @test GeometryBasics.cyclic_hash(f) == GeometryBasics.cyclic_hash(QuadFace(3,4,7,8))
     # cyclic permutation does not change the face
-    @test hash(f) == hash(QuadFace(7,8,3,4))
-    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(1,2,3))
-    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(2,3,1))
-    @test hash(GLTriangleFace(1,2,3)) == hash(GLTriangleFace(3,1,2))
+    @test GeometryBasics.cyclic_hash(f) == GeometryBasics.cyclic_hash(QuadFace(7,8,3,4))
+    @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3))
+    @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(2,3,1))
+    @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(3,1,2))
 end
 
 @testset "FaceView" begin
