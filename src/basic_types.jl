@@ -82,7 +82,7 @@ function Base.show(io::IO, x::NgonFace{N, T}) where {N, T}
 end
 
 # two faces are the same if they match or they just cycle indices
-function Base.:(==)(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
+function cyclic_equal(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
     _, min_i1 = findmin(f1.data)
     _, min_i2 = findmin(f2.data)
     @inbounds for i in 1:N
@@ -92,7 +92,7 @@ function Base.:(==)(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
     end
     return true
 end
-function Base.hash(f::AbstractFace{N}, h::UInt) where {N}
+function cyclic_hash(f::AbstractFace{N}, h::UInt = hash(0)) where {N}
     _, min_i = findmin(f.data)
     @inbounds for i in min_i:N
         h = hash(f[i], h)
@@ -102,17 +102,16 @@ function Base.hash(f::AbstractFace{N}, h::UInt) where {N}
     end
     return h
 end
-Base.isequal(f1::AbstractFace, f2::AbstractFace) = ==(f1, f2)
 
 # Fastpaths
-Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) == minmax(f2.data...)
-Base.hash(f::AbstractFace{2}, h::UInt) = hash(minmax(f.data...), h)
+cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) == minmax(f2.data...)
+cyclic_hash(f::AbstractFace{2}, h::UInt = hash(0)) = hash(minmax(f.data...), h)
 
-function Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
+function cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
     return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) ||
         (f1.data == (f2[3], f2[1], f2[2]))
 end
-function Base.hash(f::AbstractFace{3}, h::UInt)
+function cyclic_hash(f::AbstractFace{3}, h::UInt = hash(0))
     if f[1] < f[2]
         if f[1] < f[3]
             return hash(f.data, h)

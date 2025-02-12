@@ -468,9 +468,9 @@ end
 Uses a Dict to remove duplicates from the given `faces`.
 """
 function remove_duplicates(fs::AbstractVector{FT}) where {FT <: AbstractFace}
-    hashmap = Dict{FT, Nothing}()
-    foreach(k -> setindex!(hashmap, nothing, k), fs)
-    return collect(keys(hashmap))
+    hashmap = Dict{UInt64, FT}()
+    foreach(f -> hashmap[cyclic_hash(f)] = f, fs)
+    return collect(values(hashmap))
 end
 
 
