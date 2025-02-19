@@ -9,6 +9,13 @@ Formally it is the Cartesian product of intervals, which is represented by the
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
     origin::Vec{N,T}
     widths::Vec{N,T}
+
+    function HyperRectangle{N, T}(o::VecTypes, w::VecTypes) where {N, T}
+        return new{N, T}(convert(Vec{N, T}, o), convert(Vec{N, T}, w))
+    end
+    function HyperRectangle{N, T}(o::VecTypes, w::VecTypes) where {N, T <: Integer}
+        return new{N, T}(convert(Vec{N, T}, round.(T, o)), convert(Vec{N, T}, round.(T, w)))
+    end
 end
 
 ##
@@ -153,6 +160,12 @@ height(prim::Rect) = prim.widths[2]
 
 volume(prim::HyperRectangle) = prod(prim.widths)
 area(prim::Rect2) = volume(prim)
+
+# function Base.round(::Type{Rect{N, T}}, x::Rect{N}, mode::RoundingMode=RoundNearest) where {N, T}
+#     mini = round.(T, minimum(x))
+#     maxi = round.(T, maximum(x))
+#     return Rect{N, T}(mini, maxi .- mini)
+# end
 
 """
     split(rectangle, axis, value)

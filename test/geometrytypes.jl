@@ -182,6 +182,13 @@ end
         end
     end
 
+    # TODO: consider deprecating this
+    @testset "Integer rounding" begin
+        @test Rect2i(0.3, 0.4, 0.6, 0.5) == Rect2i(0,0,1,0)
+        @test Rect2{UInt32}(0.8, 0.1, 1.3, 1.9) == Rect2i(1,0,1,2)
+        @test Rect3i(0.3, 0.6, 0.9, 1.2, 1.5, 1.8) == Rect3i(0,1,1,1,2,2)
+    end
+
     # TODO: These don't really make sense...
     r = Rect2f()
     @test origin(r) == Vec(Inf, Inf)
