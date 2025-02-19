@@ -188,6 +188,12 @@ end
         @test Rect2{UInt32}(0.8, 0.1, 1.3, 1.9) == Rect2i(1,0,1,2)
         @test Rect3i(0.3, 0.6, 0.9, 1.2, 1.5, 1.8) == Rect3i(0,1,1,1,2,2)
     end
+    @testset "Vector inputs" begin
+        @test Rect([1,2], [2,3]) == Rect2i(1,2,2,3)
+        @test Rect2f([0,1], [2,3]) == Rect2f(0,1,2,3)
+        @test RectT{Float64}([0,1,0], [2,2,2]) == Rect3d(0,1,0, 2,2,2)
+        @test Rect3([0,1,0], [2,2,2]) == Rect3i(0,1,0, 2,2,2)
+    end
 
     # TODO: These don't really make sense...
     r = Rect2f()
