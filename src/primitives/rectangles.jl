@@ -9,6 +9,13 @@ Formally it is the Cartesian product of intervals, which is represented by the
 struct HyperRectangle{N,T} <: GeometryPrimitive{N,T}
     origin::Vec{N,T}
     widths::Vec{N,T}
+
+    function HyperRectangle{N, T}(o::VecTypes{N, T1}, w::VecTypes{N, T2}) where {N, T, T1, T2}
+        return new{N, T}(Vec{N, T}(o...), Vec{N, T}(w...))
+    end
+    function HyperRectangle{N, T}(o::VecTypes{N, T1}, w::VecTypes{N, T2}) where {N, T <: Integer, T1, T2}
+        return new{N, T}(Vec{N, T}(round.(T, o)...), Vec{N, T}(round.(T, w)...))
+    end
 end
 
 ##
