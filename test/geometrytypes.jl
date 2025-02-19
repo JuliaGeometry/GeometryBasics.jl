@@ -297,6 +297,14 @@ end
     @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3))
     @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(2,3,1))
     @test GeometryBasics.cyclic_hash(GLTriangleFace(1,2,3)) == GeometryBasics.cyclic_hash(GLTriangleFace(3,1,2))
+
+    # repeat with cyclic_equal
+    @test !GeometryBasics.cyclic_equal(f, QuadFace(1,2,3,4))
+    @test GeometryBasics.cyclic_equal(f, QuadFace(3,4,7,8))
+    @test GeometryBasics.cyclic_equal(f, QuadFace(7,8,3,4))
+    @test GeometryBasics.cyclic_equal(GLTriangleFace(1,2,3), GLTriangleFace(1,2,3))
+    @test GeometryBasics.cyclic_equal(GLTriangleFace(1,2,3), GLTriangleFace(2,3,1))
+    @test GeometryBasics.cyclic_equal(GLTriangleFace(1,2,3), GLTriangleFace(3,1,2))
 end
 
 @testset "FaceView" begin
