@@ -161,11 +161,11 @@ height(prim::Rect) = prim.widths[2]
 volume(prim::HyperRectangle) = prod(prim.widths)
 area(prim::Rect2) = volume(prim)
 
-function Base.round(::Type{Rect{N, T}}, x::Rect{N}, mode::RoundingMode=RoundNearest) where {N, T}
-    mini = round.(T, minimum(x))
-    maxi = round.(T, maximum(x))
-    return Rect{N, T}(mini, maxi .- mini)
-end
+# function Base.round(::Type{Rect{N, T}}, x::Rect{N}, mode::RoundingMode=RoundNearest) where {N, T}
+#     mini = round.(T, minimum(x))
+#     maxi = round.(T, maximum(x))
+#     return Rect{N, T}(mini, maxi .- mini)
+# end
 
 """
     split(rectangle, axis, value)
