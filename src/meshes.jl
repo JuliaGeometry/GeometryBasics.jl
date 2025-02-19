@@ -462,15 +462,80 @@ function split_mesh(mesh::Mesh, views::Vector{<: UnitRange{<: Integer}} = mesh.v
     end
 end
 
+
+
+# two faces are the same if they match or they just cycle indices
+"""
+    cyclic_equal(face1, face2)
+
+Returns true if two faces are equal up to a cyclic permutation of their indices.
+E.g. considers `GLTriangleFace(2,3,1)` equal to `GLTriangleFace(1,2,3)` but not
+`GLTriangleFace(2,1,3)`.
+"""
+function cyclic_equal(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
+    _, min_i1 = findmin(f1.data)
+    _, min_i2 = findmin(f2.data)
+    @inbounds for i in 1:N
+        if f1[mod1(min_i1 + i, end)] !== f2[mod1(min_i2 + i, end)]
+            return false
+        end
+    end
+    return true
+end
+
+"""
+    cyclic_hash(face[, h::UInt = hash(0)])
+
+Creates a hash for the given face that is equal under cyclic permutation of the
+faces indices.
+For example `GLTriangleFace(1,2,3)` will have the same hash as `(2,3,1)` and
+`(3,1,2)`, but be different from `(1,3,2)` and its cyclic permutations.
+"""
+function cyclic_hash(f::AbstractFace{N}, h::UInt = hash(0)) where {N}
+    _, min_i = findmin(f.data)
+    @inbounds for i in min_i:N
+        h = hash(f[i], h)
+    end
+    @inbounds for i in 1:min_i-1
+        h = hash(f[i], h)
+    end
+    return h
+end
+
+# Fastpaths
+cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) == minmax(f2.data...)
+cyclic_hash(f::AbstractFace{2}, h::UInt = hash(0)) = hash(minmax(f.data...), h)
+
+function cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
+    return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) ||
+        (f1.data == (f2[3], f2[1], f2[2]))
+end
+function cyclic_hash(f::AbstractFace{3}, h::UInt = hash(0))
+    if f[1] < f[2]
+        if f[1] < f[3]
+            return hash(f.data, h)
+        else
+            return hash((f[3], f[1], f[2]), h)
+        end
+    else
+        if f[2] < f[3]
+            return hash((f[2], f[3], f[1]), h)
+        else
+            return hash((f[3], f[1], f[2]), h)
+        end
+    end
+end
+
+
 """
     remove_duplicates(faces)
 
 Uses a Dict to remove duplicates from the given `faces`.
 """
 function remove_duplicates(fs::AbstractVector{FT}) where {FT <: AbstractFace}
-    hashmap = Dict{FT, Nothing}()
-    foreach(k -> setindex!(hashmap, nothing, k), fs)
-    return collect(keys(hashmap))
+    hashmap = Dict{UInt64, FT}()
+    foreach(f -> hashmap[cyclic_hash(f)] = f, fs)
+    return collect(values(hashmap))
 end
 
 
