@@ -95,6 +95,13 @@ end
 RectT{ T}(o::VecTypes{N},     w::VecTypes{N})     where {N, T}      = Rect{N, T}(o, w)
 Rect{N  }(o::VecTypes{N, T1}, w::VecTypes{N, T2}) where {N, T1, T2} = Rect{N, promote_type(T1, T2)}(o, w)
 
+# Arrays
+
+      Rect(o::AbstractVector{T1}, w::AbstractVector{T2}) where {T1, T2}    = RectT{promote_type(T1, T2)}(Vec(o...), Vec(w...))
+RectT{  T}(o::AbstractVector,     w::AbstractVector)     where {T}         = RectT{T}(Vec(o...), Vec(w...))
+Rect{N   }(o::AbstractVector{T1}, w::AbstractVector{T2}) where {N, T1, T2} = Rect{N, promote_type(T1, T2)}(Vec(o...), Vec(w...))
+Rect{N, T}(o::AbstractVector, w::AbstractVector) where {N, T}              = Rect{N, T}(Vec(o...), Vec(w...))
+
 # mixed number - vectype
 
       Rect(o::VecTypes{N, <:Number}, args::Vararg{Number, N}) where {N}    = Rect{N   }(o, promote(args...))
