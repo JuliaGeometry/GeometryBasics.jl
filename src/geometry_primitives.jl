@@ -157,9 +157,13 @@ function orthogonal_vector(::Type{VT},vertices) where VT
     return c
 end
 
-function orthogonal_vector(vertices)
-    return orthogonal_vector(eltype(vertices),vertices)
+# Not sure how useful this fast path is, but it's simple to keep
+function orthogonal_vector(::Type{VT}, triangle::Triangle) where {VT <: VecTypes{3}}
+    a, b, c = triangle
+    return cross(to_ndim(VT, b-a, 0), to_ndim(VT, c-a, 0))
 end
+end
+orthogonal_vector(vertices) = orthogonal_vector(Vec3f, vertices)
 
 """
     normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
