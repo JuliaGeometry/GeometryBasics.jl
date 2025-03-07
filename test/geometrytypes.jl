@@ -332,6 +332,16 @@ end
     @test length(fv) == 5
 end
 
+@testset "orthogonal_vector" begin
+    tri = Triangle(Point3d(0,0,0), Point3d(1,0,0), Point3d(0,1,0))
+    @test GeometryBasics.orthogonal_vector(tri) == Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(tri))) == Vec3d(0,0,1)
+
+    quad = GeometryBasics.Quadrilateral(Point2i(0,0), Point2i(1,0), Point2i(1,1), Point2i(0,1))
+    @test GeometryBasics.orthogonal_vector(quad) == Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(quad))) == Vec3i(0,0,2)
+end
+
 @testset "Normals" begin
     # per face normals
     r = Rect3f(Point3f(0), Vec3f(1))
@@ -358,19 +368,19 @@ end
     @test values(ns)[1:15] ≈ v_ns[1:15]
     @test values(ns)[1:15] ≈ v_ns[16:30] # repeated via FaceView in ns
 
-    # Planar QuadFace with colinear edge 
-    v = [Point{3,Float64}(0.0,0.0,0.0),Point{3,Float64}(1.0,0.0,0.0),Point{3,Float64}(2.0,0.0,0.0),Point{3,Float64}(2.0,1.0,0.0)]
+    # Planar QuadFace with colinear edge
+    v = [Point3d(0,0,0),Point3d(1,0,0),Point3d(2,0,0),Point3d(2,1,0)]
     f = [QuadFace{Int}(1,2,3,4)]
     n = normals(v,f)
     @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
 
-    # Planar NgonFace (5-sided) with colinear edge 
-    v = [Point{3,Float64}(0.0,0.0,0.0),Point{3,Float64}(1.0,0.0,0.0),Point{3,Float64}(2.0,0.0,0.0),Point{3,Float64}(2.0,1.0,0.0),Point{3,Float64}(2.0,0.5,0.0)]
+    # Planar NgonFace (5-sided) with colinear edge
+    v = [Point3d(0,0,0),Point3d(1,0,0),Point3d(2,0,0),Point3d(2,1,0),Point3d(2,0.5,0)]
     f = [NgonFace{5,Int}(1,2,3,4,5)]
     n = normals(v,f)
     @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
 
-    # Non-planar NgonFace (6 sided), features equal up and down variations resulting in z-dir average face_normal    
+    # Non-planar NgonFace (6 sided), features equal up and down variations resulting in z-dir average face_normal
     t = range(0.0,2*pi-(2*pi)/6,6)
     v = [Point{3,Float64}(cos(t[i]),sin(t[i]),iseven(i)) for i in eachindex(t)]
     f = [NgonFace{6,Int}(1,2,3,4,5,6)]

@@ -165,6 +165,9 @@ end
 
 # derive target type
 orthogonal_vector(vertices::Ngon{D, T}) where {D, T} = orthogonal_vector(Vec3{T}, vertices)
+function orthogonal_vector(vertices::NTuple{N, VT}) where {N, D, T, VT <: VecTypes{D, T}}
+    return orthogonal_vector(Vec3{T}, vertices)
+end
 function orthogonal_vector(vertices::AbstractArray{VT}) where {D, T, VT <: VecTypes{D, T}}
     return orthogonal_vector(Vec3{T}, vertices)
 end
