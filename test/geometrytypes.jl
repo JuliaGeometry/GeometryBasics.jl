@@ -381,7 +381,7 @@ end
     @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
 
     # Non-planar NgonFace (6 sided), features equal up and down variations resulting in z-dir average face_normal
-    t = range(0.0,2*pi-(2*pi)/6,6)
+    t = range(0.0, 2*pi-(2*pi)/6, length = 6)
     v = [Point{3,Float64}(cos(t[i]),sin(t[i]),iseven(i)) for i in eachindex(t)]
     f = [NgonFace{6,Int}(1,2,3,4,5,6)]
     n = normals(v,f)
