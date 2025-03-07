@@ -140,19 +140,19 @@ function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
 end
 
 """
-    orthogonal_vector(vertices)
+    orthogonal_vector([target_type = Vec3f], points)
 
-Calculates an orthogonal vector to a face or polygon defined by a set of 
-ordered points contained in the point vector `vertices`. Note that for 2D points
-a scalar is returned (the dot product of the orthogonal vector with the 
-positive Z-direction). 
+Calculates an orthogonal vector to a polygon defined by a vector of ordered
+`points`. Note that the orthogonal vector to a collection of 2D points needs to
+expand to 3D space.
 """
-function orthogonal_vector(::Type{VT},vertices) where VT     
-    c = zeros(VT) # Inherit vector type from input 
-    j = length(vertices)
-    @inbounds for i in eachindex(vertices) # Use shoelace approach
-        c += cross(vertices[j],vertices[i]) # Add each edge contribution          
-        j = i
+function orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
+    c = zeros(VT) # Inherit vector type from input
+    prev = to_ndim(VT, last(coordinates(vertices)), 0)
+    @inbounds for p in coordinates(vertices) # Use shoelace approach
+        v = to_ndim(VT, p, 0)
+        c += cross(prev, v) # Add each edge contribution
+        prev = v
     end
     return c
 end
@@ -177,8 +177,8 @@ orthogonal_vector(vertices) = orthogonal_vector(Vec3f, vertices)
 Compute vertex normals from the given `positions` and `faces`.
 
 This runs through all faces, computing a face normal each and adding it to every
-involved vertex. The direction of the face normal is based on winding direction 
-and assumed counter-clockwise faces. At the end the summed face normals are 
+involved vertex. The direction of the face normal is based on winding direction
+and assumed counter-clockwise faces. At the end the summed face normals are
 normalized again to produce a vertex normal.
 """
 function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
@@ -188,10 +188,10 @@ end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
                  ::Type{NormalType}) where {NormalType}
-                                  
+
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
-        v = coordinates(vertices[face])
+        v = vertices[face]
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(NormalType, v)
         for i in 1:length(face)
@@ -211,15 +211,15 @@ Compute face normals from the given `positions` and `faces` and returns an
 appropriate `FaceView`.
 """
 function face_normals(
-        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace}; 
+        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace};
         normaltype = Vec3{T}) where {T}
     return face_normals(positions, fs, normaltype)
 end
-    
+
 @generated function face_normals(positions::AbstractVector{<:Point3}, fs::AbstractVector{F},
         ::Type{NormalType}) where {F<:NgonFace,NormalType}
-    
-    # If the facetype is not concrete it likely varies and we need to query it 
+
+    # If the facetype is not concrete it likely varies and we need to query it
     # doing the iteration
     FT = ifelse(isconcretetype(F), :($F), :(typeof(f)))
 
@@ -228,7 +228,7 @@ end
         faces   = resize!(F[], length(fs))
 
         for (i, f) in enumerate(fs)
-            ps = coordinates(positions[f])
+            ps = positions[f]
             n = orthogonal_vector(NormalType, ps)
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)

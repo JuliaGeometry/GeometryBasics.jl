@@ -17,8 +17,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Calculate the area of one face.
 """
-function area(vertices::AbstractVector{<:Point},
-              face::NgonFace)
+function area(vertices::AbstractVector{<:Point}, face::NgonFace)
     return 0.5 * norm(orthogonal_vector(vertices[face]))
 end
 
@@ -27,8 +26,7 @@ end
 
 Calculate the area of all faces.
 """
-function area(vertices::AbstractVector{<:Point},
-              faces::AbstractVector{<:NgonFace})
+function area(vertices::AbstractVector{<:Point}, faces::AbstractVector{<:NgonFace})
     return sum(x -> area(vertices, x), faces)
 end
 
@@ -41,11 +39,12 @@ For 2D points, the oriented area is returned (negative when the points are
 oriented clockwise).
 """
 function area(vertices::AbstractVector{Point{2,T}}) where {T}
-    length(vertices) < 3 && return zero(T)       
-    return T(0.5) * orthogonal_vector(vertices) 
+    length(vertices) < 3 && return zero(T)
+    return T(0.5) * orthogonal_vector(vertices)[3]
 end
 
 function area(vertices::AbstractVector{Point{3,T}}) where {T}
+    length(vertices) < 3 && return zero(T)
     return T(0.5) * norm(orthogonal_vector(vertices))
 end
 
