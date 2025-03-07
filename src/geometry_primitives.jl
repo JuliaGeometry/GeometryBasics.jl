@@ -140,13 +140,23 @@ function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
 end
 
 """
-    orthogonal_vector(p1, p2, p3)
+    orthogonal_vector(vertices)
 
-Calculates an orthogonal vector `cross(p2 - p1, p3 - p1)` to a plane described
-by 3 points p1, p2, p3. 
+Calculates an orthogonal vector to a face or polygon defined by a set of 
+ordered points contained in the point vector `vertices`. 
 """
-orthogonal_vector(p1, p2, p3) = cross(p2 - p1, p3 - p1)
-orthogonal_vector(::Type{VT}, p1, p2, p3) where {VT} = orthogonal_vector(VT(p1), VT(p2), VT(p3))
+function orthogonal_vector(vertices)
+    N = length(vertices)
+    c = zeros(eltype(vertices)) # Inherit vector type from input 
+    @inbounds for i in eachindex(vertices) # Use shoelace approach
+        c  += cross(vertices[i],vertices[mod1(i+1,N)]) # Add each edge contribution          
+    end
+    return c
+end
+
+function orthogonal_vector(VT,vertices)
+    return orthogonal_vector(VT.(vertices))
+end
 
 """
     normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
@@ -165,12 +175,12 @@ end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
                  ::Type{NormalType}) where {NormalType}
-                 
+    println("WOOOHOOOO")                 
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
-        n = orthogonal_vector(NormalType, v[1], v[2], v[3])
+        n = orthogonal_vector(NormalType, v)
         for i in 1:length(face)
             fi = face[i]
             normals_result[fi] = normals_result[fi] .+ n
@@ -206,7 +216,7 @@ end
 
         for (i, f) in enumerate(fs)
             ps = positions[f]
-            n = orthogonal_vector(NormalType, ps[1], ps[2], ps[3])
+            n = orthogonal_vector(NormalType, ps)
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)
         end
