@@ -143,19 +143,22 @@ end
     orthogonal_vector(vertices)
 
 Calculates an orthogonal vector to a face or polygon defined by a set of 
-ordered points contained in the point vector `vertices`. 
+ordered points contained in the point vector `vertices`. Note that for 2D points
+a scalar is returned (the dot product of the orthogonal vector with the 
+positive Z-direction). 
 """
-function orthogonal_vector(vertices)
-    N = length(vertices)
-    c = zeros(eltype(vertices)) # Inherit vector type from input 
+function orthogonal_vector(::Type{VT},vertices) where VT     
+    c = zeros(VT) # Inherit vector type from input 
+    j = length(vertices)
     @inbounds for i in eachindex(vertices) # Use shoelace approach
-        c  += cross(vertices[i],vertices[mod1(i+1,N)]) # Add each edge contribution          
+        c += cross(vertices[j],vertices[i]) # Add each edge contribution          
+        j = i
     end
     return c
 end
 
-function orthogonal_vector(VT,vertices)
-    return orthogonal_vector(VT.(vertices))
+function orthogonal_vector(vertices)
+    return orthogonal_vector(eltype(vertices),vertices)
 end
 
 """
@@ -178,7 +181,7 @@ function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: 
                                   
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
-        v = vertices[face]
+        v = coordinates(vertices[face])
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(NormalType, v)
         for i in 1:length(face)
@@ -215,7 +218,7 @@ end
         faces   = resize!(F[], length(fs))
 
         for (i, f) in enumerate(fs)
-            ps = positions[f]
+            ps = coordinates(positions[f])
             n = orthogonal_vector(NormalType, ps)
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)

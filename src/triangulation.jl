@@ -13,53 +13,42 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =#
 """
-    area(vertices::AbstractVector{Point{3}}, face::TriangleFace)
+    area(vertices::AbstractVector{Point{3}}, face::NgonFace)
 
-Calculate the area of one triangle.
+Calculate the area of one face.
 """
-function area(vertices::AbstractVector{<:Point{3,VT}},
-              face::TriangleFace{FT}) where {VT,FT}
-    v1, v2, v3 = vertices[face]
-    return 0.5 * norm(orthogonal_vector(v1, v2, v3))
+function area(vertices::AbstractVector{<:Point},
+              face::NgonFace)
+    return 0.5 * norm(orthogonal_vector(vertices[face]))
 end
 
 """
-    area(vertices::AbstractVector{Point{3}}, faces::AbstractVector{TriangleFace})
+    area(vertices::AbstractVector{Point}, faces::AbstractVector{NgonFace})
 
-Calculate the area of all triangles.
+Calculate the area of all faces.
 """
-function area(vertices::AbstractVector{Point{3,VT}},
-              faces::AbstractVector{TriangleFace{FT}}) where {VT,FT}
+function area(vertices::AbstractVector{<:Point},
+              faces::AbstractVector{<:NgonFace})
     return sum(x -> area(vertices, x), faces)
 end
 
 """
-    area(contour::AbstractVector{Point}})
+    area(vertices::AbstractVector{Point}})
 
 Calculate the area of a polygon.
 
 For 2D points, the oriented area is returned (negative when the points are
 oriented clockwise).
 """
-function area(contour::AbstractVector{Point{2,T}}) where {T}
-    length(contour) < 3 && return zero(T)
-    A = zero(T)
-    p = lastindex(contour)
-    for q in eachindex(contour)
-        A += cross(contour[p], contour[q])
-        p = q
-    end
-    return A * T(0.5)
+function area(vertices::AbstractVector{Point{2,T}}) where {T}
+    length(vertices) < 3 && return zero(T)       
+    return T(0.5) * orthogonal_vector(vertices) 
 end
 
-function area(contour::AbstractVector{Point{3,T}}) where {T}
-    A = zero(eltype(contour))
-    o = first(contour)
-    for i in (firstindex(contour) + 1):(lastindex(contour) - 1)
-        A += cross(contour[i] - o, contour[i + 1] - o)
-    end
-    return norm(A) * T(0.5)
+function area(vertices::AbstractVector{Point{3,T}}) where {T}
+    return T(0.5) * norm(orthogonal_vector(vertices))
 end
+
 
 """
     in(point, triangle)

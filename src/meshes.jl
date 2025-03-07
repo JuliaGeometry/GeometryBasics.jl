@@ -213,9 +213,8 @@ end
 Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
-function volume(triangle::Triangle)
-    v1, v2, v3 = triangle
-    sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
+function volume(triangle::Triangle)    
+    sig = sign(orthogonal_vector(triangle.points) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end
 
