@@ -175,7 +175,7 @@ end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
                  ::Type{NormalType}) where {NormalType}
-    println("WOOOHOOOO")                 
+                                  
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]

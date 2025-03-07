@@ -351,12 +351,31 @@ end
     ns = normals(c)
     # caps without mantle
     f_ns = face_normals(coordinates(c), filter!(f -> f isa TriangleFace, faces(c)))
-    @test all(n -> n == values(ns)[end-1], values(f_ns)[1:15])
-    @test all(n -> n == values(ns)[end], values(f_ns)[16:end])
+    @test all(n -> n ≈ values(ns)[end-1], values(f_ns)[1:15])
+    @test all(n -> n ≈ values(ns)[end], values(f_ns)[16:end])
     # Mantle without caps
     v_ns = normals(coordinates(c), filter!(f -> f isa QuadFace, faces(c)))[1:end-2]
     @test values(ns)[1:15] ≈ v_ns[1:15]
     @test values(ns)[1:15] ≈ v_ns[16:30] # repeated via FaceView in ns
+
+    # Planar QuadFace with colinear edge 
+    v = [Point{3,Float64}(0.0,0.0,0.0),Point{3,Float64}(1.0,0.0,0.0),Point{3,Float64}(2.0,0.0,0.0),Point{3,Float64}(2.0,1.0,0.0)]
+    f = [QuadFace{Int}(1,2,3,4)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
+
+    # Planar NgonFace (5-sided) with colinear edge 
+    v = [Point{3,Float64}(0.0,0.0,0.0),Point{3,Float64}(1.0,0.0,0.0),Point{3,Float64}(2.0,0.0,0.0),Point{3,Float64}(2.0,1.0,0.0),Point{3,Float64}(2.0,0.5,0.0)]
+    f = [NgonFace{5,Int}(1,2,3,4,5)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
+
+    # Non-planar NgonFace (6 sided), features equal up and down variations resulting in z-dir average face_normal    
+    t = range(0.0,2*pi-(2*pi)/6,6)
+    v = [Point{3,Float64}(cos(t[i]),sin(t[i]),iseven(i)) for i in eachindex(t)]
+    f = [NgonFace{6,Int}(1,2,3,4,5,6)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
 end
 
 @testset "HyperSphere" begin
