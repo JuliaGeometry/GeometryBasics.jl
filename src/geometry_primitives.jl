@@ -162,7 +162,13 @@ function orthogonal_vector(::Type{VT}, triangle::Triangle) where {VT <: VecTypes
     a, b, c = triangle
     return cross(to_ndim(VT, b-a, 0), to_ndim(VT, c-a, 0))
 end
+
+# derive target type
+orthogonal_vector(vertices::Ngon{D, T}) where {D, T} = orthogonal_vector(Vec3{T}, vertices)
+function orthogonal_vector(vertices::AbstractArray{VT}) where {D, T, VT <: VecTypes{D, T}}
+    return orthogonal_vector(Vec3{T}, vertices)
 end
+# fallback to Vec3f if vertices is something else
 orthogonal_vector(vertices) = orthogonal_vector(Vec3f, vertices)
 
 """
