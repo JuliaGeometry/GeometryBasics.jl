@@ -390,6 +390,8 @@ function expand_faceviews(mesh::Mesh)
     end
 end
 
+expand_faceviews(m::MetaMesh) = MetaMesh(expand_faceviews(Mesh(m)), meta(m))
+
 function merge_vertex_indices(
         faces::NTuple{N_Attrib, <: AbstractVector{FT}},
         vertex_index_counter::Integer = T(1)
