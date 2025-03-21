@@ -145,6 +145,13 @@ Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
 Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
 Base.isfinite(p::Union{AbstractPoint,Vec}) = all(isfinite, p)
 
+function to_ndim(T::Type{<: VecTypes{N, ET}}, vec::VecTypes{N2}, fillval) where {N,ET,N2}
+    T(ntuple(Val(N)) do i
+        i > N2 && return ET(fillval)
+        @inbounds return vec[i]
+    end)
+end
+
 ## Generate aliases
 ## As a text file instead of eval/macro, to not confuse code linter
 

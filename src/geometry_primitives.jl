@@ -140,13 +140,52 @@ function collect_with_eltype!(result::AbstractVector{T}, iter) where {T}
 end
 
 """
-    orthogonal_vector(p1, p2, p3)
+    orthogonal_vector([target_type = Vec3f], points)
 
-Calculates an orthogonal vector `cross(p2 - p1, p3 - p1)` to a plane described
-by 3 points p1, p2, p3. 
+Calculates an orthogonal vector to a polygon defined by a vector of ordered
+`points`. Note that the orthogonal vector to a collection of 2D points needs to
+expand to 3D space.
+
+Note that this vector is not normalized.
 """
-orthogonal_vector(p1, p2, p3) = cross(p2 - p1, p3 - p1)
-orthogonal_vector(::Type{VT}, p1, p2, p3) where {VT} = orthogonal_vector(VT(p1), VT(p2), VT(p3))
+function orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
+    c = zeros(VT) # Inherit vector type from input
+    prev = to_ndim(VT, last(coordinates(vertices)), 0)
+    @inbounds for p in coordinates(vertices) # Use shoelace approach
+        v = to_ndim(VT, p, 0)
+        c += cross(prev, v) # Add each edge contribution
+        prev = v
+    end
+    return c
+end
+
+function orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}}
+    c = zeros(VT) # Inherit vector type from input
+    prev = to_ndim(VT, last(vertices), 0)
+    @inbounds for p in vertices # Use shoelace approach
+        v = to_ndim(VT, p, 0)
+        c += cross(prev, v) # Add each edge contribution
+        prev = v
+    end
+    return c
+end
+
+# Not sure how useful this fast path is, but it's simple to keep
+function orthogonal_vector(::Type{VT}, triangle::Triangle) where {VT <: VecTypes{3}}
+    a, b, c = triangle
+    return cross(to_ndim(VT, b-a, 0), to_ndim(VT, c-a, 0))
+end
+
+# derive target type
+orthogonal_vector(vertices::Ngon{D, T}) where {D, T} = orthogonal_vector(Vec3{T}, vertices)
+function orthogonal_vector(vertices::NTuple{N, VT}) where {N, D, T, VT <: VecTypes{D, T}}
+    return orthogonal_vector(Vec3{T}, vertices)
+end
+function orthogonal_vector(vertices::AbstractArray{VT}) where {D, T, VT <: VecTypes{D, T}}
+    return orthogonal_vector(Vec3{T}, vertices)
+end
+# fallback to Vec3f if vertices is something else
+orthogonal_vector(vertices) = orthogonal_vector(Vec3f, vertices)
 
 """
     normals(positions::Vector{Point3{T}}, faces::Vector{<: NgonFace}[; normaltype = Vec3{T}])
@@ -154,8 +193,8 @@ orthogonal_vector(::Type{VT}, p1, p2, p3) where {VT} = orthogonal_vector(VT(p1),
 Compute vertex normals from the given `positions` and `faces`.
 
 This runs through all faces, computing a face normal each and adding it to every
-involved vertex. The direction of the face normal is based on winding direction 
-and assumed counter-clockwise faces. At the end the summed face normals are 
+involved vertex. The direction of the face normal is based on winding direction
+and assumed counter-clockwise faces. At the end the summed face normals are
 normalized again to produce a vertex normal.
 """
 function normals(vertices::AbstractVector{Point{3,T}}, faces::AbstractVector{F};
@@ -165,12 +204,12 @@ end
 
 function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: NgonFace},
                  ::Type{NormalType}) where {NormalType}
-                 
+
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
         v = vertices[face]
         # we can get away with two edges since faces are planar.
-        n = orthogonal_vector(NormalType, v[1], v[2], v[3])
+        n = orthogonal_vector(NormalType, v)
         for i in 1:length(face)
             fi = face[i]
             normals_result[fi] = normals_result[fi] .+ n
@@ -188,15 +227,15 @@ Compute face normals from the given `positions` and `faces` and returns an
 appropriate `FaceView`.
 """
 function face_normals(
-        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace}; 
+        positions::AbstractVector{<:Point3{T}}, fs::AbstractVector{<: AbstractFace};
         normaltype = Vec3{T}) where {T}
     return face_normals(positions, fs, normaltype)
 end
-    
+
 @generated function face_normals(positions::AbstractVector{<:Point3}, fs::AbstractVector{F},
         ::Type{NormalType}) where {F<:NgonFace,NormalType}
-    
-    # If the facetype is not concrete it likely varies and we need to query it 
+
+    # If the facetype is not concrete it likely varies and we need to query it
     # doing the iteration
     FT = ifelse(isconcretetype(F), :($F), :(typeof(f)))
 
@@ -206,7 +245,7 @@ end
 
         for (i, f) in enumerate(fs)
             ps = positions[f]
-            n = orthogonal_vector(NormalType, ps[1], ps[2], ps[3])
+            n = orthogonal_vector(NormalType, ps)
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)
         end
