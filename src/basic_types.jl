@@ -31,14 +31,6 @@ abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
-@propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Point, F <: AbstractFace}
-    return Polytope(P, F)(map(i-> points[i], face.data))
-end
-
-@propagate_inbounds function Base.getindex(elements::AbstractVector, face::F) where {F <: AbstractFace}
-    return map(i-> elements[i], face.data)
-end
-
 @fixed_vector SimplexFace = AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
@@ -597,7 +589,12 @@ Mutating these will change the mesh.
 """
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
+function Base.getindex(mesh::Mesh, i::Integer)
+    f = mesh.faces[i]
+    P = Polytope(eltype(mesh.position), typeof(f))
+    return P(map(j -> mesh.position[j], f.data))
+end
+
 Base.length(mesh::Mesh) = length(mesh.faces)
 
 function Base.:(==)(a::Mesh, b::Mesh)
