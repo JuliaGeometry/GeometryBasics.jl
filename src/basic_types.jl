@@ -31,10 +31,6 @@ abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
-@propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Point, F <: AbstractFace}
-    return Polytope(P, F)(map(i-> points[i], face.data))
-end
-
 @fixed_vector SimplexFace = AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
