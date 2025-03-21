@@ -589,7 +589,12 @@ Mutating these will change the mesh.
 """
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
+function Base.getindex(mesh::Mesh, i::Integer)
+    f = mesh.faces[i]
+    P = Polytope(eltype(mesh.position), typeof(f))
+    return P(map(j -> mesh.position[j], f.data))
+end
+
 Base.length(mesh::Mesh) = length(mesh.faces)
 
 function Base.:(==)(a::Mesh, b::Mesh)

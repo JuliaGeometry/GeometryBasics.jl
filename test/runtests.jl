@@ -136,7 +136,7 @@ end
         points = connect([1, 2, 3, 4, 5, 6, 7, 8], Point{2})
         f = connect([1, 2, 3, 4], SimplexFace{4})
         mesh = Mesh(points, f)
-        @test collect(mesh) == [GeometryBasics.SVector(points...)]
+        @test collect(mesh) == [Tetrahedron(points...)]
         @test faces(mesh) == [TetrahedronFace{Int64}(1,2,3,4)]
         @test decompose(LineFace{Int64}, mesh) == LineFace{Int64}[(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
         @test decompose(GLTriangleFace, mesh) == GLTriangleFace[(2, 3, 4), (1, 3, 4), (1, 2, 4), (1, 2, 3)]
