@@ -54,6 +54,11 @@ end
     @test normals(m2) != normals(m)
     @test normals(m2) == [only(values(normals(m))) for _ in 1:4]
     @test isempty(m2.views)
+
+    mm = MetaMesh(m, Dict(:test => 1, :a => "a"))
+    mm2 = GeometryBasics.expand_faceviews(mm)
+    @test mm2.meta == mm.meta
+    @test Mesh(mm2) == m2
 end
 
 @testset "Duplicate face removal" begin
