@@ -334,12 +334,28 @@ end
 
 @testset "orthogonal_vector" begin
     tri = Triangle(Point3d(0,0,0), Point3d(1,0,0), Point3d(0,1,0))
-    @test GeometryBasics.orthogonal_vector(tri) == Vec3d(0,0,1)
-    @test GeometryBasics.orthogonal_vector(collect(coordinates(tri))) == Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(tri) === Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(tri))) === Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3f, tri) === Vec3f(0,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3f, collect(coordinates(tri))) === Vec3f(0,0,1)
 
     quad = GeometryBasics.Quadrilateral(Point2i(0,0), Point2i(1,0), Point2i(1,1), Point2i(0,1))
-    @test GeometryBasics.orthogonal_vector(quad) == Vec3i(0,0,2)
-    @test GeometryBasics.orthogonal_vector(collect(coordinates(quad))) == Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(quad) === Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(quad))) === Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(Vec3d, quad) === Vec3d(0,0,2)
+    @test GeometryBasics.orthogonal_vector(Vec3d, collect(coordinates(quad))) === Vec3d(0,0,2)
+
+    t = (Point3f(0), Point3f(1,0,1), Point3f(0,1,0))
+    @test GeometryBasics.orthogonal_vector(t) == Vec3f(-1,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3i, t) == Vec3i(-1,0,1)#
+
+    # Maybe the ::Any fallback is too generic...?
+    struct TestType
+        data::Vector{Vec3f}
+    end
+    GeometryBasics.coordinates(x::TestType) = x.data
+    x = TestType([Point3f(1,1,1), Point3f(0,0,0), Point3f(0.5,0,0)])
+    @test GeometryBasics.orthogonal_vector(x) == Vec3f(0, -0.5, 0.5)
 end
 
 @testset "Normals" begin

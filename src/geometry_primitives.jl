@@ -145,11 +145,24 @@ end
 Calculates an orthogonal vector to a polygon defined by a vector of ordered
 `points`. Note that the orthogonal vector to a collection of 2D points needs to
 expand to 3D space.
+
+Note that this vector is not normalized.
 """
 function orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
     c = zeros(VT) # Inherit vector type from input
     prev = to_ndim(VT, last(coordinates(vertices)), 0)
     @inbounds for p in coordinates(vertices) # Use shoelace approach
+        v = to_ndim(VT, p, 0)
+        c += cross(prev, v) # Add each edge contribution
+        prev = v
+    end
+    return c
+end
+
+function orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}}
+    c = zeros(VT) # Inherit vector type from input
+    prev = to_ndim(VT, last(vertices), 0)
+    @inbounds for p in vertices # Use shoelace approach
         v = to_ndim(VT, p, 0)
         c += cross(prev, v) # Add each edge contribution
         prev = v
