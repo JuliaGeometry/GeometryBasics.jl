@@ -217,7 +217,7 @@ volume(triangle::Triangle) = volume(triangle...)
 volume(ps::SVector{3, <: VecTypes}) = volume(ps...)
 
 function volume(v1, v2, v3)
-    sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
+    sig = sign(orthogonal_vector((v1, v2, v3)) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end
 

@@ -1,4 +1,5 @@
 using Test
+using GeometryBasics: to_ndim
 
 @testset "Construction and Conversion" begin
     for VT in [Point, Vec]
@@ -19,6 +20,10 @@ using Test
 
     @test convert(Point, (2, 3)) === Point(2, 3)
     @test convert(Point, (2.0, 3)) === Point(2.0, 3.0)
+
+    @test to_ndim(Point3f, Vec2i(1,2), 0) == Point3f(1,2,0)
+    @test to_ndim(Vec4i, (1f0, 2), 0) == Vec4i(1,2,0,0)
+    @test to_ndim(NTuple{2, Float64}, Point3f(1,2,3), 0) == (1.0, 2.0)
 end
 
 @testset "broadcast" begin

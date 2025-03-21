@@ -332,6 +332,32 @@ end
     @test length(fv) == 5
 end
 
+@testset "orthogonal_vector" begin
+    tri = Triangle(Point3d(0,0,0), Point3d(1,0,0), Point3d(0,1,0))
+    @test GeometryBasics.orthogonal_vector(tri) === Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(tri))) === Vec3d(0,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3f, tri) === Vec3f(0,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3f, collect(coordinates(tri))) === Vec3f(0,0,1)
+
+    quad = GeometryBasics.Quadrilateral(Point2i(0,0), Point2i(1,0), Point2i(1,1), Point2i(0,1))
+    @test GeometryBasics.orthogonal_vector(quad) === Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(collect(coordinates(quad))) === Vec3i(0,0,2)
+    @test GeometryBasics.orthogonal_vector(Vec3d, quad) === Vec3d(0,0,2)
+    @test GeometryBasics.orthogonal_vector(Vec3d, collect(coordinates(quad))) === Vec3d(0,0,2)
+
+    t = (Point3f(0), Point3f(1,0,1), Point3f(0,1,0))
+    @test GeometryBasics.orthogonal_vector(t) == Vec3f(-1,0,1)
+    @test GeometryBasics.orthogonal_vector(Vec3i, t) == Vec3i(-1,0,1)#
+
+    # Maybe the ::Any fallback is too generic...?
+    struct TestType
+        data::Vector{Vec3f}
+    end
+    GeometryBasics.coordinates(x::TestType) = x.data
+    x = TestType([Point3f(1,1,1), Point3f(0,0,0), Point3f(0.5,0,0)])
+    @test GeometryBasics.orthogonal_vector(x) == Vec3f(0, -0.5, 0.5)
+end
+
 @testset "Normals" begin
     # per face normals
     r = Rect3f(Point3f(0), Vec3f(1))
@@ -351,12 +377,31 @@ end
     ns = normals(c)
     # caps without mantle
     f_ns = face_normals(coordinates(c), filter!(f -> f isa TriangleFace, faces(c)))
-    @test all(n -> n == values(ns)[end-1], values(f_ns)[1:15])
-    @test all(n -> n == values(ns)[end], values(f_ns)[16:end])
+    @test all(n -> n ≈ values(ns)[end-1], values(f_ns)[1:15])
+    @test all(n -> n ≈ values(ns)[end], values(f_ns)[16:end])
     # Mantle without caps
     v_ns = normals(coordinates(c), filter!(f -> f isa QuadFace, faces(c)))[1:end-2]
     @test values(ns)[1:15] ≈ v_ns[1:15]
     @test values(ns)[1:15] ≈ v_ns[16:30] # repeated via FaceView in ns
+
+    # Planar QuadFace with colinear edge
+    v = [Point3d(0,0,0),Point3d(1,0,0),Point3d(2,0,0),Point3d(2,1,0)]
+    f = [QuadFace{Int}(1,2,3,4)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
+
+    # Planar NgonFace (5-sided) with colinear edge
+    v = [Point3d(0,0,0),Point3d(1,0,0),Point3d(2,0,0),Point3d(2,1,0),Point3d(2,0.5,0)]
+    f = [NgonFace{5,Int}(1,2,3,4,5)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
+
+    # Non-planar NgonFace (6 sided), features equal up and down variations resulting in z-dir average face_normal
+    t = range(0.0, 2*pi-(2*pi)/6, length = 6)
+    v = [Point{3,Float64}(cos(t[i]),sin(t[i]),iseven(i)) for i in eachindex(t)]
+    f = [NgonFace{6,Int}(1,2,3,4,5,6)]
+    n = normals(v,f)
+    @test all(n_i -> n_i ≈ [0.0,0.0,1.0], n)
 end
 
 @testset "HyperSphere" begin
