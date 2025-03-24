@@ -298,10 +298,15 @@ end
 
     ps = rand(Point2f, 10)
     f = GLTriangleFace(1, 2, 3)
-    @test ps[f] == Triangle(ps[[1,2,3]]...)
+    @test ps[f] == GeometryBasics.@SVector [ps[1], ps[2], ps[3]]
+
     data = [string(i) for i in 1:10]
     f = QuadFace(3, 4, 7, 8)
-    @test data[f] == ("3", "4", "7", "8")
+    @test data[f] == ["3", "4", "7", "8"]
+
+    @test (f .== 4) == QuadFace(false, true, false, false)
+    @test f[f .== 4] isa Vector{Int}
+    @test f[f .== 4] == [4]
 
     @test GeometryBasics.cyclic_hash(f) != GeometryBasics.cyclic_hash(QuadFace(1,2,3,4))
     @test GeometryBasics.cyclic_hash(f) == GeometryBasics.cyclic_hash(QuadFace(3,4,7,8))
