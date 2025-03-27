@@ -352,7 +352,10 @@ end
 
     t = (Point3f(0), Point3f(1,0,1), Point3f(0,1,0))
     @test GeometryBasics.orthogonal_vector(t) == Vec3f(-1,0,1)
-    @test GeometryBasics.orthogonal_vector(Vec3i, t) == Vec3i(-1,0,1)#
+    @test GeometryBasics.orthogonal_vector(Vec3i, t) == Vec3i(-1,0,1)
+
+    t = Point2f[(0,0), (1,0), (2,1), (1,2), (0,2), (-1, 1)]
+    @test GeometryBasics.orthogonal_vector(Vec3f, t) == Vec3f(0,0,8)
 
     # Maybe the ::Any fallback is too generic...?
     struct TestType
