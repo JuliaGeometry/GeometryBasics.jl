@@ -173,7 +173,7 @@ function orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}
 end
 
 # Not sure how useful this fast path is, but it's simple to keep
-function orthogonal_vector(::Type{VT}, triangle::Triangle) where {VT <: VecTypes{3}}
+function orthogonal_vector(::Type{VT}, triangle::Union{Triangle, NTuple{3, <:VecTypes}, StaticVector{3, <:VecTypes}}) where {VT <: VecTypes{3}}
     a, b, c = triangle
     return cross(to_ndim(VT, b-a, 0), to_ndim(VT, c-a, 0))
 end
