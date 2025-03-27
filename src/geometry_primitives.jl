@@ -153,7 +153,8 @@ function orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
     prev = to_ndim(VT, last(coordinates(vertices)), 0)
     @inbounds for p in coordinates(vertices) # Use shoelace approach
         v = to_ndim(VT, p, 0)
-        c += cross(prev, v) # Add each edge contribution
+        # cross(prev-v, v) is equivalent to cross(prev, v) but improves float precision
+        c += cross(prev - v, v) # Add each edge contribution
         prev = v
     end
     return c
@@ -164,7 +165,8 @@ function orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}
     prev = to_ndim(VT, last(vertices), 0)
     @inbounds for p in vertices # Use shoelace approach
         v = to_ndim(VT, p, 0)
-        c += cross(prev, v) # Add each edge contribution
+        # cross(prev-v, v) is equivalent to cross(prev, v) but improves float precision
+        c += cross(prev - v, v) # Add each edge contribution
         prev = v
     end
     return c
