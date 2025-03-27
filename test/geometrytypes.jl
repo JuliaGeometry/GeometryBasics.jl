@@ -364,6 +364,32 @@ end
     GeometryBasics.coordinates(x::TestType) = x.data
     x = TestType([Point3f(1,1,1), Point3f(0,0,0), Point3f(0.5,0,0)])
     @test GeometryBasics.orthogonal_vector(x) == Vec3f(0, -0.5, 0.5)
+
+    @testset "Float Precision" begin
+        # Collection of risky triangles
+        tris = [
+            # with 0s that remove terms from cross(a-b, c-b)
+            (Point3f(-10.180012, 9.928894, 63.42825), Point3f(-10.180012, 9.92804, 63.424137), Point3f(-10.181978, 9.92804, 63.42825)),
+            (Point3f(-11.75692, 6.245064, 86.05223), Point3f(-11.758429, 6.245064, 86.048584), Point3f(-11.758429, 6.2428894, 86.05223)),
+            (Point3f(52.430557, 13.611008, 7.657501), Point3f(52.43055, 13.611008, 7.6574783), Point3f(52.43055, 13.611008, 7.657501)),
+            (Point3f(52.430557, 13.611008, 7.657501), Point3f(52.43055, 13.611008, 7.657501), Point3f(52.45581, 13.61525, 8.18364)),
+            # tiny shift
+            (Point3f(1, 1 + 1e-4, 1), Point3f(1 + 1e-4, 1 + 1e-4, 1 - 1e-4), Point3f(1 - 1e-4, 1, 1 + 1e-4))
+        ]
+
+        for tri in tris
+            a, b, c = tri
+            n64 = Vec3f(cross(Point3d(b) - Point3d(a), Point3d(c) - Point3d(a)))
+            # fast paths
+            n_fast = GeometryBasics.orthogonal_vector(Vec3f, Triangle(a, b, c))
+            @test n64 ≈ n_fast
+            @test n_fast == GeometryBasics.orthogonal_vector(Vec3f, (a, b, c))
+            @test n_fast == GeometryBasics.orthogonal_vector(Vec3f, GeometryBasics.SVector(a, b, c)) # hit by points[face]
+            n_slow = GeometryBasics.orthogonal_vector(Vec3f, TestType([a, b, c]))
+            @test n_slow ≈ n64
+            @test n_slow == GeometryBasics.orthogonal_vector(Vec3f, [a, b, c])
+        end
+    end
 end
 
 @testset "Normals" begin
