@@ -357,6 +357,10 @@ end
     t = Point2f[(0,0), (1,0), (2,1), (1,2), (0,2), (-1, 1)]
     @test GeometryBasics.orthogonal_vector(Vec3f, t) == Vec3f(0,0,8)
 
+    # Makie uses this syntax
+    @test GeometryBasics.orthogonal_vector(Point3f(0), Point3f(1,0,1), Point3f(0,1,0)) == Vec3f(-1,0,1)
+    @test GeometryBasics.orthogonal_vector((1,2,3), (2,3,1), (3,1,2)) == Vec3f(-3.0)
+
     # Maybe the ::Any fallback is too generic...?
     struct TestType
         data::Vector{Vec3f}
