@@ -152,10 +152,17 @@ orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}} = _orthogonal_
 orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}} = _orthogonal_vector(VT, vertices)
 
 function _orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
+    # Using shoelace approach (with N+1 = 1) (see #245)
+    # \sum_i p_i × p_{i+1}
+    # with distance vectors to avoid float precision issues
+    # \sum_i (p_i - p_1) × (p_{i+1} - p_1)
+    # These terms are equal when expanded (extra terms cancel over full sum)
     c = zero(VT)
     p0 = first(vertices)
     prev = zero(VT)
     for i in eachindex(vertices)
+        # i = 1 and N don't contribute as then produce (q_1 - q_1) terms
+        # we need i = 1 to set up prev though
         i == lastindex(vertices) && break
         v = to_ndim(VT, vertices[i+1] - p0, 0)
         c += cross(prev, v)
