@@ -148,30 +148,32 @@ expand to 3D space.
 
 Note that this vector is not normalized.
 """
-function orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
-    c = zeros(VT) # Inherit vector type from input
-    prev = to_ndim(VT, last(coordinates(vertices)), 0)
-    @inbounds for p in coordinates(vertices) # Use shoelace approach
-        v = to_ndim(VT, p, 0)
-        c += cross(prev, v) # Add each edge contribution
-        prev = v
-    end
-    return c
-end
+orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}} = _orthogonal_vector(VT, coordinates(vertices))
+orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}} = _orthogonal_vector(VT, vertices)
 
-function orthogonal_vector(::Type{VT}, vertices::Tuple) where {VT <: VecTypes{3}}
-    c = zeros(VT) # Inherit vector type from input
-    prev = to_ndim(VT, last(vertices), 0)
-    @inbounds for p in vertices # Use shoelace approach
-        v = to_ndim(VT, p, 0)
-        c += cross(prev, v) # Add each edge contribution
+function _orthogonal_vector(::Type{VT}, vertices) where {VT <: VecTypes{3}}
+    # Using shoelace approach (with N+1 = 1) (see #245)
+    # \sum_i p_i × p_{i+1}
+    # with distance vectors to avoid float precision issues
+    # \sum_i (p_i - p_1) × (p_{i+1} - p_1)
+    # These terms are equal when expanded (extra terms cancel over full sum)
+    c = zero(VT)
+    p0 = first(vertices)
+    prev = zero(VT)
+    for i in eachindex(vertices)
+        # i = 1 and N don't contribute as then produce (q_1 - q_1) terms
+        # we need i = 1 to set up prev though
+        i == lastindex(vertices) && break
+        v = to_ndim(VT, vertices[i+1] - p0, 0)
+        c += cross(prev, v)
         prev = v
     end
     return c
 end
 
 # Not sure how useful this fast path is, but it's simple to keep
-function orthogonal_vector(::Type{VT}, triangle::Triangle) where {VT <: VecTypes{3}}
+orthogonal_vector(p1::VT, p2::VT, p3::VT) where {VT <: VecTypes{3}} = _orthogonal_vector(Vec3f, to_ndim.(Vec3f, (p1, p2, p3), 0))
+function orthogonal_vector(::Type{VT}, triangle::Union{Triangle, NTuple{3, <:VecTypes}, StaticVector{3, <:VecTypes}}) where {VT <: VecTypes{3}}
     a, b, c = triangle
     return cross(to_ndim(VT, b-a, 0), to_ndim(VT, c-a, 0))
 end
