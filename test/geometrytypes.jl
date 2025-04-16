@@ -697,3 +697,65 @@ end
     @test size(mp) == (10, ) # TODO: Does this make sense?
     @test length(mp) == 10
 end
+
+@testset "Cone" begin
+    @testset "constructors" begin
+        v1 = rand(Point{3,Float64})
+        v2 = rand(Point{3,Float64})
+        R = rand()
+        s = Cone(v1, v2, R)
+        @test typeof(s) == Cone{Float64}
+        @test origin(s) == v1
+        @test extremity(s) == v2
+        @test radius(s) == R
+        @test height(s) == norm(v2 - v1)
+        @test isapprox(direction(s), (v2 - v1) ./ norm(v2 .- v1))
+    end
+
+    @testset "decompose" begin
+        v1 = Point{3,Float64}(1, 2, 3)
+        v2 = Point{3,Float64}(4, 5, 6)
+        R = 5.0
+        s = Cone(v1, v2, R)
+        positions = Point{3,Float64}[
+            (4.535533905932738, -1.5355339059327373, 3.0),
+            (3.0412414523193148, 4.041241452319315, -1.0824829046386295),
+            (-2.535533905932737, 5.535533905932738, 2.9999999999999996),
+            (-1.0412414523193152, -0.04124145231931431, 7.0824829046386295),
+            (4, 5, 6),
+            (1, 2, 3)
+        ]
+
+        @test decompose(Point3{Float64}, Tessellation(s, 8)) ≈ positions
+
+        _faces = TriangleFace[
+            (1,2,5), (2,3,5), (3,4,5), (4,1,5),
+            (1,2,6), (2,3,6), (3,4,6), (4,1,6)]
+
+        @test _faces == decompose(TriangleFace{Int}, Tessellation(s, 8))
+
+        m = triangle_mesh(Tessellation(s, 8))
+        @test m === triangle_mesh(m)
+        @test GeometryBasics.faces(m) == decompose(GLTriangleFace, _faces)
+        @test GeometryBasics.coordinates(m) ≈ positions
+
+        m = normal_mesh(s) # just test that it works without explicit resolution parameter
+        @test hasproperty(m, :position)
+        @test hasproperty(m, :normal)
+        @test faces(m) isa AbstractVector{GLTriangleFace}
+
+        ns = Vec{3, Float32}[
+            (0.90984505, -0.10920427, 0.40032038),
+            (0.6944946, 0.6944946, -0.18802801),
+            (-0.10920427, 0.90984505, 0.40032038),
+            (0.106146194, 0.106146194, 0.9886688),
+            (0.0, 0.0, 0.0),
+            (-0.57735026, -0.57735026, -0.57735026),
+        ]
+
+        @test ns == decompose_normals(Tessellation(s, 8))
+
+        muv = uv_mesh(s)
+        @test !hasproperty(muv, :uv) # not defined yet
+    end
+end
