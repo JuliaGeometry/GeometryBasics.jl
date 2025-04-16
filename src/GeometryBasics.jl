@@ -17,6 +17,7 @@ include("primitives/spheres.jl")
 include("primitives/cylinders.jl")
 include("primitives/pyramids.jl")
 include("primitives/particles.jl")
+include("primitives/Cone.jl")
 
 include("interfaces.jl")
 include("viewtypes.jl")
@@ -56,7 +57,7 @@ export triangle_mesh, triangle_mesh, uv_mesh
 export uv_mesh, normal_mesh, uv_normal_mesh
 
 export height, origin, radius, width, widths
-export HyperSphere, Circle, Sphere
+export HyperSphere, Circle, Sphere, Cone
 export Cylinder, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f, Rectd, Rect2d, Rect3d, RectT
 export before, during, meets, overlaps, intersects, finishes
