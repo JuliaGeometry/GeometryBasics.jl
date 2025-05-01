@@ -79,7 +79,19 @@ function normals(c::Cone, nvertices = 30)
     # cap
     ns[end] = Vec3f(normalize(c.origin - c.tip))
 
-    return ns
+    faces = Vector{GLTriangleFace}(undef, nvertices)
+
+    # shell
+    for i in 1:nhalf
+        faces[i] = GLTriangleFace(i, mod1(i+1, nhalf), nhalf+1)
+    end
+
+    # cap
+    for i in 1:nhalf
+        faces[i+nhalf] = GLTriangleFace(nhalf + 2)
+    end
+
+    return FaceView(ns, faces)
 end
 
 function faces(::Cone, facets=30)
