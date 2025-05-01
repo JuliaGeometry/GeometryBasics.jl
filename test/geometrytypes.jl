@@ -752,8 +752,12 @@ end
             (0.0, 0.0, 0.0),
             (-0.57735026, -0.57735026, -0.57735026),
         ]
+        fs = [
+            GLTriangleFace(1, 2, 5), GLTriangleFace(2, 3, 5), GLTriangleFace(3, 4, 5), GLTriangleFace(4, 1, 5),
+            GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6), GLTriangleFace(6, 6, 6)
+        ]
 
-        @test ns == decompose_normals(Tessellation(s, 8))
+        @test FaceView(ns, fs) == decompose_normals(Tessellation(s, 8))
 
         muv = uv_mesh(s)
         @test !hasproperty(muv, :uv) # not defined yet
