@@ -21,8 +21,15 @@ radius(c::Cylinder) = c.r
 height(c::Cylinder) = norm(c.extremity - c.origin)
 direction(c::Cylinder) = (c.extremity .- c.origin) ./ height(c)
 
-function rotation(c::Cylinder{T}) where {T}
-    d3 = direction(c)
+"""
+    cylinder_rotation_matrix(direction::VecTypes{3})
+
+Creates a basis transformation matrix `R` that maps the third dimension to the
+given `direction` and the first and second to orthogonal directions. This allows
+you to encode a rotation around `direction` in the first two components and
+transform it with `R * rotated_point`.
+"""
+function cylinder_rotation_matrix(d3::VecTypes{3, T}) where {T}
     u = Vec{3, T}(d3[1], d3[2], d3[3])
     if abs(u[1]) > 0 || abs(u[2]) > 0
         v = Vec{3, T}(u[2], -u[1], T(0))
@@ -39,9 +46,9 @@ function coordinates(c::Cylinder{T}, nvertices=30) where {T}
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = rotation(c)
+    R = cylinder_rotation_matrix(direction(c))
     step = 2pi / nhalf
-    
+
     ps = Vector{Point3{T}}(undef, nvertices + 2)
     for i in 1:nhalf
         phi = (i-1) * step
@@ -61,9 +68,9 @@ function normals(c::Cylinder, nvertices = 30)
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = rotation(c)
+    R = cylinder_rotation_matrix(direction(c))
     step = 2pi / nhalf
-    
+
     ns = Vector{Vec3f}(undef, nhalf + 2)
     for i in 1:nhalf
         phi = (i-1) * step

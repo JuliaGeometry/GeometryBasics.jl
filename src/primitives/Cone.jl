@@ -21,25 +21,11 @@ radius(c::Cone) = c.radius
 height(c::Cone) = norm(c.tip - c.origin)
 direction(c::Cone) = (c.tip .- c.origin) ./ height(c)
 
-function rotation(c::Cone{T}) where {T}
-    d3 = direction(c)
-    u = Vec{3, T}(d3[1], d3[2], d3[3])
-    if abs(u[1]) > 0 || abs(u[2]) > 0
-        v = Vec{3, T}(u[2], -u[1], T(0))
-    else
-        v = Vec{3, T}(T(0), -u[3], u[2])
-    end
-    v = normalize(v)
-    w = Vec{3, T}(u[2] * v[3] - u[3] * v[2], -u[1] * v[3] + u[3] * v[1],
-                  u[1] * v[2] - u[2] * v[1])
-    return Mat{3, 3, T}(v..., w..., u...)
-end
-
 function coordinates(c::Cone{T}, nvertices=30) where {T}
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = rotation(c)
+    R = cylinder_rotation_matrix(direction(c))
     step = 2pi / nhalf
 
     ps = Vector{Point3{T}}(undef, nhalf + 2)
@@ -57,7 +43,7 @@ function normals(c::Cone, nvertices = 30)
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = rotation(c)
+    R = cylinder_rotation_matrix(direction(c))
     step = 2pi / nhalf
 
     ns = Vector{Vec3f}(undef, nhalf + 2)
