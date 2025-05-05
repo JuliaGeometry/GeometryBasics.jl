@@ -45,6 +45,7 @@ export expand_faceviews, split_mesh, remove_duplicates
 export face_normals
 export Tessellation, Normal, UV, UVW
 export AbstractMesh, Mesh, MetaMesh, FaceView
+export per_face
 
 
 # all the different predefined mesh types

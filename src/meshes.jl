@@ -585,3 +585,30 @@ function Base.show(io::IO, mesh::MetaMesh{N, T}) where {N, T}
     FT = eltype(faces(mesh))
     println(io, "MetaMesh{$N, $T, $(FT)}($(join(keys(meta(mesh)), ", ")))")
 end
+
+"""
+    per_face(data, faces)
+    per_face(data, mesh)
+
+Generates a `FaceView` that applies the given data per face, rather than per
+vertex. The result can then be used to create a (new) mesh:
+```
+mesh(..., attribute_name = per_face(data, faces))
+mesh(old_mesh, attribute_name = per_face(data, old_mesh))
+```
+"""
+per_face(data, geom::AbstractGeometry) = per_face(data, faces(geom))
+function per_face(data, faces::AbstractVector{<: AbstractFace})
+    if length(data) != length(faces)
+        error("Length of per-face data $(length(data)) must match the number of faces $(length(faces))")
+    end
+
+    return FaceView(data, [typeof(f)(i) for (i, f) in enumerate(faces)])
+end
+function per_face(data, faces::AbstractVector{FT}) where {N, FT <: AbstractFace{N}}
+    if length(data) != length(faces)
+        error("Length of per-face data $(length(data)) must match the number of faces $(length(faces))")
+    end
+
+    return FaceView(data, FT.(eachindex(faces)))
+end
