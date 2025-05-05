@@ -21,6 +21,11 @@ radius(c::Cone) = c.radius
 height(c::Cone) = norm(c.tip - c.origin)
 direction(c::Cone) = (c.tip .- c.origin) ./ height(c)
 
+# Note:
+# nvertices is matched with Cylinder, where each end has half the vertices. That
+# results in less than nvertices for Cone, but allows a Cylinder and a Cone to
+# be seamless matched with the same `nvertices`
+
 function coordinates(c::Cone{T}, nvertices=30) where {T}
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
