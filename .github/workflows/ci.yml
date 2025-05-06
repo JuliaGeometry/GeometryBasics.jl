@@ -43,7 +43,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
   docs:
     name: Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       JULIA_PKG_SERVER: ""
     steps:
