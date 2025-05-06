@@ -61,7 +61,7 @@ using GeometryBasics
 c = Cylinder(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, end point, radius
 ```
 
-Cylinder supports normals an Tessellation, but currently no texture coordinates.
+Cylinder supports normals and Tessellation, but currently no texture coordinates.
 
 #### Cone
 
@@ -74,7 +74,7 @@ using GeometryBasics
 c = Cone(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, tip point, radius
 ```
 
-Cone supports normals an Tessellation, but currently no texture coordinates.
+Cone supports normals and Tessellation, but currently no texture coordinates.
 
 #### Pyramid
 
