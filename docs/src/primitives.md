@@ -9,7 +9,7 @@ GeometryBasics comes with a few predefined primitives:
 
 #### HyperRectangle
 
-A `Rect{D, T} = HyperRectangle{D, T}` is a D-dimensional axis-aligned 
+A `Rect{D, T} = HyperRectangle{D, T}` is a D-dimensional axis-aligned
 hyperrectangle defined by an origin and a size.
 
 ```@repl rects
@@ -33,7 +33,7 @@ Shorthands:
 
 #### Sphere and Circle
 
-`Circle` and `Sphere` are the 2 and 3 dimensional variants of `HyperSphere`. 
+`Circle` and `Sphere` are the 2 and 3 dimensional variants of `HyperSphere`.
 They are defined by an origin and a radius.
 While you can technically create a HyperSphere of any dimension, decomposition
 is only defined in 2D and 3D.
@@ -54,7 +54,6 @@ The coordinates of Circle are defined in anti-clockwise order.
 
 A `Cylinder` is a 3D shape defined by two points and a radius.
 
-
 ```@setup cylinder
 using GeometryBasics
 ```
@@ -64,12 +63,24 @@ c = Cylinder(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, end poin
 
 Cylinder supports normals an Tessellation, but currently no texture coordinates.
 
+#### Cone
+
+A `Cone` is also defined by two points and a radius, but the radius decreases to 0 from the start point to the tip.
+
+```@setup cone
+using GeometryBasics
+```
+```@repl cone
+c = Cone(Point3f(-1, 0, 0), Point3f(0, 0, 1), 0.3f0) # start point, tip point, radius
+```
+
+Cone supports normals an Tessellation, but currently no texture coordinates.
+
 #### Pyramid
 
 `Pyramid` corresponds to a pyramid shape with a square base and four triangles
 coming together into a sharp point.
 It is defined by by the center point of the base, its height and its width.
-
 
 ```@setup pyramid
 using GeometryBasics
@@ -132,7 +143,7 @@ end
 ```
 
 To connect these points into a mesh, we need to generate a set of faces.
-The faces of a parallelepiped are parallelograms, which we can describe with `QuadFace`. 
+The faces of a parallelepiped are parallelograms, which we can describe with `QuadFace`.
 Here we should be conscious of the winding direction of faces.
 They are often used to determine the front vs the backside of a (2D) face.
 For example GeometryBasics normal generation and OpenGL's backface culling assume a counter-clockwise winding direction to correspond to a front-facing face.
@@ -187,7 +198,7 @@ function GeometryBasics.texturecoordinates(::Parallelepiped{T}) where {T}
     uvs = [Vec2f(x, y) for x in range(0, 1, length=4) for y in range(0, 1, 3)]
     fs = QuadFace{Int}[
         (1, 2, 5, 4),   (2, 3, 6, 5),
-        (4, 5, 8, 7),   (5, 6, 9, 8), 
+        (4, 5, 8, 7),   (5, 6, 9, 8),
         (7, 8, 11, 10), (8, 9, 12, 11)
     ]
     return FaceView(uvs, fs)
