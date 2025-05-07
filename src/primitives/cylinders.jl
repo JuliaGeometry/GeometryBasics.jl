@@ -22,14 +22,14 @@ height(c::Cylinder) = norm(c.extremity - c.origin)
 direction(c::Cylinder) = (c.extremity .- c.origin) ./ height(c)
 
 """
-    cylinder_rotation_matrix(direction::VecTypes{3})
+    rotation(prim::GeometryPrimitive)
+    rotation(direction::VecTypes{3})
 
-Creates a basis transformation matrix `R` that maps the third dimension to the
-given `direction` and the first and second to orthogonal directions. This allows
-you to encode a rotation around `direction` in the first two components and
-transform it with `R * rotated_point`.
+Creates a rotation matrix `R` that rotates the z direction to `direction`. The
+x and y directions remain orthogonal to `direction`, i.e act as radial directions.
 """
-function cylinder_rotation_matrix(d3::VecTypes{3, T}) where {T}
+rotation(prim::GeometryPrimitive) = rotation(direction(prim))
+function rotation(d3::VecTypes{3, T}) where {T}
     u = Vec{3, T}(d3[1], d3[2], d3[3])
     if abs(u[1]) > 0 || abs(u[2]) > 0
         v = Vec{3, T}(u[2], -u[1], T(0))
@@ -46,7 +46,7 @@ function coordinates(c::Cylinder{T}, nvertices=30) where {T}
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = cylinder_rotation_matrix(direction(c))
+    R = rotation(c)
     step = 2pi / nhalf
 
     ps = Vector{Point3{T}}(undef, nvertices + 2)
@@ -68,7 +68,7 @@ function normals(c::Cylinder, nvertices = 30)
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = cylinder_rotation_matrix(direction(c))
+    R = rotation(c)
     step = 2pi / nhalf
 
     ns = Vector{Vec3f}(undef, nhalf + 2)

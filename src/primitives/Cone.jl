@@ -30,7 +30,7 @@ function coordinates(c::Cone{T}, nvertices=30) where {T}
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = cylinder_rotation_matrix(direction(c))
+    R = rotation(c)
     step = 2pi / nhalf
 
     ps = Vector{Point3{T}}(undef, nhalf + 2)
@@ -48,7 +48,7 @@ function normals(c::Cone, nvertices = 30)
     nvertices += isodd(nvertices)
     nhalf = div(nvertices, 2)
 
-    R = cylinder_rotation_matrix(direction(c))
+    R = rotation(c)
     step = 2pi / nhalf
 
     ns = Vector{Vec3f}(undef, nhalf + 2)
