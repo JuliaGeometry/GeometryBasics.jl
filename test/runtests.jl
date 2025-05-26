@@ -2,9 +2,6 @@ using Test, Random, OffsetArrays
 using GeometryBasics
 using LinearAlgebra
 using GeometryBasics: MetaMesh
-using GeoInterface
-using GeoJSON
-using Extents
 using StaticArrays
 
 @testset "GeometryBasics" begin
