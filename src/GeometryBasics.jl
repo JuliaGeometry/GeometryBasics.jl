@@ -1,8 +1,6 @@
 module GeometryBasics
 
 using IterTools, LinearAlgebra, StaticArrays
-using GeoInterface
-import Extents
 using EarCut_jll
 import Base: *
 
@@ -26,8 +24,6 @@ include("meshes.jl")
 include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
-
-include("geointerface.jl")
 
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
