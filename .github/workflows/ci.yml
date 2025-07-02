@@ -22,9 +22,13 @@ jobs:
           - windows-latest
         arch:
           - x64
+          - x86
         include:
           - os: macOS-latest
             arch: aarch64
+            version: '1'
+          - os: macOS-13
+            aarch: x64
             version: '1'
     steps:
       - uses: actions/checkout@v4
