@@ -28,7 +28,7 @@ jobs:
             arch: aarch64
             version: '1'
           - os: macOS-13
-            aarch: x64
+            arch: x64
             version: '1'
     steps:
       - uses: actions/checkout@v4
