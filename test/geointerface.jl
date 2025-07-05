@@ -123,4 +123,9 @@ end
     ext = extent(rect)
     @test ext.X == (0.0f0, 1.0f0)
     @test ext.Y == (0.0f0, 1.0f0)
+    rect = Rect3f(Vec3f(0), Vec3f(1.0))
+    ext = extent(rect)
+    @test ext.X == (0.0f0, 1.0f0)
+    @test ext.Y == (0.0f0, 1.0f0)
+    @test ext.Z == (0.0f0, 1.0f0)
 end
