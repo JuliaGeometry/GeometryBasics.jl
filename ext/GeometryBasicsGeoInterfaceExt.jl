@@ -1,3 +1,10 @@
+module GeometryBasicsGeoInterfaceExt
+
+using GeoInterface, GeometryBasics
+
+import GeometryBasics: geointerface_geomtype
+using GeometryBasics: Ngon
+
 # Implementation of trait based interface from https://github.com/JuliaGeo/GeoInterface.jl/
 
 GeoInterface.isgeometry(::Type{<:AbstractGeometry}) = true
@@ -104,12 +111,6 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
         return Point{2,T}(x, y)
     end
 end
-
-# without a function barrier you get a lot of allocations from runtime types
-function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
-    return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
-end
-
 function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
@@ -122,7 +123,6 @@ function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
         return LineString(_collect_with_type(Point{2, T}, geom))
     end
 end
-
 function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
     t = LineStringTrait()
     exterior = GeoInterface.convert(LineString, t, GeoInterface.getexterior(geom))
@@ -133,7 +133,6 @@ function GeoInterface.convert(::Type{Polygon}, type::PolygonTrait, geom)
         return Polygon(exterior, interiors)
     end
 end
-
 function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
@@ -146,18 +145,18 @@ function GeoInterface.convert(::Type{MultiPoint}, type::MultiPointTrait, geom)
         return MultiPoint([Point{2,T}(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)])
     end
 end
-
 function GeoInterface.convert(::Type{MultiLineString}, type::MultiLineStringTrait, geom)
     t = LineStringTrait()
     return MultiLineString(map(l -> GeoInterface.convert(LineString, t, l), getgeom(geom)))
 end
-
 function GeoInterface.convert(::Type{MultiPolygon}, type::MultiPolygonTrait, geom)
     t = PolygonTrait()
     return MultiPolygon(map(poly -> GeoInterface.convert(Polygon, t, poly), getgeom(geom)))
 end
 
-function Extents.extent(rect::Rect2)
-    (xmin, ymin), (xmax, ymax) = extrema(rect)
-    return Extents.Extent(X=(xmin, xmax), Y=(ymin, ymax))
+# without a function barrier you get a lot of allocations from runtime types
+function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
+    return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
+end
+
 end

@@ -1,7 +1,6 @@
 module GeometryBasics
 
 using IterTools, LinearAlgebra, StaticArrays
-using GeoInterface
 import Extents
 using EarCut_jll
 import Base: *
@@ -26,8 +25,6 @@ include("meshes.jl")
 include("triangulation.jl")
 include("lines.jl")
 include("boundingboxes.jl")
-
-include("geointerface.jl")
 
 export AbstractGeometry, GeometryPrimitive
 export Mat, Point, Vec
@@ -70,5 +67,9 @@ export self_intersections, split_intersections
 if Base.VERSION >= v"1.8"
     include("precompiles.jl")
 end
+
+# Needed for GeometryBasicsGeoInterfaceExt. 
+# In future this can go away as can use Module dispatch.
+function geointerface_geomtype end
 
 end # module
