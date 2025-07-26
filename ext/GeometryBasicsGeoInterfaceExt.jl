@@ -112,6 +112,18 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
         return Point{2,T}(x, y)
     end
 end
+function GeoInterface.convert(::Type{Line}, type::LineTrait, geom)
+    g1, g2 = GeoInterface.getgeom(geom)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return Line{3,T}(Point{3,T}(x, y, z), Point{3,T}(GeoInterface.x(g2), GeoInterface.y(g2), GeoInterface.z(g2)))
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return Line{2,T}(Point{2,T}(x, y), Point{2,T}(GeoInterface.x(g2), GeoInterface.y(g2)))
+    end
+end
 function GeoInterface.convert(::Type{LineString}, type::Union{LineStringTrait, LinearRingTrait}, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
