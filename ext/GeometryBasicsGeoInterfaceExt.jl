@@ -34,6 +34,7 @@ geointerface_geomtype(::GeoInterface.PointTrait) = Point
 geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
 geointerface_geomtype(::GeoInterface.LineTrait) = Line
 geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
+geointerface_geomtype(::GeoInterface.LinearRingTrait) = LineString
 geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
 geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
 geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
@@ -111,7 +112,7 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
         return Point{2,T}(x, y)
     end
 end
-function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
+function GeoInterface.convert(::Type{LineString}, type::Union{LineStringTrait, LinearRingTrait}, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
     if GeoInterface.is3d(geom)
