@@ -26,7 +26,7 @@ struct ConicalFrustum{T} <: GeometryPrimitive{3,T}
     """
     An inner constructor that validates the input values.
     """
-    function ConicalFrustum(baseCenter,baseRadius,topCenter,topRadius)
+    function ConicalFrustum{T}(baseCenter,baseRadius,topCenter,topRadius) where T
 
         baseRadius > 0 ? nothing : throw(ArgumentError("The base radius of a conical frustum needs to be positive."))
 
@@ -36,7 +36,7 @@ struct ConicalFrustum{T} <: GeometryPrimitive{3,T}
 
         isfinite(topRadius) ? nothing : throw(ArgumentError("The top radius of a conical frustum needs to be finite."))
 
-        new(baseCenter,baseRadius,topCenter,topRadius)
+        new{T}(baseCenter,baseRadius,topCenter,topRadius)
 
     end # function
 
