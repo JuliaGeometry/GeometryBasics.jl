@@ -173,6 +173,6 @@ function volume(x::ConicalFrustum)
 
     lengthVal = length(x)
 
-    pi * lengthVal * ( baseRadiusVal ^ 2 + baseRadiusVal * topRadiusVal + topRadiusVal ^ 2 )/ 3
+    pi * lengthVal * ( baseRadiusVal ^ 2 + baseRadiusVal * topRadiusVal + topRadiusVal ^ 2 ) / 3
 
 end # function
