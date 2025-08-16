@@ -28,6 +28,10 @@ struct ConicalFrustum{T} <: GeometryPrimitive{3,T}
     """
     function ConicalFrustum{T}(baseCenter,baseRadius,topCenter,topRadius) where T
 
+        all(isfinite.(baseCenter)) ? nothing : throw(ArgumentError("The bottom circle center point of a conical frustum needs to have finite coordinates and be a number."))
+
+        all(isfinite.(topCenter)) ? nothing : throw(ArgumentError("The top circle center point of a conical frustum needs to have finite coordinates and be a number."))
+
         baseRadius > 0 ? nothing : throw(ArgumentError("The base radius of a conical frustum needs to be positive."))
 
         isfinite(baseRadius) ? nothing : throw(ArgumentError("The base radius of a conical frustum needs to be finite."))
