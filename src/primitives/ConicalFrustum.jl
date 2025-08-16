@@ -52,3 +52,44 @@ function ConicalFrustum(baseCenter::Point3{T1},baseRadius::T2,topCenter::Point3{
     ConicalFrustum{T}(baseCenter,baseRadius,topCenter,topRadius)
 
 end # function
+
+"""
+An external convenience constructor for creating instances from arrays instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::AbstractArray{T1},baseRadius::T2,topCenter::AbstractArray{T3},topRadius::T4) where {T1,T2,T3,T4}
+
+    baseCenterPoint = Point3{T1}(baseCenter)
+
+    topCenterPoint = Point3{T3}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
+
+"""
+An external convenience constructor for creating instances from NTuples instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::NTuple{3,T1},baseRadius::T2,topCenter::NTuple{3,T3},topRadius::T4) where {T1,T2,T3,T4}
+
+    baseCenterPoint = Point3{T1}(baseCenter)
+
+    topCenterPoint = Point3{T3}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
+
+"""
+An external convenience constructor for creating instances from Tuples instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::Tuple{T1,T2,T3},baseRadius::T4,topCenter::Tuple{T4,T5,T6},topRadius::T7) where {T1,T2,T3,T4,T5,T6,T7}
+
+    T = promote_type(T1,T2,T3,T4,T5,T6,T7)
+
+    baseCenterPoint = Point3{T}(baseCenter)
+
+    topCenterPoint = Point3{T}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
