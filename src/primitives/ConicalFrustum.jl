@@ -176,3 +176,8 @@ function volume(x::ConicalFrustum)
     pi * lengthVal * ( baseRadiusVal ^ 2 + baseRadiusVal * topRadiusVal + topRadiusVal ^ 2 ) / 3
 
 end # function
+
+"""
+Computes the centroid of a frustum: the mean between the base and top centers.
+"""
+centroid(x::ConicalFrustum) = (baseCenter(x) + topCenter(x)) / 2
