@@ -140,7 +140,7 @@ topArea(x::ConicalFrustum) = pi * topRadius(x) ^ 2
 """
 Computes the slant length of a conical frustum.
 """
-slantLength(x::ConicalFrustum) = sqrt( ( baseArea(x) - topArea(x) ) ^ 2 + length(x) ^ 2 )
+slantLength(x::ConicalFrustum) = sqrt( ( baseRadius(x) - topRadius(x) ) ^ 2 + length(x) ^ 2 )
 
 """
 Computes the surface area of a frustum not including the top and bottom areas.
