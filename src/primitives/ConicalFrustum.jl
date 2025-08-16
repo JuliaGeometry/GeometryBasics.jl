@@ -97,3 +97,82 @@ function ConicalFrustum(baseCenter::Tuple{T1,T2,T3},baseRadius::T4,topCenter::Tu
     ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
 
 end # function
+
+# Accessor functions for frustum fields.
+
+"""
+An accessor function for a base center.
+"""
+baseCenter(x::ConicalFrustum) = x.baseCenter
+
+"""
+An accessor function for base radius.
+"""
+baseRadius(x::ConicalFrustum) = x.baseRadius
+
+"""
+An accessor function for top center.
+"""
+topCenter(x::ConicalFrustum) = x.topCenter
+
+"""
+An accessor function for top radius.
+"""
+topRadius(x::ConicalFrustum) = x.topRadius
+
+# Functions for computing derived properties based on type field values.
+
+"""
+Computes the length of a frustum as the norm of the difference of its top and base centers.
+"""
+Base.length(x::ConicalFrustum) = LinearAlgebra.norm(topCenter(x) - baseCenter(x))
+
+"""
+Computes the area of the base of a given conical frustum.
+"""
+baseArea(x::ConicalFrustum) = pi * baseRadius(x) ^ 2
+
+"""
+Computes the area of the top of a given conical frustum.
+"""
+topArea(x::ConicalFrustum) = pi * topRadius(x) ^ 2
+
+"""
+Computes the slant length of a conical frustum.
+"""
+slantLength(x::ConicalFrustum) = sqrt( ( baseArea(x) - topArea(x) ) ^ 2 + length(x) ^ 2 )
+
+"""
+Computes the surface area of a frustum not including the top and bottom areas.
+"""
+function slantArea(x::ConicalFrustum)
+
+    baseRadiusVal = baseRadius(x)
+
+    topRadiusVal = topRadius(x)
+
+    lengthVal = length(x)
+
+    pi * (baseRadiusVal + topRadiusVal) * slantLength(x)
+
+end # function
+
+"""
+Computes the total surface area of a conical frustum.
+"""
+surfaceArea(x::ConicalFrustum) = baseArea(x) + topArea(x) + slantArea(x)
+
+"""
+Computes the volume of a conical frustum.
+"""
+function volume(x::ConicalFrustum)
+
+    baseRadiusVal = baseRadius(x)
+
+    topRadiusVal = topRadius(x)
+
+    lengthVal = length(x)
+
+    pi * lengthVal * ( baseRadiusVal ^ 2 + baseRadiusVal * topRadiusVal + topRadiusVal ^ 2 )/ 3
+
+end # function
