@@ -8,6 +8,7 @@ struct ConicalFrustum{T} <: GeometryPrimitive{3,T}
     The center point of the circular base.
     """
     baseCenter :: Point3{T}
+
     """
     The radius of the bottom circle.
     """
