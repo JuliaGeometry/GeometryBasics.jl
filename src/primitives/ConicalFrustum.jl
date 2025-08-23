@@ -182,3 +182,56 @@ end # function
 Computes the centroid of a frustum: the mean between the base and top centers.
 """
 centroid(x::ConicalFrustum) = (baseCenter(x) + topCenter(x)) / 2
+
+"""
+Computes the coordinates required for the discretization
+of a frustum. The logic is the same as that for a cylinder,
+where the top and bottom circles are approximated using
+a polygon.
+"""
+function coordinates(c::ConicalFrustum{T}, nvertices=30) where {T}
+
+    nvertices += isodd(nvertices)
+
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+
+    step = 2pi / nhalf
+
+    ps = Vector{Point3{T}}(undef, nvertices + 2)
+
+    baseRadiusVal = baseRadius(c)
+
+    baseCenterVal = baseCenter(c)
+
+    topRadiusVal = topRadius(c)
+
+    topCenterVal = topCenter(c)
+
+    # First discretize the base...
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ps[i] = R * Point3{T}(baseRadius * cos(phi), baseRadius * sin(phi), 0) + baseCenterVal
+
+    end
+
+    # ... and then the top circle.
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ps[i + nhalf] = R * Point3{T}(topRadiusVal * cos(phi), topRadiusVal * sin(phi), 0) + topCenterVal
+    end
+
+    ps[end-1] = baseCenterVal
+
+    ps[end] = topCenterVal
+
+    return ps
+
+end # function
