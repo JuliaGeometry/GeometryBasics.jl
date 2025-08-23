@@ -220,7 +220,7 @@ function coordinates(c::ConicalFrustum{T}, nvertices=30) where {T}
 
         phi = (i-1) * step
 
-        ps[i] = R * Point3{T}(baseRadius * cos(phi), baseRadius * sin(phi), 0) + baseCenterVal
+        ps[i] = R * Point3{T}(baseRadiusVal * cos(phi), baseRadiusVal * sin(phi), 0) + baseCenterVal
 
     end
 
