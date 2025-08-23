@@ -144,14 +144,14 @@ Computes the area of the top of a given conical frustum.
 topArea(x::ConicalFrustum) = pi * topRadius(x) ^ 2
 
 """
-Computes the slant length of a conical frustum.
+Computes the mantle length of a conical frustum.
 """
-slantLength(x::ConicalFrustum) = sqrt( ( baseRadius(x) - topRadius(x) ) ^ 2 + length(x) ^ 2 )
+mantleLength(x::ConicalFrustum) = sqrt( ( baseRadius(x) - topRadius(x) ) ^ 2 + length(x) ^ 2 )
 
 """
 Computes the surface area of a frustum not including the top and bottom areas.
 """
-function slantArea(x::ConicalFrustum)
+function mantleArea(x::ConicalFrustum)
 
     baseRadiusVal = baseRadius(x)
 
@@ -159,14 +159,14 @@ function slantArea(x::ConicalFrustum)
 
     lengthVal = length(x)
 
-    pi * (baseRadiusVal + topRadiusVal) * slantLength(x)
+    pi * (baseRadiusVal + topRadiusVal) * mantleLength(x)
 
 end # function
 
 """
 Computes the total surface area of a conical frustum.
 """
-surfaceArea(x::ConicalFrustum) = baseArea(x) + topArea(x) + slantArea(x)
+surfaceArea(x::ConicalFrustum) = baseArea(x) + topArea(x) + mantleArea(x)
 
 """
 Computes the volume of a conical frustum.
