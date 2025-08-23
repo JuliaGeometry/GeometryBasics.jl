@@ -240,3 +240,22 @@ function coordinates(c::ConicalFrustum{T}, nvertices=30) where {T}
     return ps
 
 end # function
+
+"""
+Computes the facial indices of a conical frustum,
+that can be used to index into the coordinates produced by the coordinates function.
+Again, follows the same logic as cylinders.
+"""
+function faces(::ConicalFrustum, facets=30)
+    nvertices = facets + isodd(facets)
+    nhalf = div(nvertices, 2)
+
+    disk1 = map(i -> GLTriangleFace(nvertices+1, mod1(i+1, nhalf), i), 1:nhalf)
+    mantle = map(1:nhalf) do i
+        i1 = mod1(i+1, nhalf)
+        QuadFace(i, i1, i1 + nhalf, i+nhalf)
+    end
+    disk2 = map(i -> GLTriangleFace(nvertices+2, i+nhalf, mod1(i+1, nhalf)+nhalf), 1:nhalf)
+
+    return vcat(disk1, mantle, disk2)
+end
