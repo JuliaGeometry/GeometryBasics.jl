@@ -242,6 +242,46 @@ function coordinates(c::ConicalFrustum{T}, nvertices=30) where {T}
 end # function
 
 """
+Computes the surface normals of the discrtization of a conical frustum.
+Follows the same logic as cylinders.
+"""
+function normals(c::ConicalFrustum, nvertices = 30)
+
+    nvertices += isodd(nvertices)
+
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+
+    step = 2pi / nhalf
+
+    ns = Vector{Vec3f}(undef, nhalf + 2)
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ns[i] = R * Vec3f(cos(phi), sin(phi), 0)
+
+    end
+
+    ns[end-1] = R * Vec3f(0, 0, -1)
+
+    ns[end] = R * Vec3f(0, 0, 1)
+
+    disk1 = map(i -> GLTriangleFace(nhalf+1), 1:nhalf)
+
+    mantle = map(i -> QuadFace(i, mod1(i+1, nhalf), mod1(i+1, nhalf), i), 1:nhalf)
+
+    disk2 = map(i -> GLTriangleFace(nhalf+2), 1:nhalf)
+
+    fs = vcat(disk1, mantle, disk2)
+
+    return FaceView(ns, fs)
+
+end
+
+"""
 Computes the facial indices of a conical frustum,
 that can be used to index into the coordinates produced by the coordinates function.
 Again, follows the same logic as cylinders.
