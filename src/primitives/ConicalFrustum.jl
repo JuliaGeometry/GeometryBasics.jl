@@ -124,9 +124,14 @@ topRadius(x::ConicalFrustum) = x.topRadius
 # Functions for computing derived properties based on type field values.
 
 """
+Computes the direction of a frustum, the difference between its top and base centers.
+"""
+direction(x::ConicalFrustum) = topCenter(x) - baseCenter(x)
+
+"""
 Computes the length of a frustum as the norm of the difference of its top and base centers.
 """
-Base.length(x::ConicalFrustum) = LinearAlgebra.norm(topCenter(x) - baseCenter(x))
+Base.length(x::ConicalFrustum) = LinearAlgebra.norm(direction(x))
 
 """
 Computes the area of the base of a given conical frustum.
