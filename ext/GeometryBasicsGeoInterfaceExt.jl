@@ -159,4 +159,13 @@ function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
     return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
 end
 
+# coordtype implementation - GeometryBasics encodes coordinate type in eltype
+if :coordtype in names(GeoInterface; all = true)
+    # For types with coordinate type T as a type parameter
+    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::Point{Dim,T}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::AbstractGeometry{Dim,T}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::Simplex{Dim,T,N}) where {Dim,T,N} = T
+    GeoInterface.coordtype(::GeoInterface.PolyhedralSurfaceTrait, geom::Mesh{Dim,T,E,V}) where {Dim,T,E,V} = T
+end
+
 end
