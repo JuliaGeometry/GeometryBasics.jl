@@ -160,7 +160,7 @@ function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
 end
 
 # coordtype implementation - GeometryBasics encodes coordinate type in eltype
-if :coordtype in names(GeoInterface; all = true)
+if isdefined(GeoInterface, :coordtype)
     # For types with coordinate type T as a type parameter
     GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::Point{Dim,T}) where {Dim,T} = T
     GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::AbstractGeometry{Dim,T}) where {Dim,T} = T
