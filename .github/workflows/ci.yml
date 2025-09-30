@@ -56,13 +56,12 @@ jobs:
         with:
           version: "1.11"
       - uses: julia-actions/cache@v2
-      - run: |
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            pkg"add MakieCore Makie GLMakie"
-            Pkg.instantiate()'
-      - run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs docs/make.jl
+      - name: Configure doc environment
+        shell: julia --project=docs --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.instantiate()
+      - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}

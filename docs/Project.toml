@@ -1,3 +1,9 @@
 [deps]
+Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+Meshing = "e6723b4c-ebff-59f1-b4b7-d97aa5274f73"
+WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+
+[sources]
+GeometryBasics = {path = "../"}
