@@ -21,6 +21,8 @@ radius(c::Cylinder) = c.r
 height(c::Cylinder) = norm(c.extremity - c.origin)
 direction(c::Cylinder) = (c.extremity .- c.origin) ./ height(c)
 
+Base.length(c::Cylinder) = LinearAlgebra.norm(extremity(c) - origin(c))
+
 """
     rotation(prim::GeometryPrimitive)
     rotation(direction::VecTypes{3})
