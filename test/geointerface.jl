@@ -129,3 +129,61 @@ end
     @test ext.Y == (0.0f0, 1.0f0)
     @test ext.Z == (0.0f0, 1.0f0)
 end
+
+@testset "coordtype" begin
+    if isdefined(GeoInterface, :coordtype)
+        # Point
+        point_int = Point(2, 3)
+        point_float = Point(2.0, 3.0)
+        point_float32 = Point{2,Float32}(2.0, 3.0)
+        point_3d = Point{3,Float64}(1.0, 2.0, 3.0)
+        @test GeoInterface.coordtype(point_int) == Int
+        @test GeoInterface.coordtype(point_float) == Float64
+        @test GeoInterface.coordtype(point_float32) == Float32
+        @test GeoInterface.coordtype(point_3d) == Float64
+
+        # Line (AbstractGeometry)
+        line = Line(Point(2, 3), Point(4, 5))
+        line_float = Line(Point(2.0, 3.0), Point(4.0, 5.0))
+        @test GeoInterface.coordtype(line) == Int
+        @test GeoInterface.coordtype(line_float) == Float64
+
+        # LineString
+        linestring = LineString(Point{2,Int}[(10, 10), (20, 20), (10, 40)])
+        linestring_float = LineString(Point{2,Float64}[(10.0, 10.0), (20.0, 20.0)])
+        @test GeoInterface.coordtype(linestring) == Int
+        @test GeoInterface.coordtype(linestring_float) == Float64
+
+        # MultiPoint
+        mp = MultiPoint([Point(2, 3), Point(4, 5)])
+        mp_float = MultiPoint([Point(2.0, 3.0), Point(4.0, 5.0)])
+        @test GeoInterface.coordtype(mp) == Int
+        @test GeoInterface.coordtype(mp_float) == Float64
+
+        # MultiLineString
+        mls = MultiLineString([linestring, linestring])
+        mls_float = MultiLineString([linestring_float, linestring_float])
+        @test GeoInterface.coordtype(mls) == Int
+        @test GeoInterface.coordtype(mls_float) == Float64
+
+        # Polygon
+        poly_float32 = Polygon(rand(Point{2,Float32}, 5))
+        poly_float64 = Polygon(rand(Point{2,Float64}, 5))
+        @test GeoInterface.coordtype(poly_float32) == Float32
+        @test GeoInterface.coordtype(poly_float64) == Float64
+
+        # MultiPolygon
+        mpoly = MultiPolygon([poly_float32, poly_float32])
+        @test GeoInterface.coordtype(mpoly) == Float32
+
+        # Simplex (Triangle is Ngon which is a Simplex)
+        triangle = Triangle(Point(1, 2), Point(3, 4), Point(5, 6))
+        triangle_float = Triangle(Point(1.0, 2.0), Point(3.0, 4.0), Point(5.0, 6.0))
+        @test GeoInterface.coordtype(triangle) == Int
+        @test GeoInterface.coordtype(triangle_float) == Float64
+
+        # Mesh
+        mesh = triangle_mesh(Sphere(Point3f(0), 1))
+        @test GeoInterface.coordtype(mesh) == Float32
+    end
+end
