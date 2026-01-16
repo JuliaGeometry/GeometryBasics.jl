@@ -1,7 +1,6 @@
 module GeometryBasics
 
-using IterTools, LinearAlgebra, StaticArrays
-import Extents
+using LinearAlgebra, StaticArrays
 using EarCut_jll
 import Base: *
 

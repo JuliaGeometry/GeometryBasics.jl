@@ -67,7 +67,7 @@ end
 
 function texturecoordinates(::Sphere, nvertices=24)
     ux = LinRange(0, 1, nvertices)
-    return ivec(((φ, θ) for θ in reverse(ux), φ in ux))
+    return ((φ, θ) for φ in ux for θ in reverse(ux))
 end
 
 function faces(::Sphere, nvertices=24)
