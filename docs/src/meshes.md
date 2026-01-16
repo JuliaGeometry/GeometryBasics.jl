@@ -1,5 +1,10 @@
 # Meshes
 
+```@setup 1
+using Bonito
+Page()
+```
+
 GeometryBasics defines two mesh types to work with - `Mesh` and `MetaMesh`
 
 ## Mesh
@@ -16,6 +21,48 @@ You can get data from a mesh using a few interface functions:
 - `faces(mesh) = mesh.faces`
 
 You can also grab the contents of `mesh.vertex_attributes` as if they were fields of the `Mesh`, e.g. `mesh.position` works.
+
+### Custom Attributes
+
+Meshes support arbitrary custom attributes beyond the standard position, normal, and UV coordinates. You can attach per-vertex or per-face data like material properties, identifiers, or computed values. These are stored in `mesh.vertex_attributes` and accessed using the same interface.
+
+```julia
+using GeometryBasics
+
+# Define custom data type
+struct Material
+    emissivity::Float64
+    absorptivity::Float64
+    reflectivity::Float64
+end
+
+# Create mesh with custom attributes
+points = [Point3f(0,0,0), Point3f(1,0,0), Point3f(0,1,0), Point3f(0,0,1)]
+faces = [TriangleFace(1,2,3), TriangleFace(1,2,4), TriangleFace(1,3,4), TriangleFace(2,3,4)]
+
+materials = [
+    Material(0.1, 0.8, 0.1),
+    Material(0.2, 0.7, 0.1),
+    Material(0.0, 0.9, 0.1),
+    Material(0.3, 0.6, 0.1)
+]
+
+face_names = ["bottom", "side1", "side2", "top"]
+
+# Use per_face to create FaceViews for per-face attributes
+mesh = GeometryBasics.mesh(
+    points,
+    faces,
+    material=per_face(materials, faces),
+    face_name=per_face(face_names, faces)
+)
+
+# Access custom attributes
+mesh.material[2]  # Get material of second face
+mesh.face_name[1]  # Get name of first face
+```
+
+This pattern is useful for physical simulations, rendering with material properties, or tagging mesh regions for analysis.
 
 ### FaceView
 
@@ -47,6 +94,40 @@ per_face
 MetaMesh
 ```
 
+`MetaMesh` wraps a `Mesh` and allows you to attach global metadata that applies to the entire mesh rather than individual vertices or faces. This is useful for storing information like source file paths, transformation matrices, object identifiers, or simulation parameters.
+
+```julia
+using GeometryBasics
+
+# Create a basic mesh
+points = [Point3f(0,0,0), Point3f(1,0,0), Point3f(0,1,0)]
+faces = [TriangleFace(1,2,3)]
+mesh = GeometryBasics.mesh(points, faces; attribute=rand(3))
+
+# Wrap with MetaMesh and add global metadata
+meta_mesh = MetaMesh(mesh, source_file="model.obj", object_id=42, scale=1.5)
+
+# Access metadata
+meta_mesh[:source_file] # "model.obj"
+meta_mesh[:object_id] # 42
+meta_mesh.attribute # access vertex attributes via getproperty
+# The underlying mesh is still accessible
+meta_mesh.mesh
+```
+
+You can combine `MetaMesh` for global properties with per-face/per-vertex attributes for complete geometric and metadata representation:
+
+```julia
+# Create mesh with both per-face attributes and global metadata
+mesh = GeometryBasics.mesh(
+    points, faces,
+    material=per_face(materials, faces),
+    normal=face_normals(points, faces)
+)
+
+meta_mesh = MetaMesh(mesh, gltf_file="spacecraft.gltf", mass=150.0)
+```
+
 ## How to create a mesh
 
 ### GeometryBasics
@@ -66,13 +147,33 @@ Note that this doesn't remove any data (e.g. hidden or duplicate vertices), and 
 
 ### Meshing.jl
 
+```@example 1
+using Meshing
+using GeometryBasics
+using WGLMakie
+using LinearAlgebra
+
+gyroid(v) = cos(v[1])*sin(v[2])+cos(v[2])*sin(v[3])+cos(v[3])*sin(v[1])
+gyroid_shell(v) = max(gyroid(v)-0.4,-gyroid(v)-0.4)
+xr,yr,zr = ntuple(_->LinRange(0,pi*4,50),3)
+
+A = [gyroid_shell((x,y,z)) for x in xr, y in yr, z in zr]
+# generate directly using GeometryBasics API
+# Rect specifies the sampling intervals
+vts, fcs = isosurface(A, MarchingCubes())
+# view with Makie
+fcs = TriangleFace{Int}.(fcs)
+vts = Point3d.(vts)
+Makie.mesh(GeometryBasics.Mesh(vts, fcs), color=[norm(v) for v in vts])
+```
+
 ### MeshIO.jl
 
 The [`MeshIO.jl`](https://github.com/JuliaIO/MeshIO.jl) package provides load/save support for several file formats which store meshes.
 
-```@example
-using GLMakie, GLMakie.FileIO, GeometryBasics
+```@example 1
+using WGLMakie, GeometryBasics
 
-m = load(GLMakie.assetpath("cat.obj"))
-GLMakie.mesh(m; color=load(GLMakie.assetpath("diffusemap.png")), axis=(; show_axis=false))
+m = Makie.loadasset("cat.obj")
+Makie.mesh(m; color=Makie.loadasset("diffusemap.png"), axis=(; show_axis=false))
 ```
