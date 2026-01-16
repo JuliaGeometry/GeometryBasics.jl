@@ -156,7 +156,12 @@ end
 
 # without a function barrier you get a lot of allocations from runtime types
 function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
-    return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
+    point_iter = getgeom(geom)
+    if point_iter isa GeometryBasics.StaticArray
+        return collect((PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom))
+    else
+        return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
+    end
 end
 
 end
