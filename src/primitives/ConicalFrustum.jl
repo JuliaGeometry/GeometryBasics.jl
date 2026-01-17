@@ -1,0 +1,301 @@
+"""
+A type that represents a conical frustum: a cone whose top has been cut off such,
+that the intersection of the cutting plane and the cone is a circle.
+"""
+struct ConicalFrustum{T} <: GeometryPrimitive{3,T}
+
+    """
+    The center point of the circular base.
+    """
+    baseCenter :: Point3{T}
+
+    """
+    The radius of the bottom circle.
+    """
+    baseRadius :: T
+
+    """
+    The center of the top circle.
+    """
+    topCenter :: Point3{T}
+
+    """
+    The radius of the top circle.
+    """
+    topRadius :: T
+
+    """
+    An inner constructor that validates the input values.
+    """
+    function ConicalFrustum{T}(baseCenter,baseRadius,topCenter,topRadius) where T
+
+        all(isfinite.(baseCenter)) ? nothing : throw(ArgumentError("The bottom circle center point of a conical frustum needs to have finite coordinates and be a number."))
+
+        all(isfinite.(topCenter)) ? nothing : throw(ArgumentError("The top circle center point of a conical frustum needs to have finite coordinates and be a number."))
+
+        baseRadius > 0 ? nothing : throw(ArgumentError("The base radius of a conical frustum needs to be positive."))
+
+        isfinite(baseRadius) ? nothing : throw(ArgumentError("The base radius of a conical frustum needs to be finite."))
+
+        topRadius > 0 ? nothing : throw(ArgumentError("The top radius of a conical frustum needs to be positive."))
+
+        isfinite(topRadius) ? nothing : throw(ArgumentError("The top radius of a conical frustum needs to be finite."))
+
+        new{T}(baseCenter,baseRadius,topCenter,topRadius)
+
+    end # function
+
+end # struct
+
+"""
+An external constructor for converting inputs of different eltypes to a common type.
+"""
+function ConicalFrustum(baseCenter::Point3{T1},baseRadius::T2,topCenter::Point3{T3},topRadius::T4) where {T1,T2,T3,T4}
+
+    T = promote_type(T1,T2,T3,T4)
+
+    ConicalFrustum{T}(baseCenter,baseRadius,topCenter,topRadius)
+
+end # function
+
+"""
+An external convenience constructor for creating instances from arrays instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::AbstractArray{T1},baseRadius::T2,topCenter::AbstractArray{T3},topRadius::T4) where {T1,T2,T3,T4}
+
+    baseCenterPoint = Point3{T1}(baseCenter)
+
+    topCenterPoint = Point3{T3}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
+
+"""
+An external convenience constructor for creating instances from NTuples instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::NTuple{3,T1},baseRadius::T2,topCenter::NTuple{3,T3},topRadius::T4) where {T1,T2,T3,T4}
+
+    baseCenterPoint = Point3{T1}(baseCenter)
+
+    topCenterPoint = Point3{T3}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
+
+"""
+An external convenience constructor for creating instances from Tuples instead of having to exlicitly create points.
+"""
+function ConicalFrustum(baseCenter::Tuple{T1,T2,T3},baseRadius::T4,topCenter::Tuple{T4,T5,T6},topRadius::T7) where {T1,T2,T3,T4,T5,T6,T7}
+
+    T = promote_type(T1,T2,T3,T4,T5,T6,T7)
+
+    baseCenterPoint = Point3{T}(baseCenter)
+
+    topCenterPoint = Point3{T}(topCenter)
+
+    ConicalFrustum(baseCenterPoint,baseRadius,topCenterPoint,topRadius)
+
+end # function
+
+# Accessor functions for frustum fields.
+
+"""
+An accessor function for a base center.
+"""
+baseCenter(x::ConicalFrustum) = x.baseCenter
+
+"""
+An accessor function for base radius.
+"""
+baseRadius(x::ConicalFrustum) = x.baseRadius
+
+"""
+An accessor function for top center.
+"""
+topCenter(x::ConicalFrustum) = x.topCenter
+
+"""
+An accessor function for top radius.
+"""
+topRadius(x::ConicalFrustum) = x.topRadius
+
+# Functions for computing derived properties based on type field values.
+
+"""
+Computes the direction of a frustum, the difference between its top and base centers.
+"""
+direction(x::ConicalFrustum) = topCenter(x) - baseCenter(x)
+
+"""
+Computes the length of a frustum as the norm of the difference of its top and base centers.
+"""
+Base.length(x::ConicalFrustum) = LinearAlgebra.norm(direction(x))
+
+"""
+Computes the area of the base of a given conical frustum.
+"""
+baseArea(x::ConicalFrustum) = pi * baseRadius(x) ^ 2
+
+"""
+Computes the area of the top of a given conical frustum.
+"""
+topArea(x::ConicalFrustum) = pi * topRadius(x) ^ 2
+
+"""
+Computes the mantle length of a conical frustum.
+"""
+mantleLength(x::ConicalFrustum) = sqrt( ( baseRadius(x) - topRadius(x) ) ^ 2 + length(x) ^ 2 )
+
+"""
+Computes the surface area of a frustum not including the top and bottom areas.
+"""
+function mantleArea(x::ConicalFrustum)
+
+    baseRadiusVal = baseRadius(x)
+
+    topRadiusVal = topRadius(x)
+
+    lengthVal = length(x)
+
+    pi * (baseRadiusVal + topRadiusVal) * mantleLength(x)
+
+end # function
+
+"""
+Computes the total surface area of a conical frustum.
+"""
+surfaceArea(x::ConicalFrustum) = baseArea(x) + topArea(x) + mantleArea(x)
+
+"""
+Computes the volume of a conical frustum.
+"""
+function volume(x::ConicalFrustum)
+
+    baseRadiusVal = baseRadius(x)
+
+    topRadiusVal = topRadius(x)
+
+    lengthVal = length(x)
+
+    pi * lengthVal * ( baseRadiusVal ^ 2 + baseRadiusVal * topRadiusVal + topRadiusVal ^ 2 ) / 3
+
+end # function
+
+"""
+Computes the centroid of a frustum: the mean between the base and top centers.
+"""
+centroid(x::ConicalFrustum) = (baseCenter(x) + topCenter(x)) / 2
+
+"""
+Computes the coordinates required for the discretization
+of a frustum. The logic is the same as that for a cylinder,
+where the top and bottom circles are approximated using
+a polygon.
+"""
+function coordinates(c::ConicalFrustum{T}, nvertices=30) where {T}
+
+    nvertices += isodd(nvertices)
+
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+
+    step = 2pi / nhalf
+
+    ps = Vector{Point3{T}}(undef, nvertices + 2)
+
+    baseRadiusVal = baseRadius(c)
+
+    baseCenterVal = baseCenter(c)
+
+    topRadiusVal = topRadius(c)
+
+    topCenterVal = topCenter(c)
+
+    # First discretize the base...
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ps[i] = R * Point3{T}(baseRadiusVal * cos(phi), baseRadiusVal * sin(phi), 0) + baseCenterVal
+
+    end
+
+    # ... and then the top circle.
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ps[i + nhalf] = R * Point3{T}(topRadiusVal * cos(phi), topRadiusVal * sin(phi), 0) + topCenterVal
+    end
+
+    ps[end-1] = baseCenterVal
+
+    ps[end] = topCenterVal
+
+    return ps
+
+end # function
+
+"""
+Computes the surface normals of the discrtization of a conical frustum.
+Follows the same logic as cylinders.
+"""
+function normals(c::ConicalFrustum, nvertices = 30)
+
+    nvertices += isodd(nvertices)
+
+    nhalf = div(nvertices, 2)
+
+    R = rotation(c)
+
+    step = 2pi / nhalf
+
+    ns = Vector{Vec3f}(undef, nhalf + 2)
+
+    for i in 1:nhalf
+
+        phi = (i-1) * step
+
+        ns[i] = R * Vec3f(cos(phi), sin(phi), 0)
+
+    end
+
+    ns[end-1] = R * Vec3f(0, 0, -1)
+
+    ns[end] = R * Vec3f(0, 0, 1)
+
+    disk1 = map(i -> GLTriangleFace(nhalf+1), 1:nhalf)
+
+    mantle = map(i -> QuadFace(i, mod1(i+1, nhalf), mod1(i+1, nhalf), i), 1:nhalf)
+
+    disk2 = map(i -> GLTriangleFace(nhalf+2), 1:nhalf)
+
+    fs = vcat(disk1, mantle, disk2)
+
+    return FaceView(ns, fs)
+
+end
+
+"""
+Computes the facial indices of a conical frustum,
+that can be used to index into the coordinates produced by the coordinates function.
+Again, follows the same logic as cylinders.
+"""
+function faces(::ConicalFrustum, facets=30)
+    nvertices = facets + isodd(facets)
+    nhalf = div(nvertices, 2)
+
+    disk1 = map(i -> GLTriangleFace(nvertices+1, mod1(i+1, nhalf), i), 1:nhalf)
+    mantle = map(1:nhalf) do i
+        i1 = mod1(i+1, nhalf)
+        QuadFace(i, i1, i1 + nhalf, i+nhalf)
+    end
+    disk2 = map(i -> GLTriangleFace(nvertices+2, i+nhalf, mod1(i+1, nhalf)+nhalf), 1:nhalf)
+
+    return vcat(disk1, mantle, disk2)
+end

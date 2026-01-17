@@ -17,6 +17,7 @@ include("primitives/cylinders.jl")
 include("primitives/pyramids.jl")
 include("primitives/particles.jl")
 include("primitives/Cone.jl")
+include("primitives/ConicalFrustum.jl")
 
 include("interfaces.jl")
 include("viewtypes.jl")
@@ -68,7 +69,7 @@ if Base.VERSION >= v"1.8"
     include("precompiles.jl")
 end
 
-# Needed for GeometryBasicsGeoInterfaceExt. 
+# Needed for GeometryBasicsGeoInterfaceExt.
 # In future this can go away as can use Module dispatch.
 function geointerface_geomtype end
 
