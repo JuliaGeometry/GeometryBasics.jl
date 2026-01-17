@@ -573,7 +573,17 @@ function normals(::Rect3)
 end
 
 function texturecoordinates(rect::Rect3)
-    return coordinates(Rect3(0, 0, 0, 1, 1, 1))
+    # compatible with a texture ordered:
+    # [+x +y +z; -x -y -z]
+    uvs = map(v -> v ./ (3, 2), Vec{2, Float32}[
+        (2, 0), (2, 1), (3, 1), (3, 0),
+        (1, 0), (1, 1), (2, 1), (2, 0),
+        (0, 0), (0, 1), (1, 1), (1, 0),
+        (2, 1), (2, 2), (3, 2), (3, 1),
+        (0, 1), (0, 2), (1, 2), (1, 1),
+        (1, 1), (1, 2), (2, 2), (2, 1),
+    ])
+    return uvs
 end
 
 function faces(::Rect3)
