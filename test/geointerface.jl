@@ -129,3 +129,26 @@ end
     @test ext.Y == (0.0f0, 1.0f0)
     @test ext.Z == (0.0f0, 1.0f0)
 end
+
+@testset "Convert from StaticArrays" begin
+    using GeometryBasics.StaticArrays
+
+    # LineString from StaticVector
+    ls = GeoInterface.convert(GeometryBasics, GeoInterface.LineString(SA[(1.0, 2.0), (3.0, 4.0)]))
+    @test ls isa LineString{2, Float64}
+    @test length(ls) == 2
+    @test ls.points[1] == Point(1.0, 2.0)
+    @test ls.points[2] == Point(3.0, 4.0)
+
+    # Polygon from StaticVector of StaticVector rings
+    ring = GeoInterface.LinearRing(SA[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0)])
+    poly = GeoInterface.convert(GeometryBasics, GeoInterface.Polygon(SA[ring]))
+    @test poly isa Polygon{2, Float64}
+
+    # MultiLineString from StaticVector
+    line1 = GeoInterface.LineString(SA[(1.0, 2.0), (3.0, 4.0)])
+    line2 = GeoInterface.LineString(SA[(5.0, 6.0), (7.0, 8.0)])
+    mls = GeoInterface.convert(GeometryBasics, GeoInterface.MultiLineString([line1, line2]))
+    @test mls isa MultiLineString{2, Float64}
+    @test length(mls) == 2
+end
