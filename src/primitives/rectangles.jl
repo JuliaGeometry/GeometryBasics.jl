@@ -389,12 +389,12 @@ end
 function update(b::Rect{N,T}, v::VecTypes{N,T}) where {N,T}
     m = min.(minimum(b), v)
     maxi = maximum(b)
-    mm = if any(isnan, maxi)
+    ws = if any(isnan, maxi)
         v - m
     else
         max.(v, maxi) - m
     end
-    return Rect{N,T}(m, mm)
+    return Rect{N,T}(m, ws)
 end
 
 # Min maximum distance functions between hrectangle and point for a given dimension
@@ -464,6 +464,8 @@ function minmax_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) wh
 end
 
 # http://en.wikipedia.org/wiki/Allen%27s_interval_algebra
+# These don't really make sense for rectangles though?
+
 function before(b1::Rect{N}, b2::Rect{N}) where {N}
     for i in 1:N
         maximum(b1)[i] < minimum(b2)[i] || return false
@@ -492,7 +494,7 @@ function overlaps(a::Rect{N}, b::Rect{N}) where {N}
 end
 
 function starts(b1::Rect{N}, b2::Rect{N}) where {N}
-    return if minimum(b1) == minimum(b2)
+    if minimum(b1) == minimum(b2)
         for i in 1:N
             maximum(b1)[i] < maximum(b2)[i] || return false
         end
