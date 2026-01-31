@@ -337,14 +337,35 @@ function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
     return Rect{N}(m, mm - m)
 end
 
-# TODO: What should this be? The difference is "h2 - h1", which could leave an
-# L shaped cutout. Should we pad that back out into a full rect?
-# """
-#     diff(h1::Rect, h2::Rect)
+# TODO: Add a diff that returns the slabs created. This could be anywhere between
+# 0 (r2 fully covers r1) to 2*D (?) (r2 is fully inside r1)
+"""
+    bbox_diff(r1::Rect{N}, r2::Rect{N})
 
-# Perform a difference between two Rects.
-# """
-# diff(h1::Rect, h2::Rect) = h1
+Returns the bounding box of the difference "r1 - r2".
+"""
+function bbox_diff(a::Rect{D, T1}, b::Rect{D, T2}) where {D, T1, T2}
+    T = promote_type(T1, T2)
+    cut_left = minimum(a) .>= minimum(b)
+    cut_right = maximum(a) .<= maximum(b)
+    a_fully_inside_b = cut_left .&& cut_right
+    fully_outside = any((minimum(a) .> maximum(b)) .|| (maximum(a) .< minimum(b)))
+    N = sum(a_fully_inside_b)
+    if N == D # intersection is a
+        return Rect{D, T}()
+    end
+
+    mini = ifelse.(a_fully_inside_b, minimum(a), ifelse.(cut_right, minimum(a), maximum(b)))
+    maxi = ifelse.(a_fully_inside_b, maximum(a), ifelse.(cut_left, maximum(a), minimum(b)))
+    widths = maxi - mini
+    if (N == D - 1) && !fully_outside && all(>=(0), widths)
+        # one dimension is not fully cut && shapes instersect &&
+        # b does not bisect a (cut_left and cut_right are both false => mini, maxi become maxi, mini of b)
+        return Rect{D, T}(mini, maxi .- mini)
+    end
+    return Rect{D, T}(a)
+end
+
 
 """
     intersect(h1::Rect, h2::Rect)

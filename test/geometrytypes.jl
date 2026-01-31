@@ -558,11 +558,44 @@ end
     rect = Rect(0.0, 0.0, 1.0, 1.0)
     @test GeometryBasics.positive_widths(rect) isa GeometryBasics.HyperRectangle{2,Float64}
 
-    h1 = Rect(0.0, 0.0, 1.0, 1.0)
-    h2 = Rect(1.0, 1.0, 2.0, 2.0)
-    @test union(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
-    # @test GeometryBasics.diff(h1, h2) == h1
-    @test GeometryBasics.intersect(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
+    @testset "union, intersect, diff" begin
+        h1 = Rect(0.0, 0.0, 1.0, 1.0)
+        h2 = Rect(1.0, 1.0, 2.0, 2.0)
+        @test union(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
+        # @test GeometryBasics.diff(h1, h2) == h1
+        @test GeometryBasics.intersect(h1, h2) isa GeometryBasics.HyperRectangle{2,Float64}
+
+        # Cases:
+        # 1. always got 1+ negative?
+        # 2. mixed, always 0 trues
+        # 3. always positive?
+
+        a = Rectf(-1, -1, -1, 2, 2, 2)
+        # no intersection -> return a
+        @test bbox_diff(a, Rectf(2, -1, -1, 2, 2, 2)) == a
+        @test bbox_diff(a, Rectf(2, 2, 2, 3, 3, 3)) == a
+        @test bbox_diff(a, Rectf(-3, -3, -3, 1, 1, 1)) == a
+        @test bbox_diff(a, Rectf(-8, -4, -4, 4, 10, 8)) == a
+
+        # intersection is a chunk < a in every dimension -> return a
+        @test bbox_diff(a, Rectf(0, 0, 0, 2, 2, 2)) == a
+        @test bbox_diff(a, Rectf(-2, -4, -1, 2, 3.8, 1)) == a
+        @test bbox_diff(a, Rectf(-0.5, -0.5, -1, 1, 1, 2)) == a
+
+        # intersection is matching the size of a in just one dimension -> return a
+        @test bbox_diff(a, Rectf(-2, 0, 0, 4, 2, 2)) == a
+        @test bbox_diff(a, Rectf(-0.5, -0.5, -2, 1, 1, 10)) == a
+
+        # intersection is a slab matching the size of a in two dimension -> reduced
+        @test bbox_diff(a, Rectf(-2, -2, 0, 4, 4, 2)) == Rectf(-1, -1, -1, 2, 2, 1)
+        @test bbox_diff(a, Rectf(-5, -2, -2, 5.2, 4, 4)) ≈ Rectf(0.2, -1, -1, 0.8, 2, 2)
+        # edge case: bisection
+        @test bbox_diff(a, Rectf(-0.5, -2, -2, 1, 4, 4)) == a
+
+        # intersection is a -> empty Rect
+        @test bbox_diff(a, Rectf(-2, -2, -2, 4, 4, 4)) == Rect3f()
+        @test bbox_diff(a, Rectf(-1, -1, -1, 2, 2, 2)) == Rect3f()
+    end
 
     b = Rect(0.0, 0.0, 1.0, 1.0)
     v = Vec(1, 2)
