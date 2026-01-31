@@ -332,9 +332,11 @@ Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
 Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
-    m = min.(minimum(h1), minimum(h2))
-    mm = max.(maximum(h1), maximum(h2))
-    return Rect{N}(m, mm - m)
+    isempty(h1) && return h2
+    isempty(h2) && return h1
+    mini = min.(minimum(h1), minimum(h2))
+    maxi = max.(maximum(h1), maximum(h2))
+    return Rect{N}(mini, maxi - mini)
 end
 
 # TODO: Add a diff that returns the slabs created. This could be anywhere between
