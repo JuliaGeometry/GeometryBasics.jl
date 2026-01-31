@@ -374,10 +374,12 @@ end
 
 Perform a intersection between two Rects.
 """
-function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
+function Base.intersect(h1::Rect{N, T1}, h2::Rect{N, T2}) where {N, T1, T2}
+    T = promote_type(T1, T2)
+    overlaps(h1, h2) || return Rect{N, T}()
     m = max.(minimum(h1), minimum(h2))
     mm = min.(maximum(h1), maximum(h2))
-    return Rect{N}(m, mm - m)
+    return Rect{N, T}(m, mm - m)
 end
 
 function update(b::Rect{N,T}, v::VecTypes{N,T2}) where {N,T,T2}
