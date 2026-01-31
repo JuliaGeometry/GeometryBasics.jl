@@ -58,7 +58,7 @@ export height, origin, radius, width, widths
 export HyperSphere, Circle, Sphere, Cone
 export Cylinder, Pyramid, extremity
 export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f, Rectd, Rect2d, Rect3d, RectT
-export before, during, meets, overlaps, intersects, finishes
+export before, during, meets, overlaps, intersects, finishes, bbox_diff
 export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
@@ -68,7 +68,7 @@ if Base.VERSION >= v"1.8"
     include("precompiles.jl")
 end
 
-# Needed for GeometryBasicsGeoInterfaceExt. 
+# Needed for GeometryBasicsGeoInterfaceExt.
 # In future this can go away as can use Module dispatch.
 function geointerface_geomtype end
 
