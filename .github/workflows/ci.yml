@@ -27,7 +27,7 @@ jobs:
           - os: macOS-latest
             arch: aarch64
             version: '1'
-          - os: macOS-13
+          - os: macOS-15
             arch: x64
             version: '1'
     steps:
