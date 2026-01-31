@@ -469,12 +469,22 @@ end
 
 meets(b1::Rect{N}, b2::Rect{N}) where {N} = maximum(b1) == minimum(b2)
 
-function overlaps(b1::Rect{N}, b2::Rect{N}) where {N}
-    for i in 1:N
-        maximum(b2)[i] > maximum(b1)[i] > minimum(b2)[i] &&
-            minimum(b1)[i] < minimum(b2)[i] || return false
-    end
-    return true
+"""
+    overlaps(a::Rect, b::Rect)
+
+Returns true if the given rectangles overlap, i.e. if their intersection is not
+empty.
+"""
+function overlaps(a::Rect{N}, b::Rect{N}) where {N}
+    mini1 = minimum(a)
+    maxi1 = maximum(a)
+    mini2 = minimum(b)
+    maxi2 = maximum(b)
+
+    return all(mini2 .<= mini1 .< maxi2) || # minimum(a) in b
+        all(mini2 .< maxi1 .<= maxi2) || # maximum(a) in b
+        all(mini1 .<= mini2 .< maxi1) || # minimum(b) in a
+        all(mini1 .< maxi2 .<= maxi1) # maximum(b) in a
 end
 
 function starts(b1::Rect{N}, b2::Rect{N}) where {N}
