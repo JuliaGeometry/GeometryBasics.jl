@@ -324,7 +324,7 @@ end
 
 Return `true` if any of the widths of `h` are negative.
 """
-Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
+Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
 
 """
     union(r1::Rect{N}, r2::Rect{N})
