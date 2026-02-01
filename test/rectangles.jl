@@ -111,6 +111,8 @@ end
         @test overlaps(Rect2f(0, -0.1, 3, 0.2), Rect2f(-1, -1, 2, 2))
         @test !overlaps(Rect2f(1, -0.1, 3, 0.2), Rect2f(-1, -1, 2, 2))
         @test !overlaps(Rect2f(2, -0.1, 3, 0.2), Rect2f(-1, -1, 2, 2))
+
+        @test overlaps(Rect3f(-0.3, -0.3, -0.5, 0.6, 0.6, 1.0), Rect3f(-0.2, -0.2, -0.6, 0.4, 0.4, 1.2))
     end
 end
 

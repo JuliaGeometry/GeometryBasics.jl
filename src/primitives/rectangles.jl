@@ -487,10 +487,7 @@ function overlaps(a::Rect{N}, b::Rect{N}) where {N}
     mini2 = minimum(b)
     maxi2 = maximum(b)
 
-    return all(mini2 .<= mini1 .< maxi2) || # minimum(a) in b
-        all(mini2 .< maxi1 .<= maxi2) || # maximum(a) in b
-        all(mini1 .<= mini2 .< maxi1) || # minimum(b) in a
-        all(mini1 .< maxi2 .<= maxi1) # maximum(b) in a
+    return all(mini1 .< maxi2) && all(maxi1 .> mini2)
 end
 
 function starts(b1::Rect{N}, b2::Rect{N}) where {N}
