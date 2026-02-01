@@ -324,7 +324,7 @@ end
 
 Return `true` if any of the widths of `h` are negative.
 """
-Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
+Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
 
 """
     union(r1::Rect{N}, r2::Rect{N})
@@ -332,29 +332,54 @@ Base.isempty(h::Rect{N,T}) where {N,T} = any(<(zero(T)), h.widths)
 Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
-    m = min.(minimum(h1), minimum(h2))
-    mm = max.(maximum(h1), maximum(h2))
-    return Rect{N}(m, mm - m)
+    isempty(h1) && return h2
+    isempty(h2) && return h1
+    mini = min.(minimum(h1), minimum(h2))
+    maxi = max.(maximum(h1), maximum(h2))
+    return Rect{N}(mini, maxi - mini)
 end
 
-# TODO: What should this be? The difference is "h2 - h1", which could leave an
-# L shaped cutout. Should we pad that back out into a full rect?
-# """
-#     diff(h1::Rect, h2::Rect)
+# TODO: Add a diff that returns the slabs created. This could be anywhere between
+# 0 (r2 fully covers r1) to 2*D (?) (r2 is fully inside r1)
+"""
+    bbox_diff(r1::Rect{N}, r2::Rect{N})
 
-# Perform a difference between two Rects.
-# """
-# diff(h1::Rect, h2::Rect) = h1
+Returns the bounding box of the difference "r1 - r2".
+"""
+function bbox_diff(a::Rect{D, T1}, b::Rect{D, T2}) where {D, T1, T2}
+    T = promote_type(T1, T2)
+    cut_left = minimum(a) .>= minimum(b)
+    cut_right = maximum(a) .<= maximum(b)
+    a_fully_inside_b = cut_left .&& cut_right
+    fully_outside = any((minimum(a) .> maximum(b)) .|| (maximum(a) .< minimum(b)))
+    N = sum(a_fully_inside_b)
+    if N == D # intersection is a
+        return Rect{D, T}()
+    end
+
+    mini = ifelse.(a_fully_inside_b, minimum(a), ifelse.(cut_right, minimum(a), maximum(b)))
+    maxi = ifelse.(a_fully_inside_b, maximum(a), ifelse.(cut_left, maximum(a), minimum(b)))
+    widths = maxi - mini
+    if (N == D - 1) && !fully_outside && all(>=(0), widths)
+        # one dimension is not fully cut && shapes instersect &&
+        # b does not bisect a (cut_left and cut_right are both false => mini, maxi become maxi, mini of b)
+        return Rect{D, T}(mini, maxi .- mini)
+    end
+    return Rect{D, T}(a)
+end
+
 
 """
     intersect(h1::Rect, h2::Rect)
 
 Perform a intersection between two Rects.
 """
-function Base.intersect(h1::Rect{N}, h2::Rect{N}) where {N}
+function Base.intersect(h1::Rect{N, T1}, h2::Rect{N, T2}) where {N, T1, T2}
+    T = promote_type(T1, T2)
+    overlaps(h1, h2) || return Rect{N, T}()
     m = max.(minimum(h1), minimum(h2))
     mm = min.(maximum(h1), maximum(h2))
-    return Rect{N}(m, mm - m)
+    return Rect{N, T}(m, mm - m)
 end
 
 function update(b::Rect{N,T}, v::VecTypes{N,T2}) where {N,T,T2}
@@ -364,12 +389,12 @@ end
 function update(b::Rect{N,T}, v::VecTypes{N,T}) where {N,T}
     m = min.(minimum(b), v)
     maxi = maximum(b)
-    mm = if any(isnan, maxi)
+    ws = if any(isnan, maxi)
         v - m
     else
         max.(v, maxi) - m
     end
-    return Rect{N,T}(m, mm)
+    return Rect{N,T}(m, ws)
 end
 
 # Min maximum distance functions between hrectangle and point for a given dimension
@@ -439,6 +464,8 @@ function minmax_euclidean(rect::Rect{N,T}, p::Union{VecTypes{N,T},Rect{N,T}}) wh
 end
 
 # http://en.wikipedia.org/wiki/Allen%27s_interval_algebra
+# These don't really make sense for rectangles though?
+
 function before(b1::Rect{N}, b2::Rect{N}) where {N}
     for i in 1:N
         maximum(b1)[i] < minimum(b2)[i] || return false
@@ -448,16 +475,23 @@ end
 
 meets(b1::Rect{N}, b2::Rect{N}) where {N} = maximum(b1) == minimum(b2)
 
-function overlaps(b1::Rect{N}, b2::Rect{N}) where {N}
-    for i in 1:N
-        maximum(b2)[i] > maximum(b1)[i] > minimum(b2)[i] &&
-            minimum(b1)[i] < minimum(b2)[i] || return false
-    end
-    return true
+"""
+    overlaps(a::Rect, b::Rect)
+
+Returns true if the given rectangles overlap, i.e. if their intersection is not
+empty.
+"""
+function overlaps(a::Rect{N}, b::Rect{N}) where {N}
+    mini1 = minimum(a)
+    maxi1 = maximum(a)
+    mini2 = minimum(b)
+    maxi2 = maximum(b)
+
+    return all(mini1 .< maxi2) && all(maxi1 .> mini2)
 end
 
 function starts(b1::Rect{N}, b2::Rect{N}) where {N}
-    return if minimum(b1) == minimum(b2)
+    if minimum(b1) == minimum(b2)
         for i in 1:N
             maximum(b1)[i] < maximum(b2)[i] || return false
         end
