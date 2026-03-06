@@ -320,11 +320,19 @@ end
 # set operations
 
 """
-    isempty(h::Rect)
+    isempty(h::Rect[, volumetric = true])
 
-Return `true` if any of the widths of `h` are negative.
+Return `true` if the rectangle is empty.
+
+By default (`volumetric = true`) a `Rect{D}` is considered empty if its
+D-dimensional volume is empty, i.e. if any of the widths are 0. Alternatively
+(`volumetric = false`) all of its widths are zero.
 """
-Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
+function Base.isempty(h::Rect{N,T}, volumetric = true) where {N,T}
+    degenerate = any(<=(zero(T)), h.widths)
+    empty = all(<=(zero(T)), h.widths)
+    return ifelse(volumetric, degenerate, empty)
+end
 
 """
     union(r1::Rect{N}, r2::Rect{N})
@@ -332,8 +340,8 @@ Base.isempty(h::Rect{N,T}) where {N,T} = any(<=(zero(T)), h.widths)
 Returns a new `Rect{N}` which contains both r1 and r2.
 """
 function Base.union(h1::Rect{N}, h2::Rect{N}) where {N}
-    isempty(h1) && return h2
-    isempty(h2) && return h1
+    isempty(h1, false) && return h2
+    isempty(h2, false) && return h1
     mini = min.(minimum(h1), minimum(h2))
     maxi = max.(maximum(h1), maximum(h2))
     return Rect{N}(mini, maxi - mini)
