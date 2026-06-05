@@ -683,6 +683,14 @@ end
     r = Rect2i(2, 4, 2, 4)
     @test M[r] == [53 63 73 83; 54 64 74 84]
 
+    # Rect1 coordinates/texturecoordinates
+    r = Rect{1,Float32}(0.2, 0.5)
+    @test eltype(coordinates(r)) == Point{1,Float32}
+    @test coordinates(r) == [Point{1,Float32}(0.2), Point{1,Float32}(0.7)]
+
+    r64 = Rect{1,Float64}(-0.2, 1.3)
+    @test eltype(coordinates(r64)) == Point{1,Float64}
+    @test coordinates(r64) == [Point{1,Float64}(-0.2), Point{1,Float64}(1.1)]
 end
 
 @testset "LineStrings" begin

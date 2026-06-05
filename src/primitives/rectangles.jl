@@ -525,6 +525,14 @@ function Base.isapprox(r1::Rect, r2::Rect; kwargs...)
 end
 
 ##
+# Rect1 decomposition
+function coordinates(rect::Rect{1, T}) where {T}
+    w = widths(rect)
+    o = origin(rect)
+    return [Point{1,T}(o[1]), Point{1,T}(o[1]+w[1])]
+end
+
+##
 # Rect2 decomposition
 
 function faces(rect::Rect2, nvertices=(2, 2))
