@@ -1,4 +1,5 @@
 using Test, GeometryBasics
+using IntervalSets: (..)
 
 @testset "Cylinder" begin
     @testset "constructors" begin
@@ -179,6 +180,20 @@ end
                 m = GeometryBasics.mesh(Tessellation(Sphere(Point3f(0), 1f0), 5))
                 @test constructor(m)                                                 ≈ Rect3f(-1, -1, -1, 2, 2, 2)
             end
+        end
+
+        @testset "From intervals" begin
+            # 1D interval
+            @test HyperRectangle(1..3) == Rect{1, Float64}(Point(1.0), Vec(2.0))
+            # 2D intervals
+            @test HyperRectangle(0..2, -1..1) == Rect{2, Float64}(Point(0.0, -1.0), Vec(2.0, 2.0))
+            # different interval eltypes
+            @test HyperRectangle(0.0..2.0, -1..1) == Rect{2, Float64}(Point(0.0, -1.0), Vec(2.0, 2.0))
+            # N-typed constructor
+            @test HyperRectangle{2}(0..2, -1..1) == HyperRectangle(0..2, -1..1)
+            # Rect constructor:
+            @test Rect(1..3, 4..5) == Rect{2, Float64}(Point(1.0, 4.0), Vec(2.0, 1.0))
+            @test Rect{2, Float64}(1..3, 4..5) == Rect{2, Float64}(Point(1.0, 4.0), Vec(2.0, 1.0))
         end
     end
 
@@ -668,6 +683,14 @@ end
     r = Rect2i(2, 4, 2, 4)
     @test M[r] == [53 63 73 83; 54 64 74 84]
 
+    # Rect1 coordinates/texturecoordinates
+    r = Rect{1,Float32}(0.2, 0.5)
+    @test eltype(coordinates(r)) == Point{1,Float32}
+    @test coordinates(r) == [Point{1,Float32}(0.2), Point{1,Float32}(0.7)]
+
+    r64 = Rect{1,Float64}(-0.2, 1.3)
+    @test eltype(coordinates(r64)) == Point{1,Float64}
+    @test coordinates(r64) == [Point{1,Float64}(-0.2), Point{1,Float64}(1.1)]
 end
 
 @testset "LineStrings" begin
