@@ -7,7 +7,7 @@ Returns `(intersection_found::Bool, intersection_point::Point)`
 """
 # 2D Line-segment intersection algorithm by Paul Bourke and many others.
 # http://paulbourke.net/geometry/pointlineplane/
-function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
+function intersects(a::Line{2,T1}, b::Line{2,T2}; eps = 0) where {T1,T2}
     T = promote_type(T1, T2)
     p0 = zero(Point2{T})
 
@@ -34,7 +34,7 @@ function intersects(a::Line{2,T1}, b::Line{2,T2}) where {T1,T2}
 
     # Values between [0, 1] mean the intersection point of the lines rests on
     # both of the line segments.
-    if 0 <= unknown_a <= 1 && 0 <= unknown_b <= 1
+    if eps <= unknown_a <= 1-eps && eps <= unknown_b <= 1-eps
         # Substituting an unknown back lets us find the intersection point.
         x = x1 + (unknown_a * (x2 - x1))
         y = y1 + (unknown_a * (y2 - y1))
@@ -62,27 +62,39 @@ end
 """
     self_intersections(points::AbstractVector{<:Point})
 
-Finds all self intersections of polygon `points`
+Finds all self intersections of in a continuous line described by `points`.
+Returns a Vector of indices where each pair `v[2i], v[2i+1]` refers two
+intersecting line segments by their first point, and a Vector of intersection
+points.
+
+Note that if two points are the same, they will generate a self intersection
+unless they are consecutive segments. (The first and last point are assumed to
+be shared between the first and last segment.)
 """
-function self_intersections(points::AbstractVector{<:Point})
+function self_intersections(points::AbstractVector{<:VecTypes{D, T}}) where {D, T}
+    ti, sections = _self_intersections(points)
+    # convert array of tuples to flat array
+    return [x for t in ti for x in t], sections
+end
+
+function _self_intersections(points::AbstractVector{<:VecTypes{D, T}}) where {D, T}
     sections = similar(points, 0)
-    intersections = Int[]
+    intersections = Tuple{Int, Int}[]
 
-    wraparound(i) = mod1(i, length(points) - 1)
+    N = length(points)
 
-    for (i, (a, b)) in enumerate(consecutive_pairs(points))
-        for (j, (a2, b2)) in enumerate(consecutive_pairs(points))
-            is1, is2 = wraparound(i + 1), wraparound(i - 1)
-            if i != j &&
-               is1 != j &&
-               is2 != j &&
-               !(i in intersections) &&
-               !(j in intersections)
-                intersected, p = intersects(Line(a, b), Line(a2, b2))
-                if intersected
-                    push!(intersections, i, j)
-                    push!(sections, p)
-                end
+    for i in 1:N-3
+        a = points[i]; b = points[i+1]
+        # i+1 == j describes consecutive segments which are always "intersecting"
+        # at point i+1/j. Skip those (start at i+2)
+        # Special case: We assume points[1] == points[end] so 1 -> 2 and N-1 -> N
+        # always "intersect" at 1/N. Skip this too (end at N-2 in this case)
+        for j in i+2 : N-1 - (i == 1)
+            a2 = points[j]; b2 = points[j+1]
+            intersected, p = intersects(Line(a, b), Line(a2, b2))
+            if intersected
+                push!(intersections, (i, j))
+                push!(sections, p)
             end
         end
     end
@@ -95,15 +107,14 @@ end
 Splits polygon `points` into it's self intersecting parts. Only 1 intersection
 is handled right now.
 """
-function split_intersections(points::AbstractVector{<:Point})
-    intersections, sections = self_intersections(points)
+function split_intersections(points::AbstractVector{<:VecTypes{N, T}}) where {N, T}
+    intersections, sections = _self_intersections(points)
     return if isempty(intersections)
         return [points]
-    elseif length(intersections) == 2 && length(sections) == 1
-        a, b = intersections
+    elseif length(intersections) == 1 && length(sections) == 1
+        a, b = intersections[1]
         p = sections[1]
-        a, b = min(a, b), max(a, b)
-        poly1 = simple_concat(points, (a + 1):(b - 1), p)
+        poly1 = simple_concat(points, (a + 1):b, p)
         poly2 = simple_concat(points, (b + 1):(length(points) + a), p)
         return [poly1, poly2]
     else

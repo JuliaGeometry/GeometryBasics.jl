@@ -134,7 +134,7 @@ facetype(::Mesh{D, T, FT}) where {D, T, FT} = FT
     uv_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, uvtype = Vec2f])
 
 Creates a triangle mesh with texture coordinates from a given `primitive`. The
-`pointtype`, `facetype` and `uvtype` are set by the correspondering keyword arguments.
+`pointtype`, `facetype` and `uvtype` are set by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -154,7 +154,7 @@ end
 
 Creates a triangle mesh with texture coordinates and normals from a given
 `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -175,7 +175,7 @@ end
 
 Creates a triangle mesh with texture coordinates and normals from a given
 `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -192,7 +192,7 @@ end
     normal_mesh(primitive::GeometryPrimitive{N}[; pointtype = Point{N, Float32}, facetype = GLTriangleFace, normaltype = Vec3f])
 
 Creates a triangle mesh with normals from a given `primitive`. The `pointtype`, `facetype` and `uvtype` and `normaltype` are set
-by the correspondering keyword arguments.
+by the corresponding keyword arguments.
 
 See also: [`triangle_mesh`](@ref), [`normal_mesh`](@ref), [`uv_mesh`](@ref), [`uv_normal_mesh`](@ref)
 """
@@ -213,9 +213,9 @@ end
 Calculate the signed volume of one tetrahedron. Be sure the orientation of your
 surface is right.
 """
-function volume(triangle::Triangle)
+function volume(triangle::Triangle{3, T}) where {T}
     v1, v2, v3 = triangle
-    sig = sign(orthogonal_vector(v1, v2, v3) ⋅ v1)
+    sig = sign(orthogonal_vector(Vec3{T}, triangle) ⋅ v1)
     return sig * abs(v1 ⋅ (v2 × v3)) / 6
 end
 
@@ -333,7 +333,7 @@ end
     expand_faceviews(mesh::Mesh)
 
 Returns the given `mesh` if it contains no FaceViews. Otherwise, generates a new
-mesh that contains no FaceViews, reordering and duplicating vertex atttributes
+mesh that contains no FaceViews, reordering and duplicating vertex attributes
 as necessary. If the mesh has `views` they will be adjusted as needed to produce
 the same submeshes.
 """
@@ -390,16 +390,7 @@ function expand_faceviews(mesh::Mesh)
     end
 end
 
-function merge_vertex_indices(
-        faces::AbstractVector{FT}, args...
-    ) where {N, T, FT <: AbstractFace{N, T}}
-    if args[end] isa Integer
-        fs = tuple(faces, args[1:end-1]...)
-        return merge_vertex_indices(fs, args[end])
-    else
-        return merge_vertex_indices(tuple(faces, args...))
-    end
-end
+expand_faceviews(m::MetaMesh) = MetaMesh(expand_faceviews(Mesh(m)), meta(m))
 
 function merge_vertex_indices(
         faces::NTuple{N_Attrib, <: AbstractVector{FT}},
@@ -417,7 +408,7 @@ function merge_vertex_indices(
     # indices that remap attributes
     attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
 
-    # keep track of the remmaped indices for one vertex so we don't have to
+    # keep track of the remapped indices for one vertex so we don't have to
     # query the dict twice
     temp = Vector{T}(undef, N)
 
@@ -473,26 +464,91 @@ function split_mesh(mesh::Mesh, views::Vector{<: UnitRange{<: Integer}} = mesh.v
     end
 end
 
+
+
+# two faces are the same if they match or they just cycle indices
+"""
+    cyclic_equal(face1, face2)
+
+Returns true if two faces are equal up to a cyclic permutation of their indices.
+E.g. considers `GLTriangleFace(2,3,1)` equal to `GLTriangleFace(1,2,3)` but not
+`GLTriangleFace(2,1,3)`.
+"""
+function cyclic_equal(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
+    _, min_i1 = findmin(f1.data)
+    _, min_i2 = findmin(f2.data)
+    @inbounds for i in 1:N
+        if f1[mod1(min_i1 + i, end)] !== f2[mod1(min_i2 + i, end)]
+            return false
+        end
+    end
+    return true
+end
+
+"""
+    cyclic_hash(face[, h::UInt = hash(0)])
+
+Creates a hash for the given face that is equal under cyclic permutation of the
+faces indices.
+For example `GLTriangleFace(1,2,3)` will have the same hash as `(2,3,1)` and
+`(3,1,2)`, but be different from `(1,3,2)` and its cyclic permutations.
+"""
+function cyclic_hash(f::AbstractFace{N}, h::UInt = hash(0)) where {N}
+    _, min_i = findmin(f.data)
+    @inbounds for i in min_i:N
+        h = hash(f[i], h)
+    end
+    @inbounds for i in 1:min_i-1
+        h = hash(f[i], h)
+    end
+    return h
+end
+
+# Fastpaths
+cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) == minmax(f2.data...)
+cyclic_hash(f::AbstractFace{2}, h::UInt = hash(0)) = hash(minmax(f.data...), h)
+
+function cyclic_equal(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
+    return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) ||
+        (f1.data == (f2[3], f2[1], f2[2]))
+end
+function cyclic_hash(f::AbstractFace{3}, h::UInt = hash(0))
+    if f[1] < f[2]
+        if f[1] < f[3]
+            return hash(f.data, h)
+        else
+            return hash((f[3], f[1], f[2]), h)
+        end
+    else
+        if f[2] < f[3]
+            return hash((f[2], f[3], f[1]), h)
+        else
+            return hash((f[3], f[1], f[2]), h)
+        end
+    end
+end
+
+
 """
     remove_duplicates(faces)
 
 Uses a Dict to remove duplicates from the given `faces`.
 """
 function remove_duplicates(fs::AbstractVector{FT}) where {FT <: AbstractFace}
-    hashmap = Dict{FT, Nothing}()
-    foreach(k -> setindex!(hashmap, nothing, k), fs)
-    return collect(keys(hashmap))
+    hashmap = Dict{UInt64, FT}()
+    foreach(f -> hashmap[cyclic_hash(f)] = f, fs)
+    return collect(values(hashmap))
 end
 
 
 function map_coordinates(f, mesh::Mesh)
-    result = copy(mesh)
+    result = deepcopy(mesh)
     map_coordinates!(f, result)
     return result
 end
 
 function map_coordinates(f, mesh::MetaMesh)
-    result = copy(Mesh(mesh))
+    result = deepcopy(Mesh(mesh))
     map_coordinates!(f, result)
     return MetaMesh(result, meta(mesh))
 end
@@ -528,4 +584,31 @@ end
 function Base.show(io::IO, mesh::MetaMesh{N, T}) where {N, T}
     FT = eltype(faces(mesh))
     println(io, "MetaMesh{$N, $T, $(FT)}($(join(keys(meta(mesh)), ", ")))")
+end
+
+"""
+    per_face(data, faces)
+    per_face(data, mesh)
+
+Generates a `FaceView` that applies the given data per face, rather than per
+vertex. The result can then be used to create a (new) mesh:
+```
+mesh(..., attribute_name = per_face(data, faces))
+mesh(old_mesh, attribute_name = per_face(data, old_mesh))
+```
+"""
+per_face(data, geom::AbstractGeometry) = per_face(data, faces(geom))
+function per_face(data, faces::AbstractVector{<: AbstractFace})
+    if length(data) != length(faces)
+        error("Length of per-face data $(length(data)) must match the number of faces $(length(faces))")
+    end
+
+    return FaceView(data, [typeof(f)(i) for (i, f) in enumerate(faces)])
+end
+function per_face(data, faces::AbstractVector{FT}) where {N, FT <: AbstractFace{N}}
+    if length(data) != length(faces)
+        error("Length of per-face data $(length(data)) must match the number of faces $(length(faces))")
+    end
+
+    return FaceView(data, FT.(eachindex(faces)))
 end

@@ -31,14 +31,6 @@ abstract type AbstractNgonFace{N,T} <: AbstractFace{N,T} end
 
 abstract type AbstractSimplex{Dim,T} <: Polytope{Dim,T} end
 
-@propagate_inbounds function Base.getindex(points::AbstractVector{P}, face::F) where {P<: Point, F <: AbstractFace}
-    return Polytope(P, F)(map(i-> points[i], face.data))
-end
-
-@propagate_inbounds function Base.getindex(elements::AbstractVector, face::F) where {F <: AbstractFace}
-    return map(i-> elements[i], face.data)
-end
-
 @fixed_vector SimplexFace = AbstractSimplexFace
 
 const TetrahedronFace{T} = SimplexFace{4,T}
@@ -79,53 +71,6 @@ function Base.show(io::IO, x::NgonFace{N, T}) where {N, T}
     end
 
     return print(io, name, "(", join(value.(x), ", "), ")")
-end
-
-# two faces are the same if they match or they just cycle indices
-function Base.:(==)(f1::FT, f2::FT) where {N, FT <: AbstractFace{N}}
-    _, min_i1 = findmin(f1.data)
-    _, min_i2 = findmin(f2.data)
-    @inbounds for i in 1:N
-        if f1[mod1(min_i1 + i, end)] !== f2[mod1(min_i2 + i, end)]
-            return false
-        end
-    end
-    return true
-end
-function Base.hash(f::AbstractFace{N}, h::UInt) where {N}
-    _, min_i = findmin(f.data)
-    @inbounds for i in min_i:N
-        h = hash(f[i], h)
-    end
-    @inbounds for i in 1:min_i-1
-        h = hash(f[i], h)
-    end
-    return h
-end
-Base.isequal(f1::AbstractFace, f2::AbstractFace) = ==(f1, f2)
-
-# Fastpaths
-Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{2}} = minmax(f1.data...) == minmax(f2.data...)
-Base.hash(f::AbstractFace{2}, h::UInt) = hash(minmax(f.data...), h)
-
-function Base.:(==)(f1::FT, f2::FT) where {FT <: AbstractFace{3}}
-    return (f1.data == f2.data) || (f1.data == (f2[2], f2[3], f2[1])) ||
-        (f1.data == (f2[3], f2[1], f2[2]))
-end
-function Base.hash(f::AbstractFace{3}, h::UInt)
-    if f[1] < f[2]
-        if f[1] < f[3]
-            return hash(f.data, h)
-        else
-            return hash((f[3], f[1], f[2]), h)
-        end
-    else
-        if f[2] < f[3]
-            return hash((f[2], f[3], f[1]), h)
-        else
-            return hash((f[3], f[1], f[2]), h)
-        end
-    end
 end
 
 Face(::Type{<:NgonFace{N}}, ::Type{T}) where {N,T} = NgonFace{N,T}
@@ -288,7 +233,7 @@ end
 
 function Polygon(
         exterior::AbstractVector{Point{Dim,T}},
-        interiors::AbstractVector{AbstractVector{Point{Dim,T}}}) where {Dim, T}
+        interiors::AbstractVector{<:AbstractVector{Point{Dim,T}}}) where {Dim, T}
     tov(v) = convert(Vector{Point{Dim, T}}, v)
     return Polygon{Dim,T}(tov(exterior), map(tov, interiors))
 end
@@ -321,6 +266,17 @@ function coordinates(polygon::Polygon{N,T}) where {N,T}
     end
 end
 
+function Base.promote_rule(::Type{Polygon{N, T1}}, ::Type{Polygon{N, T2}}) where {N, T1, T2}
+    return Polygon{N, promote_type(T1, T2)}
+end
+
+function Base.convert(::Type{Polygon{N, T}}, poly::Polygon{N}) where {N, T}
+    return Polygon(
+        convert(Vector{Point{N, T}}, poly.exterior),
+        convert(Vector{Vector{Point{N, T}}}, poly.interiors),
+    )
+end
+
 """
     MultiPolygon(polygons::AbstractPolygon)
 
@@ -337,6 +293,7 @@ end
 Base.getindex(mp::MultiPolygon, i) = mp.polygons[i]
 Base.size(mp::MultiPolygon) = size(mp.polygons)
 Base.length(mp::MultiPolygon) = length(mp.polygons)
+Base.:(==)(a::MultiPolygon, b::MultiPolygon) = a.polygons == b.polygons
 
 """
     LineString(points::AbstractVector{<:Point})
@@ -346,6 +303,11 @@ A LineString is a collection of points connected by line segments.
 struct LineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     points::Vector{Point{Dim, T}}
 end
+
+function LineString(points::AbstractVector{Point{Dim, T}}) where {Dim, T}
+    return LineString{Dim,T}(convert(Vector{Point{Dim, T}}, points))
+end
+
 Base.length(ls::LineString) = length(coordinates(ls))
 Base.:(==)(a::LineString, b::LineString) = a.points == b.points
 coordinates(ls::LineString) = ls.points
@@ -361,6 +323,7 @@ end
 Base.getindex(ms::MultiLineString, i) = ms.linestrings[i]
 Base.size(ms::MultiLineString) = size(ms.linestrings)
 Base.length(mpt::MultiLineString) = length(mpt.linestrings)
+Base.:(==)(a::MultiLineString, b::MultiLineString) = a.linestrings == b.linestrings
 
 """
     MultiPoint(points::AbstractVector{AbstractPoint})
@@ -626,17 +589,81 @@ texturecoordinates(mesh::Mesh) = hasproperty(mesh, :uv) ? mesh.uv : nothing
 """
     vertex_attributes(mesh::Mesh)
 
-Returns a dictionairy containing the vertex attributes of the given mesh.
+Returns a dictionary containing the vertex attributes of the given mesh.
 Mutating these will change the mesh.
 """
 vertex_attributes(mesh::Mesh) = getfield(mesh, :vertex_attributes)
 
-Base.getindex(mesh::Mesh, i::Integer) = mesh.position[mesh.faces[i]]
+function Base.getindex(mesh::Mesh, i::Integer)
+    f = mesh.faces[i]
+    P = Polytope(eltype(mesh.position), typeof(f))
+    return P(map(j -> mesh.position[j], f.data))
+end
+
 Base.length(mesh::Mesh) = length(mesh.faces)
 
 function Base.:(==)(a::Mesh, b::Mesh)
     return (a.vertex_attributes == b.vertex_attributes) &&
            (faces(a) == faces(b)) && (a.views == b.views)
+end
+
+"""
+    strictly_equal_face_vertices(a::Mesh, b::Mesh)
+
+Checks whether mesh a and b are equal in terms of vertices used in their faces.
+This allows for vertex data and indices to be synchronously permuted. For
+example, this will recognize
+```
+a = Mesh([a, b, c], [GLTriangleFace(1,2,3)])
+b = Mesh([a, c, b], [GLTriangleFace(1,3,2)])
+```
+as equal, because while the positions and faces have different orders the vertices
+in the face are the same:
+```
+[a, c, b][[1, 3, 2]] == [a, b, c] == [a, b, c][[1,2,3]]
+```
+
+This still returns false if the order of faces is permuted, e.g.
+`Mesh(ps, [f1, f2]) != Mesh(ps, [f2, f1])`. It also returns false if vertices are
+cyclically permuted within a face, i.e. `ps[[1,2,3]] != ps[[2,3,1]]`.
+"""
+function strictly_equal_face_vertices(a::Mesh, b::Mesh)
+    # Quick checks
+    if propertynames(a) != propertynames(b) || length(faces(a)) != length(faces(b))
+        return false
+    end
+
+    N = length(faces(a))
+    # for views we want to ignore empty ranges (they don't represent geometry)
+    # and treat 1:N as no range (as that is used interchangeably)
+    views1 = filter(view -> length(view) > 0 && (minimum(view) > 1 || maximum(view) < N), a.views)
+    views2 = filter(view -> length(view) > 0 && (minimum(view) > 1 || maximum(view) < N), b.views)
+    views1 != views2 && return false
+
+    # TODO: Allow different face orders & cyclic permutation within faces.
+    # E.g. use hash.(data[face]), cyclically permute min to front, hash result
+    # and add them to heaps (or sets?) so we can compare them at the end
+    # That should probably be another function as it's probably a significant
+    # step up in overhead?
+    for (attrib1, attrib2) in zip(vertex_attributes(a), vertex_attributes(b))
+        if attrib1 isa FaceView
+            if !(attrib2 isa FaceView) || length(faces(attrib1)) != length(faces(attrib2))
+                return false
+            end
+            for (f1, f2) in zip(faces(attrib1), faces(attrib2))
+                values(attrib1)[f1] == values(attrib2)[f2] || return false
+            end
+        else
+            if attrib2 isa FaceView
+                return false
+            end
+            for (f1, f2) in zip(faces(a), faces(b))
+                attrib1[f1] == attrib2[f2] || return false
+            end
+        end
+    end
+
+    return true
 end
 
 function Base.iterate(mesh::Mesh, i=1)
@@ -684,6 +711,12 @@ end
 function Mesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Integer},
               facetype=TriangleFace, skip=1)
     return Mesh(points, connect(faces, facetype, skip))
+end
+
+# the method above allows Mesh(..., Face(...), ...) to work, but produces bad results
+# explicitly error here
+function Mesh(points::AbstractVector{<:Point}, faces::AbstractFace, args...; kwargs...)
+    throw(MethodError(Mesh, (points, faces, args...)))
 end
 
 function Mesh(; kwargs...)

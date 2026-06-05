@@ -1,5 +1,5 @@
 
-[![Build Status](https://api.travis-ci.org/JuliaGeometry/GeometryBasics.jl.svg?branch=master)](https://travis-ci.com/JuliaGeometry/GeometryBasics.jl)
+[![CI](https://github.com/JuliaGeometry/GeometryBasics.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaGeometry/GeometryBasics.jl/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/JuliaGeometry/GeometryBasics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGeometry/GeometryBasics.jl)
 
 [![Docs - stable](https://img.shields.io/badge/docs-stable-lightgrey.svg)](http://juliageometry.github.io/GeometryBasics.jl/stable/)

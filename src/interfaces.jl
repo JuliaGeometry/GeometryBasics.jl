@@ -35,7 +35,7 @@ function normals(primitive, nvertices=nothing; kw...)
     # doesn't have any specific algorithm to generate normals
     # so will be generated from faces + positions
     # which we indicate by returning nothing!
-    # Overload normals(primitive::YourPrimitive), to calcalute the normals
+    # Overload normals(primitive::YourPrimitive), to calculate the normals
     # differently
     return nothing
 end
@@ -127,7 +127,7 @@ Normal() = Normal(Vec3f)
     decompose(::Type{TargetType}, primitive)
     decompose(::Type{TargetType}, data::AbstractVector)
 
-Dependent on the given type, extracts data from the primtive and converts its
+Dependent on the given type, extracts data from the primitive and converts its
 eltype to `TargetType`.
 
 Possible `TargetType`s:

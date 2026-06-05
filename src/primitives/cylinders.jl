@@ -21,8 +21,15 @@ radius(c::Cylinder) = c.r
 height(c::Cylinder) = norm(c.extremity - c.origin)
 direction(c::Cylinder) = (c.extremity .- c.origin) ./ height(c)
 
-function rotation(c::Cylinder{T}) where {T}
-    d3 = direction(c)
+"""
+    rotation(prim::GeometryPrimitive)
+    rotation(direction::VecTypes{3})
+
+Creates a rotation matrix `R` that rotates the z direction to `direction`. The
+x and y directions remain orthogonal to `direction`, i.e act as radial directions.
+"""
+rotation(prim::GeometryPrimitive) = rotation(direction(prim))
+function rotation(d3::VecTypes{3, T}) where {T}
     u = Vec{3, T}(d3[1], d3[2], d3[3])
     if abs(u[1]) > 0 || abs(u[2]) > 0
         v = Vec{3, T}(u[2], -u[1], T(0))
@@ -41,7 +48,7 @@ function coordinates(c::Cylinder{T}, nvertices=30) where {T}
 
     R = rotation(c)
     step = 2pi / nhalf
-    
+
     ps = Vector{Point3{T}}(undef, nvertices + 2)
     for i in 1:nhalf
         phi = (i-1) * step
@@ -63,7 +70,7 @@ function normals(c::Cylinder, nvertices = 30)
 
     R = rotation(c)
     step = 2pi / nhalf
-    
+
     ns = Vector{Vec3f}(undef, nhalf + 2)
     for i in 1:nhalf
         phi = (i-1) * step

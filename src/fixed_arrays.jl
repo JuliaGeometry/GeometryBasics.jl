@@ -57,7 +57,8 @@ macro fixed_vector(name_parent)
         function $(name){S}(x::T) where {S,T <: Tuple}
             return $(name){S,StaticArrays.promote_tuple_eltype(T)}(x)
         end
-        $(name){S,T}(x::StaticVector) where {S,T} = $(name){S,T}(Tuple(x))
+        $(name){S,T}(x::StaticVector{S}) where {S,T} = $(name){S,T}(Tuple(x))
+        $(name){S,T}(x::StaticVector) where {S,T} = $(name){S,T}(ntuple(i -> x[i], S))
 
         @generated function (::Type{$(name){S,T}})(x::$(name)) where {S,T}
             idx = [:(x[$i]) for i in 1:S]
@@ -139,10 +140,17 @@ const VecTypes{N,T} = Union{StaticVector{N,T},NTuple{N,T}}
 const Vecf{N} = Vec{N,Float32}
 const PointT{T} = Point{N,T} where N
 const Pointf{N} = Point{N,Float32}
-    
+
 Base.isnan(p::Union{AbstractPoint,Vec}) = any(isnan, p)
 Base.isinf(p::Union{AbstractPoint,Vec}) = any(isinf, p)
 Base.isfinite(p::Union{AbstractPoint,Vec}) = all(isfinite, p)
+
+function to_ndim(T::Type{<: VecTypes{N, ET}}, vec::VecTypes{N2}, fillval) where {N,ET,N2}
+    T(ntuple(Val(N)) do i
+        i > N2 && return ET(fillval)
+        @inbounds return vec[i]
+    end)
+end
 
 ## Generate aliases
 ## As a text file instead of eval/macro, to not confuse code linter
@@ -177,9 +185,9 @@ export Vecf, Pointf
     Vec{N, T}(args...)
     Vec{N, T}(args::Union{AbstractVector, Tuple, NTuple, StaticVector})
 
-Constructs a Vec of length `N` from the given arguments. 
+Constructs a Vec of length `N` from the given arguments.
 
-Note that Point and Vec don't follow strict mathematical definitions. Instead 
+Note that Point and Vec don't follow strict mathematical definitions. Instead
 we allow them to be used interchangeably.
 
 ## Aliases
@@ -197,9 +205,9 @@ Vec
     Point{N, T}(args...)
     Point{N, T}(args::Union{AbstractVector, Tuple, NTuple, StaticVector})
 
-Constructs a Point of length `N` from the given arguments. 
+Constructs a Point of length `N` from the given arguments.
 
-Note that Point and Vec don't follow strict mathematical definitions. Instead 
+Note that Point and Vec don't follow strict mathematical definitions. Instead
 we allow them to be used interchangeably.
 
 ## Aliases

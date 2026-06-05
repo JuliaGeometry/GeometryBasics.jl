@@ -35,6 +35,11 @@ On a larger scale this can be useful for memory and performance reason, e.g. whe
 It can also simplify some definitions, like for example `Rect3`.
 In that case we have 8 positions and 6 normals with FaceViews, or 24 without (assuming per-face normals).
 
+For the relatively common case of per-face data, you can use the `per_face` convenience function.
+
+```@docs
+per_face
+```
 
 ## MetaMesh
 
