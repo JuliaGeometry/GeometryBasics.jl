@@ -65,6 +65,15 @@ end
     rect1 = @inferred Rect(1, 2, 3, 4, 5, 6, 7, 8)
     rect2 = Rect(Vec(1, 2, 3, 4), Vec(5, 6, 7, 8))
     @test rect1 == rect2
+
+    # Rect1 coordinates
+    r = Rect{1,Float32}(0.2, 0.5)
+    @test eltype(coordinates(r)) == Point{1,Float32}
+    @test coordinates(r) == [Point{1,Float32}(0.2), Point{1,Float32}(0.7)]
+
+    r64 = Rect{1,Float64}(-0.2, 1.3)
+    @test eltype(coordinates(r64)) == Point{1,Float64}
+    @test coordinates(r64) == [Point{1,Float64}(-0.2), Point{1,Float64}(1.1)]
 end
 
 @testset "checks" begin
