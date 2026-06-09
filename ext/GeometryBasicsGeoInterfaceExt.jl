@@ -172,4 +172,31 @@ function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
     return [PT(GeoInterface.x(p), GeoInterface.y(p)) for p in getgeom(geom)]
 end
 
+# coordtype implementation - GeometryBasics encodes coordinate type in eltype
+# Use specific traits to avoid method ambiguity with GeoInterface fallbacks
+if isdefined(GeoInterface, :coordtype)
+    # Point
+    GeoInterface.coordtype(::GeoInterface.PointTrait, geom::Point{Dim,T}) where {Dim,T} = T
+    # Line
+    GeoInterface.coordtype(::GeoInterface.LineTrait, geom::Line{Dim,T}) where {Dim,T} = T
+    # LineString
+    GeoInterface.coordtype(::GeoInterface.LineStringTrait, geom::LineString{Dim,T}) where {Dim,T} = T
+    # Polygon
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Polygon{Dim,T}) where {Dim,T} = T
+    # MultiPoint
+    GeoInterface.coordtype(::GeoInterface.MultiPointTrait, geom::MultiPoint{Dim,T}) where {Dim,T} = T
+    # MultiLineString
+    GeoInterface.coordtype(::GeoInterface.MultiLineStringTrait, geom::MultiLineString{Dim,T}) where {Dim,T} = T
+    # MultiPolygon
+    GeoInterface.coordtype(::GeoInterface.MultiPolygonTrait, geom::MultiPolygon{Dim,T}) where {Dim,T} = T
+    # Ngon (uses PolygonTrait)
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Ngon{Dim,T,N}) where {Dim,T,N} = T
+    # Simplex (can have PointTrait, LineStringTrait, or PolygonTrait depending on N)
+    GeoInterface.coordtype(::GeoInterface.PointTrait, geom::Simplex{Dim,T,1}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.LineStringTrait, geom::Simplex{Dim,T,2}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Simplex{Dim,T,3}) where {Dim,T} = T
+    # Mesh
+    GeoInterface.coordtype(::GeoInterface.PolyhedralSurfaceTrait, geom::Mesh{Dim,T,E,V}) where {Dim,T,E,V} = T
+end
+
 end
