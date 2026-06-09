@@ -128,6 +128,12 @@ end
     @test ext.X == (0.0f0, 1.0f0)
     @test ext.Y == (0.0f0, 1.0f0)
     @test ext.Z == (0.0f0, 1.0f0)
+    rect = Rect4f(Vec{4,Float32}(0), Vec{4,Float32}(1.0))
+    ext = extent(rect)
+    @test ext.X == (0.0f0, 1.0f0)
+    @test ext.Y == (0.0f0, 1.0f0)
+    @test ext.Z == (0.0f0, 1.0f0)
+    @test ext.M == (0.0f0, 1.0f0)
 end
 
 @testset "coordtype" begin
