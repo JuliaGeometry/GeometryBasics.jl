@@ -31,29 +31,34 @@ A rectangle in N dimensions, formally the Cartesian product of intervals. See al
 |`N`(dim)|`Rect{N,T}`|`Rectd{N}`|`Rectf{N}`|`Recti{N}`|
 |`2`     |`Rect2{T}` |`Rect2d`  |`Rect2f`  |`Rect2i`  |
 |`3`     |`Rect3{T}` |`Rect3d`  |`Rect3f`  |`Rect3i`  |
+|`4`     |`Rect4{T}` |`Rect4d`  |`Rect4f`  |`Rect4i`  |
 
 There is an additional unexported alias `RectT` that simply reverses the order of type parameters: `RectT{T,N} == Rect{N,T}`.
 
 """
-Rect, Rect2, Rect3, RectT, Rectd, Rect2d, Rect3d, Rectf, Rect2f, Rect3f, Recti, Rect2i, Rect3i
+Rect, Rect2, Rect3, Rect4, RectT, Rectd, Rect2d, Rect3d, Rect4d, Rectf, Rect2f, Rect3f, Rect4f, Recti, Rect2i, Rect3i, Rect4i
 
 const Rect{N,T} = HyperRectangle{N,T}
 const Rect2{T} = Rect{2,T}
 const Rect3{T} = Rect{3,T}
+const Rect4{T} = Rect{4,T}
 
 const RectT{T,N} = Rect{N,T}
 
 const Rectd{N} = Rect{N,Float64}
 const Rect2d = Rect2{Float64}
 const Rect3d = Rect3{Float64}
+const Rect4d = Rect4{Float64}
 
 const Rectf{N} = Rect{N,Float32}
 const Rect2f = Rect2{Float32}
 const Rect3f = Rect3{Float32}
+const Rect4f = Rect4{Float32}
 
 const Recti{N} = Rect{N,Int}
 const Rect2i = Rect2{Int}
 const Rect3i = Rect3{Int}
+const Rect4i = Rect4{Int}
 
 
 # Constructors
@@ -598,4 +603,9 @@ end
 function Extents.extent(rect::Rect3)
     (xmin, ymin, zmin), (xmax, ymax, zmax) = extrema(rect)
     return Extents.Extent(X=(xmin, xmax), Y=(ymin, ymax), Z=(zmin, zmax))
+end
+
+function Extents.extent(rect::Rect4)
+    (xmin, ymin, zmin, mmin), (xmax, ymax, zmax, mmax) = extrema(rect)
+    return Extents.Extent(X=(xmin, xmax), Y=(ymin, ymax), Z=(zmin, zmax), M=(mmin, mmax))
 end
