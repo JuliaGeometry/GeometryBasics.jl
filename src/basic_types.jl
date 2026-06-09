@@ -303,6 +303,11 @@ A LineString is a collection of points connected by line segments.
 struct LineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     points::Vector{Point{Dim, T}}
 end
+
+function LineString(points::AbstractVector{Point{Dim, T}}) where {Dim, T}
+    return LineString{Dim,T}(convert(Vector{Point{Dim, T}}, points))
+end
+
 Base.length(ls::LineString) = length(coordinates(ls))
 Base.:(==)(a::LineString, b::LineString) = a.points == b.points
 coordinates(ls::LineString) = ls.points
