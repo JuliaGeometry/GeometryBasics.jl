@@ -34,6 +34,7 @@ geointerface_geomtype(::GeoInterface.PointTrait) = Point
 geointerface_geomtype(::GeoInterface.MultiPointTrait) = MultiPoint
 geointerface_geomtype(::GeoInterface.LineTrait) = Line
 geointerface_geomtype(::GeoInterface.LineStringTrait) = LineString
+geointerface_geomtype(::GeoInterface.LinearRingTrait) = LineString
 geointerface_geomtype(::GeoInterface.MultiLineStringTrait) = MultiLineString
 geointerface_geomtype(::GeoInterface.PolygonTrait) = Polygon
 geointerface_geomtype(::GeoInterface.MultiPolygonTrait) = MultiPolygon
@@ -111,7 +112,19 @@ function GeoInterface.convert(::Type{Point}, type::PointTrait, geom)
         return Point{2,T}(x, y)
     end
 end
-function GeoInterface.convert(::Type{LineString}, type::LineStringTrait, geom)
+function GeoInterface.convert(::Type{Line}, type::LineTrait, geom)
+    g1, g2 = GeoInterface.getgeom(geom)
+    x, y = GeoInterface.x(g1), GeoInterface.y(g1)
+    if GeoInterface.is3d(geom)
+        z = GeoInterface.z(g1)
+        T = promote_type(typeof(x), typeof(y), typeof(z))
+        return Line{3,T}(Point{3,T}(x, y, z), Point{3,T}(GeoInterface.x(g2), GeoInterface.y(g2), GeoInterface.z(g2)))
+    else
+        T = promote_type(typeof(x), typeof(y))
+        return Line{2,T}(Point{2,T}(x, y), Point{2,T}(GeoInterface.x(g2), GeoInterface.y(g2)))
+    end
+end
+function GeoInterface.convert(::Type{LineString}, type::Union{LineStringTrait, LinearRingTrait}, geom)
     g1 = getgeom(geom, 1)
     x, y = GeoInterface.x(g1), GeoInterface.y(g1)
     if GeoInterface.is3d(geom)
@@ -160,11 +173,29 @@ function _collect_with_type(::Type{PT}, geom) where {PT <: Point{2}}
 end
 
 # coordtype implementation - GeometryBasics encodes coordinate type in eltype
+# Use specific traits to avoid method ambiguity with GeoInterface fallbacks
 if isdefined(GeoInterface, :coordtype)
-    # For types with coordinate type T as a type parameter
-    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::Point{Dim,T}) where {Dim,T} = T
-    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::AbstractGeometry{Dim,T}) where {Dim,T} = T
-    GeoInterface.coordtype(::GeoInterface.AbstractGeometryTrait, geom::Simplex{Dim,T,N}) where {Dim,T,N} = T
+    # Point
+    GeoInterface.coordtype(::GeoInterface.PointTrait, geom::Point{Dim,T}) where {Dim,T} = T
+    # Line
+    GeoInterface.coordtype(::GeoInterface.LineTrait, geom::Line{Dim,T}) where {Dim,T} = T
+    # LineString
+    GeoInterface.coordtype(::GeoInterface.LineStringTrait, geom::LineString{Dim,T}) where {Dim,T} = T
+    # Polygon
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Polygon{Dim,T}) where {Dim,T} = T
+    # MultiPoint
+    GeoInterface.coordtype(::GeoInterface.MultiPointTrait, geom::MultiPoint{Dim,T}) where {Dim,T} = T
+    # MultiLineString
+    GeoInterface.coordtype(::GeoInterface.MultiLineStringTrait, geom::MultiLineString{Dim,T}) where {Dim,T} = T
+    # MultiPolygon
+    GeoInterface.coordtype(::GeoInterface.MultiPolygonTrait, geom::MultiPolygon{Dim,T}) where {Dim,T} = T
+    # Ngon (uses PolygonTrait)
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Ngon{Dim,T,N}) where {Dim,T,N} = T
+    # Simplex (can have PointTrait, LineStringTrait, or PolygonTrait depending on N)
+    GeoInterface.coordtype(::GeoInterface.PointTrait, geom::Simplex{Dim,T,1}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.LineStringTrait, geom::Simplex{Dim,T,2}) where {Dim,T} = T
+    GeoInterface.coordtype(::GeoInterface.PolygonTrait, geom::Simplex{Dim,T,3}) where {Dim,T} = T
+    # Mesh
     GeoInterface.coordtype(::GeoInterface.PolyhedralSurfaceTrait, geom::Mesh{Dim,T,E,V}) where {Dim,T,E,V} = T
 end
 
