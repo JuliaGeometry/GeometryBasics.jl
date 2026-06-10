@@ -344,6 +344,10 @@ end
     include("geometrytypes.jl")
 end
 
+@testset "Rectangles and Bounding Boxes" begin
+    include("rectangles.jl")
+end
+
 @testset "Point & Vec type" begin
     include("fixed_arrays.jl")
 end
