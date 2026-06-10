@@ -210,3 +210,31 @@ end
     @test mls isa MultiLineString{2, Float64}
     @test length(mls) == 2
 end
+
+@testset "Convert Line and LinearRing" begin
+    # Line (2D)
+    gi_line_2d = GeoInterface.Line([(1.0, 2.0), (3.0, 4.0)])
+    line_2d = GeoInterface.convert(GeometryBasics, gi_line_2d)
+    @test line_2d isa Line{2, Float64}
+    @test line_2d[1] == Point(1.0, 2.0)
+    @test line_2d[2] == Point(3.0, 4.0)
+
+    # Line (3D)
+    gi_line_3d = GeoInterface.Line([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
+    line_3d = GeoInterface.convert(GeometryBasics, gi_line_3d)
+    @test line_3d isa Line{3, Float64}
+    @test line_3d[1] == Point(1.0, 2.0, 3.0)
+    @test line_3d[2] == Point(4.0, 5.0, 6.0)
+
+    # LinearRing → LineString (2D)
+    gi_ring = GeoInterface.LinearRing([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 0.0)])
+    ls_from_ring = GeoInterface.convert(GeometryBasics, gi_ring)
+    @test ls_from_ring isa LineString{2, Float64}
+    @test length(ls_from_ring) == 4
+
+    # LinearRing → LineString (3D)
+    gi_ring_3d = GeoInterface.LinearRing([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)])
+    ls_from_ring_3d = GeoInterface.convert(GeometryBasics, gi_ring_3d)
+    @test ls_from_ring_3d isa LineString{3, Float64}
+    @test length(ls_from_ring_3d) == 4
+end
