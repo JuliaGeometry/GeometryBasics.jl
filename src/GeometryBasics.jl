@@ -16,6 +16,7 @@ include("primitives/cylinders.jl")
 include("primitives/pyramids.jl")
 include("primitives/particles.jl")
 include("primitives/Cone.jl")
+include("primitives/ConicalFrustum.jl")
 
 include("interfaces.jl")
 include("viewtypes.jl")
