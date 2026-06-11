@@ -67,16 +67,34 @@ for op in (:(+), :(-), :(*), :(/), :div)
     end
 end
 
-for op in (:(==), :(>=), :(<=), :(<), :(>), :sub_with_overflow)
+# No mixed OffsetInteger/Integer methods for the comparison operators: they
+# go through Base's promotion machinery (promote_rule + convert above) with
+# identical semantics, just like mixed +/-/* already do. Defining e.g.
+# `==(::Integer, ::OffsetInteger)` invalidates compiled comparison code in
+# unrelated packages whenever GeometryBasics loads (~1.8k method instances,
+# measured via SnoopCompile in a Makie session).
+for op in (:(==), :(>=), :(<=), :(<), :(>))
     @eval begin
         function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
             return $op(x.i, y.i)
         end
         Base.$op(x::OffsetInteger, y::OffsetInteger) = $op(value(x), value(y))
-        Base.$op(x::OffsetInteger, y::Integer) = $op(value(x), y)
-        Base.$op(x::Integer, y::OffsetInteger) = $op(x, value(y))
     end
 end
+
+# sub_with_overflow has no promoting `(::Integer, ::Integer)` fallback in
+# Base, so the mixed methods must stay. (The bodies must be qualified: the
+# old `$op(...)` interpolation produced an unqualified `sub_with_overflow`
+# call that never resolved in this module, so these methods used to throw
+# an UndefVarError when called.)
+function Base.Checked.sub_with_overflow(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
+    return Base.Checked.sub_with_overflow(x.i, y.i)
+end
+function Base.Checked.sub_with_overflow(x::OffsetInteger, y::OffsetInteger)
+    return Base.Checked.sub_with_overflow(value(x), value(y))
+end
+Base.Checked.sub_with_overflow(x::OffsetInteger, y::Integer) = Base.Checked.sub_with_overflow(value(x), y)
+Base.Checked.sub_with_overflow(x::Integer, y::OffsetInteger) = Base.Checked.sub_with_overflow(x, value(y))
 
 Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
 
