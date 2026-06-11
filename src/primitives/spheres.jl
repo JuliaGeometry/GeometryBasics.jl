@@ -24,6 +24,9 @@ An alias for a HyperSphere of dimension 3. (i.e. `HyperSphere{3, T}`)
 const Sphere{T} = HyperSphere{3,T}
 
 HyperSphere{N}(p::Point{N,T}, number) where {N,T} = HyperSphere{N,T}(p, convert(T, number))
+HyperSphere{N}(number::T) where {N,T <: Number} = HyperSphere{N,T}(Point{N, T}(zero(T)), number)
+HyperSphere{N,T}(number::T) where {N,T} = HyperSphere{N,T}(Point{N, T}(zero(T)), number)
+
 
 widths(c::HyperSphere{N,T}) where {N,T} = Vec{N,T}(radius(c) * 2)
 radius(c::HyperSphere) = c.r
