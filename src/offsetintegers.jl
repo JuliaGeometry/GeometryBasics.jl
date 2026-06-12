@@ -82,20 +82,6 @@ for op in (:(==), :(>=), :(<=), :(<), :(>))
     end
 end
 
-# sub_with_overflow has no promoting `(::Integer, ::Integer)` fallback in
-# Base, so the mixed methods must stay. (The bodies must be qualified: the
-# old `$op(...)` interpolation produced an unqualified `sub_with_overflow`
-# call that never resolved in this module, so these methods used to throw
-# an UndefVarError when called.)
-function Base.Checked.sub_with_overflow(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
-    return Base.Checked.sub_with_overflow(x.i, y.i)
-end
-function Base.Checked.sub_with_overflow(x::OffsetInteger, y::OffsetInteger)
-    return Base.Checked.sub_with_overflow(value(x), value(y))
-end
-Base.Checked.sub_with_overflow(x::OffsetInteger, y::Integer) = Base.Checked.sub_with_overflow(value(x), y)
-Base.Checked.sub_with_overflow(x::Integer, y::OffsetInteger) = Base.Checked.sub_with_overflow(x, value(y))
-
 Base.promote_rule(::Type{IT}, ::Type{<:OffsetInteger}) where {IT<:Integer} = IT
 
 function Base.promote_rule(::Type{OffsetInteger{O1,T1}},
