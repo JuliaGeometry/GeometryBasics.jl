@@ -67,14 +67,18 @@ for op in (:(+), :(-), :(*), :(/), :div)
     end
 end
 
-for op in (:(==), :(>=), :(<=), :(<), :(>), :sub_with_overflow)
+# No mixed OffsetInteger/Integer methods for the comparison operators: they
+# go through Base's promotion machinery (promote_rule + convert above) with
+# identical semantics, just like mixed +/-/* already do. Defining e.g.
+# `==(::Integer, ::OffsetInteger)` invalidates compiled comparison code in
+# unrelated packages whenever GeometryBasics loads (~1.8k method instances,
+# measured via SnoopCompile in a Makie session).
+for op in (:(==), :(>=), :(<=), :(<), :(>))
     @eval begin
         function Base.$op(x::OffsetInteger{O}, y::OffsetInteger{O}) where {O}
             return $op(x.i, y.i)
         end
         Base.$op(x::OffsetInteger, y::OffsetInteger) = $op(value(x), value(y))
-        Base.$op(x::OffsetInteger, y::Integer) = $op(value(x), y)
-        Base.$op(x::Integer, y::OffsetInteger) = $op(x, value(y))
     end
 end
 
