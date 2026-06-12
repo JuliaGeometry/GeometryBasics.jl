@@ -338,6 +338,45 @@ end
             @test <(x, x1)
         end
     end
+
+    # With a nonzero offset `raw != value`, so this exercises the arithmetic
+    # and the same-offset comparison method `op(x.i, y.i)` for an offset != 0.
+    let O = 3
+        a = OffsetInteger{O}(2)
+        b = OffsetInteger{O}(4)
+        @test GeometryBasics.value(a) == 2
+        @test GeometryBasics.raw(a) == 2 + O
+        @test Base.to_index(a) == 2
+        @test -(a)   == OffsetInteger{O}(-2)
+        @test abs(OffsetInteger{O}(-2)) == OffsetInteger{O}(2)
+        @test +(a, b)  == OffsetInteger{O}(6)
+        @test -(b, a)  == OffsetInteger{O}(2)
+        @test *(a, b)  == OffsetInteger{O}(8)
+        @test div(b, a) == OffsetInteger{O}(2)
+        @test a == OffsetInteger{O}(2)
+        @test a != b
+        @test a < b
+        @test a <= b
+        @test b > a
+        @test b >= a
+    end
+
+    # Comparing OffsetIntegers with *different* offsets goes through the
+    # value-based fallback method `op(value(x), value(y))`.
+    let
+        a = OffsetInteger{0}(5)  # value 5
+        b = OffsetInteger{3}(5)  # value 5
+        c = OffsetInteger{3}(7)  # value 7
+        @test a == b
+        @test a <= b
+        @test a >= b
+        @test !(a < b)
+        @test a < c
+        @test a <= c
+        @test c > a
+        @test c >= a
+        @test a != c
+    end
 end
 
 @testset "Tests from GeometryTypes" begin
