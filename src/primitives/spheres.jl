@@ -42,7 +42,7 @@ centered(S::Type{<: HyperSphere}) = S(Point3f(0), 0.5f0)
 
 function coordinates(s::Circle, nvertices=64)
     r = radius(s); o = origin(s)
-    ps = [r * Point(cos(phi), sin(phi)) + o for phi in LinRange(0, 2pi, nvertices)]
+    ps = [r * Point(cospi(phi), sinpi(phi)) + o for phi in LinRange(0, 2, nvertices)]
     # ps[end] = o
     return ps
 end
@@ -59,9 +59,9 @@ end
 
 
 function coordinates(s::Sphere, nvertices=24)
-    θ = LinRange(0, pi, nvertices)
-    φ = LinRange(0, 2pi, nvertices)
-    inner(θ, φ) = Point(cos(φ) * sin(θ), sin(φ) * sin(θ), cos(θ)) .* s.r .+ s.center
+    θ = LinRange(0, 1, nvertices)
+    φ = LinRange(0, 2, nvertices)
+    inner(θ, φ) = Point(cospi(φ) * sinpi(θ), sinpi(φ) * sinpi(θ), cospi(θ)) .* s.r .+ s.center
     return [inner(θ, φ) for φ in φ for θ in θ]
 end
 
