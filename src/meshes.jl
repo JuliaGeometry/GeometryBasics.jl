@@ -401,16 +401,24 @@ function merge_vertex_indices(
 
     # maps a combination of old indices in MultiFace to a new vertex_index
     vertex_index_map = Dict{NTuple{N_Attrib, T}, T}()
+    # Count using Int to avoid type instability
+    vertex_index_counter = Ref(convert(Int,vertex_index_counter))
 
     # Faces after conversion
     new_faces = sizehint!(FT[], N_faces)
 
     # indices that remap attributes
-    attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
+    attribute_indices = ntuple(n -> sizehint!(UInt32[], N*N_faces), N_Attrib)
 
     # keep track of the remapped indices for one vertex so we don't have to
     # query the dict twice
     temp = Vector{T}(undef, N)
+
+    function create_index(vertex, vertex_index_counter::Ref{Int})::T
+        vertex_index_counter[] += 1
+        push!.(attribute_indices, vertex)
+        return convert(T,vertex_index_counter[] - 1)
+    end
 
     for multi_face in zip(faces...)
 
@@ -421,11 +429,7 @@ function merge_vertex_indices(
 
             # if the vertex exists, get it's index
             # otherwise register it with the next available vertex index
-            temp[i] = get!(vertex_index_map, vertex) do
-                vertex_index_counter += 1
-                push!.(attribute_indices, vertex)
-                return vertex_index_counter - 1
-            end
+            temp[i] = get!(() -> create_index(vertex, vertex_index_counter), vertex_index_map, vertex)
         end
 
         # generate new face
