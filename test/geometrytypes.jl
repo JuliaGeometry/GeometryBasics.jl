@@ -506,6 +506,24 @@ end
     @test Point2f(-0.5) in circle
     @test centered(Circle) == Circle(Point2f(0), 0.5f0)
     @test centered(Circle{Float64}) == Circle(Point2(0.0), 0.5)
+
+    @testset "bit-exact seam and pole vertices" begin
+        for T in (Float32, Float64)
+            n = 24
+            sphere_points = coordinates(Sphere(Point{3,T}(0.2, -0.3, 0.4), T(1.3)), n)
+            first_meridian = sphere_points[1:n]
+            last_meridian = sphere_points[(end - n + 1):end]
+            @test all(map(===, first_meridian, last_meridian))
+
+            top_pole = sphere_points[1:n:end]
+            bottom_pole = sphere_points[n:n:end]
+            @test all(p === top_pole[1] for p in top_pole)
+            @test all(p === bottom_pole[1] for p in bottom_pole)
+
+            circle_points = coordinates(Circle(Point{2,T}(0.2, -0.3), T(1.3)), n)
+            @test circle_points[1] === circle_points[end]
+        end
+    end
 end
 
 @testset "LineStrings" begin
