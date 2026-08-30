@@ -1,12 +1,12 @@
 
+# 2D Line-segment intersection algorithm by Paul Bourke and many others.
+# http://paulbourke.net/geometry/pointlineplane/
 """
     intersects(a::Line, b::Line) -> Bool, Point
 
 Intersection of 2 line segments `a` and `b`.
 Returns `(intersection_found::Bool, intersection_point::Point)`
 """
-# 2D Line-segment intersection algorithm by Paul Bourke and many others.
-# http://paulbourke.net/geometry/pointlineplane/
 function intersects(a::Line{2,T1}, b::Line{2,T2}; eps = 0) where {T1,T2}
     T = promote_type(T1, T2)
     p0 = zero(Point2{T})
