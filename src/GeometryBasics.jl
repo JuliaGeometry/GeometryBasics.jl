@@ -1,7 +1,6 @@
 module GeometryBasics
 
-using IterTools, LinearAlgebra, StaticArrays
-import Extents
+using LinearAlgebra, StaticArrays
 using EarCut_jll
 import Base: *
 
@@ -57,8 +56,8 @@ export uv_mesh, normal_mesh, uv_normal_mesh
 export height, origin, radius, width, widths
 export HyperSphere, Circle, Sphere, Cone
 export Cylinder, Pyramid, extremity
-export HyperRectangle, Rect, Rect2, Rect3, Recti, Rect2i, Rect3i, Rectf, Rect2f, Rect3f, Rectd, Rect2d, Rect3d, RectT
-export before, during, meets, overlaps, intersects, finishes
+export HyperRectangle, Rect, Rect2, Rect3, Rect4, Recti, Rect2i, Rect3i, Rect4i, Rectf, Rect2f, Rect3f, Rect4f, Rectd, Rect2d, Rect3d, Rect4d, RectT
+export before, during, meets, overlaps, intersects, finishes, bbox_diff
 export centered, direction, area, volume, update
 export max_dist_dim, max_euclidean, max_euclideansq, min_dist_dim, min_euclidean
 export min_euclideansq, minmax_dist_dim, minmax_euclidean, minmax_euclideansq
@@ -68,7 +67,7 @@ if Base.VERSION >= v"1.8"
     include("precompiles.jl")
 end
 
-# Needed for GeometryBasicsGeoInterfaceExt. 
+# Needed for GeometryBasicsGeoInterfaceExt.
 # In future this can go away as can use Module dispatch.
 function geointerface_geomtype end
 

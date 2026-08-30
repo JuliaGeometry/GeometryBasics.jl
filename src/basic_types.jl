@@ -303,6 +303,11 @@ A LineString is a collection of points connected by line segments.
 struct LineString{Dim, T<:Real} <: AbstractGeometry{Dim, T}
     points::Vector{Point{Dim, T}}
 end
+
+function LineString(points::AbstractVector{Point{Dim, T}}) where {Dim, T}
+    return LineString{Dim,T}(convert(Vector{Point{Dim, T}}, points))
+end
+
 Base.length(ls::LineString) = length(coordinates(ls))
 Base.:(==)(a::LineString, b::LineString) = a.points == b.points
 coordinates(ls::LineString) = ls.points
@@ -504,7 +509,7 @@ struct Mesh{
         Dim, T <: Real,
         FT <: AbstractFace,
         Names,
-        VAT <: Tuple{<: AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
+        VAT <: Tuple{<:AbstractVector{Point{Dim, T}}, Vararg{VertexAttributeType}},
         FVT <: AbstractVector{FT}
     } <: AbstractMesh{Dim, T}
 
@@ -522,17 +527,17 @@ struct Mesh{
         }
 
         va = vertex_attributes
-        names = Names
 
         # verify type
-        if !haskey(va, :position )
+        if !haskey(va, :position)
             error("Vertex attributes must have a :position attribute.")
         end
 
         if haskey(va, :normals)
             @warn "`normals` as a vertex attribute name has been deprecated in favor of `normal` to bring it in line with mesh.position and mesh.uv"
-            names = ntuple(i -> ifelse(names[i] == :normal, :normal, names[i]), length(names))
+            names = ntuple(i -> ifelse(Names[i] == :normals, :normal, Names[i]), length(Names))
             va = NamedTuple{names}(values(va))
+            return new{Dim, T, FT, names, VAT, FVT}(va, fs, views)
         end
 
         # verify that all vertex attributes refer to the same number of vertices
@@ -551,7 +556,7 @@ struct Mesh{
             end
         end
 
-        return new{Dim, T, FT, names, VAT, FVT}(va, fs, views)
+        return new{Dim, T, FT, Names, VAT, FVT}(va, fs, views)
     end
 end
 
