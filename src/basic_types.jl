@@ -385,6 +385,7 @@ faces(x::FaceView) = x.faces
 Base.values(x::FaceView) = x.data
 facetype(x::FaceView) = eltype(x.faces)
 Base.getindex(x::FaceView, f::AbstractFace) = getindex(values(x), f)
+Base.getindex(x::FaceView, i::Integer) = x.data[i]
 Base.isempty(x::FaceView) = isempty(values(x))
 Base.:(==)(a::FaceView, b::FaceView) = (values(a) == values(b)) && (faces(a) == faces(b))
 
@@ -768,10 +769,10 @@ function MetaMesh(points::AbstractVector{<:Point}, faces::AbstractVector{<:Abstr
     MetaMesh(Mesh(points, faces), Dict{Symbol, Any}(kwargs))
 end
 
-
 @inline function Base.hasproperty(mesh::MetaMesh, field::Symbol)
     return hasfield(MetaMesh, field) || hasproperty(getfield(mesh, :mesh), field)
 end
+
 @inline function Base.getproperty(mesh::MetaMesh, field::Symbol)
     if hasfield(MetaMesh, field)
         return getfield(mesh, field)
@@ -779,6 +780,7 @@ end
         return getproperty(getfield(mesh, :mesh), field)
     end
 end
+
 @inline function Base.propertynames(mesh::MetaMesh)
     return (fieldnames(MetaMesh)..., propertynames(getfield(mesh, :mesh))...)
 end
