@@ -1,5 +1,7 @@
 # Meshes
 
+## Types
+
 GeometryBasics defines two mesh types to work with - `Mesh` and `MetaMesh`
 
 ## Mesh
@@ -49,7 +51,6 @@ MetaMesh
 
 ## How to create a mesh
 
-### GeometryBasics
 
 In GeometryBasics you mainly create meshes from primitives using a few constructors:
 - `triangle_mesh(primitive)` generates the most basic mesh (i.e. positions and faces)
@@ -63,6 +64,40 @@ The latter also include a `pointtype` and `facetype` conversion.
 
 Finally there is also a `merge(::Vector{Mesh})` function which combines multiple meshes into a single one.
 Note that this doesn't remove any data (e.g. hidden or duplicate vertices), and may remove `FaceView`s if they are incompatible between meshes.
+
+### Constructing a mesh
+
+To create a mesh one can provide one the following.
+* A list of points and faces.
+* A list of polytopes.
+
+First, let's create four points and four faces. Each face is an integer connecting the points according to their array index.
+
+```@example
+using GeometryBasics, GLMakie
+points = [
+     Point3f(0,0,0),
+     Point3f(0,0,1),
+     Point3f(0,1,0),
+     Point3f(1,0,0)
+]
+
+myfaces = [
+     TriangleFace(1,2,3),
+     TriangleFace(1,2,4),
+     TriangleFace(1,3,4),
+     TriangleFace(2,3,4)
+ ]
+
+mymesh = Mesh(points, myfaces)
+GLMakie.mesh(mymesh)
+```
+
+As seen above, the mesh is just a sequence of points connected by triangle faces. 
+```@example
+GeometryBasics.coordinates(mymesh)
+```
+
 
 ### Meshing.jl
 
