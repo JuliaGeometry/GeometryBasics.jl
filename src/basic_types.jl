@@ -382,7 +382,7 @@ function Base.vcat(a::FaceView, b::FaceView)
 end
 
 faces(x::FaceView) = x.faces
-Base.values(x::FaceView) = x.data
+Base.values(x::FaceView{T,AVT,FVT}) where {T,AVT,FVT} = x.data::AVT
 facetype(x::FaceView) = eltype(x.faces)
 Base.getindex(x::FaceView, f::AbstractFace) = getindex(values(x), f)
 Base.isempty(x::FaceView) = isempty(values(x))
