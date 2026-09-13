@@ -469,12 +469,6 @@ function merge_vertex_indices(
     # query the dict twice
     temp = Vector{T}(undef, N)
 
-    function create_index(vertex, vertex_index_counter::Ref{Int})::T
-        vertex_index_counter[] += 1
-        push!.(attribute_indices, vertex)
-        return convert(T,vertex_index_counter[] - 1)
-    end
-
     for multi_face in zip(faces...)
 
         for i in 1:N
