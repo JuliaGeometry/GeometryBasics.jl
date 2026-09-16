@@ -209,11 +209,10 @@ function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: 
 
     normals_result = zeros(NormalType, length(vertices))
     for face in faces
-        v = vertices[convert.(Int, face)]
+        v = vertices[face]
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(NormalType, v)
-        for i in 1:length(face)
-            fi = face[i]
+        for fi in face
             normals_result[fi] = normals_result[fi] .+ n
         end
     end
@@ -246,7 +245,7 @@ end
         faces   = resize!(F[], length(fs))
 
         for (i, f) in enumerate(fs)
-            ps = positions[convert.(Int,f)]
+            ps = positions[f]
             n = orthogonal_vector(NormalType, ps)
             normals[i] = normalize(n)
             faces[i] = $(FT)(i)
