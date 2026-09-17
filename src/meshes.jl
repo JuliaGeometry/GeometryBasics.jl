@@ -329,6 +329,10 @@ function Base.merge(meshes::AbstractVector{<:Mesh})
     end
 end
 
+getmapping(maps::AbstractMatrix, i) = @view maps[i,:]
+getmapping(maps::AbstractVector, i) = maps
+remap_va(vals::AbstractVector{T}, maps::AbstractArray{UInt32,D}, i::Int) where {T,D} = vals[getmapping(maps,i)]
+
 """
     expand_faceviews(mesh::Mesh)
 
@@ -352,10 +356,10 @@ function expand_faceviews(mesh::Mesh)
 
         new_fs, maps = merge_vertex_indices(all_fs)
 
-        named_maps = NamedTuple{tuple(names...)}(maps)
+        named_indices = NamedTuple{tuple(names...)}(1:length(names))
 
         new_va = NamedTuple{keys(va)}(map(keys(va)) do name
-            values(va[name])[get(named_maps, name, maps[1])]
+            remap_va(values(va[name]), maps, get(named_indices, name, 1))
         end)
 
         return Mesh(new_va, new_fs)
@@ -373,10 +377,10 @@ function expand_faceviews(mesh::Mesh)
         for idxs in mesh.views
             view_fs, maps = merge_vertex_indices(view.(all_fs, (idxs,)), vertex_index_counter)
 
-            vertex_index_counter += length(maps[1])
+            vertex_index_counter += length(getmapping(maps, 1))
 
             for name in keys(new_va)
-                map = maps[something(findfirst(==(name), names), 1)]
+                map = getmapping(maps, something(findfirst(==(name), names), 1))
                 append!(new_va[name], values(va[name])[map])
             end
 
@@ -392,21 +396,74 @@ end
 
 expand_faceviews(m::MetaMesh) = MetaMesh(expand_faceviews(Mesh(m)), meta(m))
 
+function newindex!(vertex_next_index_map, attribute_indices, vertex)
+    new_index = UInt32(length(vertex_next_index_map) + 1)
+    push!(vertex_next_index_map, new_index)
+    push!(attribute_indices, vertex)
+    return new_index
+end
+
+function getindex!(vertex_first_index_map, vertex_next_index_map, attribute_indices, vertex, vertex_offset)
+    # if the vertex exists, get it's index
+    # otherwise register it with the next available vertex index
+    vertex_idx = (vertex[1] - vertex_offset)
+    first_vertex = vertex_first_index_map[vertex_idx]
+    if iszero(first_vertex)
+        new_i = newindex!(vertex_next_index_map, attribute_indices, vertex)
+        vertex_first_index_map[vertex_idx] = new_i
+        return new_i
+    else
+        current_vertex = first_vertex
+        while true
+            if vertex == attribute_indices[current_vertex]
+                return current_vertex
+            end
+            if current_vertex == vertex_next_index_map[current_vertex] # We are at the last stored vertex and no match was found
+                new_i = newindex!(vertex_next_index_map, attribute_indices, vertex)
+                vertex_next_index_map[current_vertex] = new_i
+                return new_i
+            end
+            current_vertex = vertex_next_index_map[current_vertex]
+        end
+    end
+end
+
+function vertex_range(faces)
+    vmin = typemax(UInt32)
+    vmax = 0
+    for face in faces
+        mi,ma = extrema(face)
+        if mi < vmin
+            vmin = mi
+        end
+        if ma > vmax
+            vmax = ma
+        end
+    end
+
+    return vmin,vmax         
+end
+
 function merge_vertex_indices(
         faces::NTuple{N_Attrib, <: AbstractVector{FT}},
         vertex_index_counter::Integer = T(1)
     ) where {N, T, FT <: AbstractFace{N, T}, N_Attrib}
 
     N_faces = length(faces[1])
+    first_vertex, last_vertex = vertex_range(faces[1])
+    vertex_offset = UInt32(first_vertex - 1)
+    N_vertices = last_vertex - vertex_offset
 
-    # maps a combination of old indices in MultiFace to a new vertex_index
-    vertex_index_map = Dict{NTuple{N_Attrib, T}, T}()
+    # maps old vertex index to the first index in the new map
+    vertex_first_index_map = zeros(UInt32, N_vertices)
+    vertex_next_index_map = sizehint!(UInt32[], N*N_faces)
+    start_index = convert(UInt32,vertex_index_counter) - 1
 
     # Faces after conversion
     new_faces = sizehint!(FT[], N_faces)
 
     # indices that remap attributes
-    attribute_indices = ntuple(n -> sizehint!(UInt32[], N_faces), N_Attrib)
+    attribute_indices = sizehint!(NTuple{N_Attrib,UInt32}[], N*N_faces)
 
     # keep track of the remapped indices for one vertex so we don't have to
     # query the dict twice
@@ -417,15 +474,8 @@ function merge_vertex_indices(
         for i in 1:N
             # get the i-th set of vertex indices from multi_face, i.e.
             # (multi_face.position_index[i], multi_face.normal_index[i], ...)
-            vertex = ntuple(n -> multi_face[n][i], N_Attrib)
-
-            # if the vertex exists, get it's index
-            # otherwise register it with the next available vertex index
-            temp[i] = get!(vertex_index_map, vertex) do
-                vertex_index_counter += 1
-                push!.(attribute_indices, vertex)
-                return vertex_index_counter - 1
-            end
+            vertex = ntuple(n -> multi_face[n][i], Val{N_Attrib}())
+            temp[i] = getindex!(vertex_first_index_map, vertex_next_index_map, attribute_indices, vertex, vertex_offset) + start_index
         end
 
         # generate new face
@@ -435,9 +485,8 @@ function merge_vertex_indices(
     # in case we are reserving more than needed
     sizehint!(new_faces, length(new_faces))
 
-    return new_faces, attribute_indices
+    return new_faces, reinterpret(reshape, UInt32, attribute_indices) #ntuple(n -> getindex.(attribute_indices,n), N_Attrib)
 end
-
 
 """
     split_mesh(mesh::Mesh, views::Vector{UnitRange{Int}} = mesh.views)
@@ -454,9 +503,9 @@ function split_mesh(mesh::Mesh, views::Vector{<: UnitRange{<: Integer}} = mesh.v
             v = getproperty(mesh, name)
             if v isa FaceView
                 _fs, _maps = merge_vertex_indices((view(faces(v), idxs),))
-                return FaceView(values(v)[_maps[1]], _fs)
+                return FaceView(values(v)[getmapping(_maps,1)], _fs)
             else
-                return v[maps[1]]
+                return v[getmapping(maps,1)]
             end
         end)
 

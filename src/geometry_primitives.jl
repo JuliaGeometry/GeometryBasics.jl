@@ -212,8 +212,7 @@ function normals(vertices::AbstractVector{<:Point{3}}, faces::AbstractVector{<: 
         v = vertices[face]
         # we can get away with two edges since faces are planar.
         n = orthogonal_vector(NormalType, v)
-        for i in 1:length(face)
-            fi = face[i]
+        for fi in face
             normals_result[fi] = normals_result[fi] .+ n
         end
     end
