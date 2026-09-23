@@ -22,7 +22,7 @@ end
     @test collect(m) == [Triangle(p[1], p[2], p[3]), GeometryBasics.Quadrilateral(p[1], p[2], p[3], p[4])]
 
     facedata = FaceView([:red, :blue], [TriangleFace(1), QuadFace(2)])
-    m2 = GeometryBasics.mesh(m, color = facedata)
+    m2 = GeometryBasics.mesh(m, color = facedata) # this converts to GLTriangleFace
     m3 = expand_faceviews(m2)
     @test faces(m3) == GLTriangleFace[(1,2,3), (4,5,6), (4,6,7)]
     @test coordinates(m3) == Point2f[[0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [4.0, 5.0]]
@@ -32,6 +32,18 @@ end
     @test per_face([:red, :blue], m) == facedata
     @test per_face([:red, :blue, :blue], m2) == FaceView([:red, :blue, :blue], GLTriangleFace.(1:3))
     @test per_face([:red, :blue, :blue], m3) == FaceView([:red, :blue, :blue], GLTriangleFace.(1:3))
+
+    # without early conversion:
+    m2 = GeometryBasics.mesh(m, color = facedata, facetype = NgonFace)
+    m3 = expand_faceviews(m2)
+    @test faces(m3) == [TriangleFace(1,2,3), QuadFace(4,5,6,7)]
+    @test coordinates(m3) == Point2f[[0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [4.0, 5.0]]
+    @test m3.color == [:red, :red, :red, :blue, :blue, :blue, :blue]
+
+    m3 = GeometryBasics.mesh(m3) # to GLTriangleFace after expand_faceviews
+    @test faces(m3) == GLTriangleFace[(1,2,3), (4,5,6), (4,6,7)]
+    @test coordinates(m3) == Point2f[[0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [0.0, 1.0], [1.0, 2.0], [3.0, 4.0], [4.0, 5.0]]
+    @test m3.color == [:red, :red, :red, :blue, :blue, :blue, :blue]
 end
 
 @testset "Ambiguous NgonFace constructors" begin

@@ -428,11 +428,11 @@ function getindex!(vertex_first_index_map, vertex_next_index_map, attribute_indi
     end
 end
 
-function vertex_range(faces)
+function vertex_range(faces)::Tuple{UInt32, UInt32}
     vmin = typemax(UInt32)
     vmax = 0
     for face in faces
-        mi,ma = extrema(face)
+        mi, ma = extrema(face)
         if mi < vmin
             vmin = mi
         end
@@ -441,7 +441,7 @@ function vertex_range(faces)
         end
     end
 
-    return vmin,vmax         
+    return convert(UInt32, vmin), convert(UInt32, vmax)
 end
 
 function merge_vertex_indices(
@@ -480,6 +480,53 @@ function merge_vertex_indices(
 
         # generate new face
         push!(new_faces, FT(temp))
+    end
+
+    # in case we are reserving more than needed
+    sizehint!(new_faces, length(new_faces))
+
+    return new_faces, reinterpret(reshape, UInt32, attribute_indices) #ntuple(n -> getindex.(attribute_indices,n), N_Attrib)
+end
+
+# Dynamically sized faces
+function merge_vertex_indices(
+        faces::NTuple{N_Attrib, <: AbstractVector{FT}},
+        vertex_index_counter::Integer = GLIndex(1)
+    ) where {N_Attrib, FT}
+
+    N_faces = length(faces[1])
+    N_max = mapreduce(length, max, faces[1], init = 3)
+    first_vertex, last_vertex = vertex_range(faces[1])
+    vertex_offset = UInt32(first_vertex - 1)
+    N_vertices = last_vertex - vertex_offset
+
+    # maps old vertex index to the first index in the new map
+    vertex_first_index_map = zeros(UInt32, N_vertices)
+    vertex_next_index_map = sizehint!(UInt32[], N_max * N_faces)
+    start_index = convert(UInt32, vertex_index_counter) - 1
+
+    # Faces after conversion
+    new_faces = sizehint!(NgonFace[], N_faces)
+
+    # indices that remap attributes
+    attribute_indices = sizehint!(NTuple{N_Attrib, UInt32}[], N_max * N_faces)
+
+    # keep track of the remapped indices for one vertex so we don't have to
+    # query the dict twice
+    temp = Vector{UInt32}(undef, N_max)
+
+    for multi_face in zip(faces...)
+        N = length(multi_face[1])
+
+        for i in 1:N
+            # get the i-th set of vertex indices from multi_face, i.e.
+            # (multi_face.position_index[i], multi_face.normal_index[i], ...)
+            vertex = ntuple(n -> UInt32(multi_face[n][i]::Integer), Val{N_Attrib}())
+            temp[i] = getindex!(vertex_first_index_map, vertex_next_index_map, attribute_indices, vertex, vertex_offset) + start_index
+        end
+
+        # generate new face
+        push!(new_faces, NgonFace{N, UInt32}(view(temp, 1:N)))
     end
 
     # in case we are reserving more than needed
