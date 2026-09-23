@@ -438,3 +438,12 @@ end
     @test 2 * coordinates(m) == coordinates(m2)
     @test GeometryBasics.meta(m) == GeometryBasics.meta(m2)
 end
+
+@testset "preserve MetaMesh" begin
+    m = MetaMesh(uv_normal_mesh(Sphere(Point3f(0), 1f0)), flag = 1)
+    for func in (GeometryBasics.mesh, triangle_mesh, uv_mesh, uv_normal_mesh, normal_mesh)
+        converted = func(m)
+        @test converted isa MetaMesh
+        @test converted[:flag] == 1
+    end
+end

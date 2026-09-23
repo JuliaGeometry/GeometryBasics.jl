@@ -708,3 +708,9 @@ function per_face(data, faces::AbstractVector{FT}) where {N, FT <: AbstractFace{
 
     return FaceView(data, FT.(eachindex(faces)))
 end
+
+for func in (:mesh, :triangle_mesh, :uv_mesh, :uv_normal_mesh, :normal_mesh)
+    @eval function $func(m::MetaMesh; kwargs...)
+        return MetaMesh($func(Mesh(m)), meta(m))
+    end
+end
