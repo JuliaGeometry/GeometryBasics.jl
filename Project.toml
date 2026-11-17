@@ -1,7 +1,7 @@
 name = "GeometryBasics"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 authors = ["SimonDanisch <sdanisch@gmail.com>"]
-version = "0.5.13"
+version = "0.5.14"
 
 [deps]
 EarCut_jll = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
@@ -22,7 +22,7 @@ IntervalSetsExt = "IntervalSets"
 
 [compat]
 Aqua = "0.8"
-EarCut_jll = "2"
+EarCut_jll = "3"
 Extents = "0.1"
 GeoInterface = "1.0.1"
 GeoJSON = "0.7, 0.8"

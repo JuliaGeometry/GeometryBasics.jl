@@ -43,14 +43,14 @@
     @test coordinates(poly1) == ps
 
     fs = GeometryBasics.earcut_triangulate([poly1.exterior[[1, 2, 3, 4, 1]]])
-    @test fs == GLTriangleFace[(4,1,2), (2,3,4)]
+    @test fs == GLTriangleFace[(4,1,2), (4,2,3)]
 
     poly1 = [
         [Point2f(100, 0), Point2f(100, 100), Point2f(0, 100), Point2f(0, 0)],
         # Following polylines define holes.
         [Point2f(75, 25), Point2f(75, 75), Point2f(25, 75), Point2f(25, 25)]
     ]
-    fs = GLTriangleFace[(4, 8, 7), (5, 8, 4), (3, 4, 7), (5, 4, 1), (2, 3, 7), (6, 5, 1), (2, 7, 6), (6, 1, 2)]
+    fs = GLTriangleFace[(4, 8, 7), (5, 8, 4), (5, 4, 1), (5, 1, 2), (3, 4, 7), (3, 7, 6), (6, 5, 2), (6, 2, 3)]
     @test fs == GeometryBasics.earcut_triangulate(poly1)
 
     # issue #236
@@ -88,17 +88,17 @@ end
 
     @testset "earcut" begin
         ps = Point2i[(-1,-1), (1,-1), (1,1), (-1,1)]
-        @test GeometryBasics.earcut_triangulate([Point{2, Int32}.(ps)]) == GLTriangleFace[(3,4,1), (1,2,3)]
-        @test GeometryBasics.earcut_triangulate([Point{2, Int64}.(ps)]) == GLTriangleFace[(3,4,1), (1,2,3)]
-        @test GeometryBasics.earcut_triangulate([Point{2, Float32}.(ps)]) == GLTriangleFace[(3,4,1), (1,2,3)]
-        @test GeometryBasics.earcut_triangulate([Point{2, Float64}.(ps)]) == GLTriangleFace[(3,4,1), (1,2,3)]
+        @test GeometryBasics.earcut_triangulate([Point{2, Int32}.(ps)]) == GLTriangleFace[(3,4,1), (3,1,2)]
+        @test GeometryBasics.earcut_triangulate([Point{2, Int64}.(ps)]) == GLTriangleFace[(3,4,1), (3,1,2)]
+        @test GeometryBasics.earcut_triangulate([Point{2, Float32}.(ps)]) == GLTriangleFace[(3,4,1), (3,1,2)]
+        @test GeometryBasics.earcut_triangulate([Point{2, Float64}.(ps)]) == GLTriangleFace[(3,4,1), (3,1,2)]
 
         ps2 = Point2i[(0,-1), (1,0), (0,1), (-1,0)]
-        @test faces(Polygon(Point2{Int32}.(ps), [Point2{Int32}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
-        @test faces(Polygon(Point2{Int64}.(ps), [Point2{Int64}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
-        @test faces(Polygon(Point2{Int8}.(ps),  [Point2{Int8}.(ps2)]))  == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
-        @test faces(Polygon(Point2{Float32}.(ps), [Point2{Float32}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
-        @test faces(Polygon(Point2{Float64}.(ps), [Point2{Float64}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
-        @test faces(Polygon(Point2{Float16}.(ps), [Point2{Float16}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (6,5,2), (3,7,6)]
+        @test faces(Polygon(Point2{Int32}.(ps), [Point2{Int32}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
+        @test faces(Polygon(Point2{Int64}.(ps), [Point2{Int64}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
+        @test faces(Polygon(Point2{Int8}.(ps),  [Point2{Int8}.(ps2)]))  == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
+        @test faces(Polygon(Point2{Float32}.(ps), [Point2{Float32}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
+        @test faces(Polygon(Point2{Float64}.(ps), [Point2{Float64}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
+        @test faces(Polygon(Point2{Float16}.(ps), [Point2{Float16}.(ps2)])) == GLTriangleFace[(4,8,7), (5,8,1), (3,7,6), (6,5,2)]
     end
 end
